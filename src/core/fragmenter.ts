@@ -1,5 +1,6 @@
 import type { FragmentationInput, FragmentationOutput, Channel, SignalSource, Fragment } from "../types.js";
 import { v4 as uuid } from "uuid";
+import { Anthropic } from "@anthropic-ai/sdk";
 
 const FRAGMENT_PROMPT = `将以下对话拆分为记忆碎片。对每段有实质内容的对话，输出JSON数组。
 
@@ -98,4 +99,37 @@ export function resolveLinks(
   for (const f of fragments) {
     f.linkedCount = f.linkedIds.length;
   }
+}
+
+export async function fragmentTranscript(
+  input: FragmentationInput,
+  apiKey: string,
+  model: string
+): Promise<FragmentationOutput> {
+  const prompt = buildFragmentationPrompt(input.transcript);
+
+  const anthropic = new Anthropic({ apiKey });
+  const response = await anthropic.messages.create({
+    model,
+    max_tokens: 4096,
+    messages: [{ role: "user", content: prompt }],
+  });
+
+  const contentBlock = response.content[0];
+  const content = contentBlock?.type === "text" ? contentBlock.text : "";
+  if (!content) return { fragments: [], summary: "" };
+
+  const output = parseFragmentationResponse(content, input.sessionId, input.projectId);
+
+  // Re-parse raw JSON for link resolution
+  let rawFragments: RawFragment[];
+  try {
+    const jsonMatch = content.match(/\[[\s\S]*\]/);
+    rawFragments = jsonMatch ? JSON.parse(jsonMatch[0]) : [];
+  } catch {
+    rawFragments = [];
+  }
+
+  resolveLinks(output.fragments, rawFragments);
+  return output;
 }
