@@ -1,17 +1,46 @@
 /**
- * Baseline embedder: character n-gram hash vector (384-dim).
+ * Semantic embedder: uses @xenova/transformers with all-MiniLM-L6-v2 (384-dim).
  *
- * IMPORTANT: This is a PLACEHOLDER for MVP testing only.
- * - Does NOT capture semantic similarity — relies on character overlap.
- * - Short Chinese queries may return 0 results against technical fragments.
- * - Production MUST use a real embedding model (DeepSeek embeddings API,
- *   bge-small-zh-v1.5 via ONNX, or @xenova/transformers when sharp is fixed).
- *
- * Token budget claim of ~50% savings depends on embedding quality.
- * Baseline hash embedder will under-report similarity and miss valid matches.
+ * Falls back to n-gram hash if the ONNX model fails to load (e.g. first-run
+ * download blocked by firewall). The hash fallback is character-overlap only
+ * and will produce lower-quality search results, especially for Chinese.
  */
 
+import { pipeline, type FeatureExtractionPipeline } from "@xenova/transformers";
+
 const DIM = 384;
+const MODEL = "Xenova/all-MiniLM-L6-v2";
+
+let _pipeline: FeatureExtractionPipeline | null = null;
+let _initError = false;
+
+async function getPipeline(): Promise<FeatureExtractionPipeline | null> {
+  if (_pipeline) return _pipeline;
+  if (_initError) return null;
+  try {
+    _pipeline = await pipeline("feature-extraction", MODEL);
+    return _pipeline;
+  } catch (e) {
+    _initError = true;
+    console.warn(`[AgentMemory] ONNX embedding model failed to load, falling back to n-gram hash. Error: ${String(e).slice(0, 120)}`);
+    return null;
+  }
+}
+
+export async function embed(text: string): Promise<number[]> {
+  const pipe = await getPipeline();
+  if (pipe) {
+    try {
+      const result = await pipe(text, { pooling: "mean", normalize: true });
+      return Array.from(result.data);
+    } catch {
+      // Fall through to hash fallback on per-call errors
+    }
+  }
+  return embedHash(text);
+}
+
+// ── n-gram hash fallback ────────────────────────────────────────────
 
 function simpleHash(str: string, seed: number): number {
   let h = seed;
@@ -21,11 +50,10 @@ function simpleHash(str: string, seed: number): number {
   return h;
 }
 
-export async function embed(text: string): Promise<number[]> {
+function embedHash(text: string): number[] {
   const vec = new Array(DIM).fill(0);
   const lower = text.toLowerCase();
 
-  // Character bigrams and trigrams as features
   for (let i = 0; i < lower.length - 1; i++) {
     const bigram = lower.slice(i, i + 2);
     const idx = ((simpleHash(bigram, 0) % DIM) + DIM) % DIM;
@@ -37,10 +65,11 @@ export async function embed(text: string): Promise<number[]> {
     vec[idx] += 1;
   }
 
-  // L2 normalize
   const norm = Math.sqrt(vec.reduce((s, v) => s + v * v, 0));
   return norm === 0 ? vec : vec.map((v) => v / norm);
 }
+
+// ── cosine similarity (pure math, model-agnostic) ───────────────────
 
 export function cosineSimilarity(a: number[], b: number[]): number {
   let dot = 0;
