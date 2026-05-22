@@ -77,6 +77,19 @@ const TOOL_DEFINITIONS = [
       required: ["projectId"],
     },
   },
+  {
+    name: "memory_bootstrap",
+    description: "First-run setup: scan existing memory files, estimate token cost, and optionally batch-import all memories as searchable fragments. Call without confirm to preview, then call with confirm='Y' to execute.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        workspaceDir: { type: "string", description: "Project workspace directory to scan for memory files" },
+        projectId: { type: "string", description: "Project identifier" },
+        confirm: { type: "string", description: "Set to 'Y' to execute the import after previewing the estimate" },
+      },
+      required: ["workspaceDir", "projectId"],
+    },
+  },
 ];
 
 export async function startServer(apiKey: string, dbPath?: string) {
