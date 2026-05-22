@@ -6,13 +6,13 @@ export interface FragmentAnchor {
   label: string;
   weight: number;
   source: SignalSource;
-  timestamp: number;
+  readonly timestamp: number;
 }
 
 export interface Fragment {
-  id: string;
-  sessionId: string;
-  projectId: string;
+  readonly id: string;
+  readonly sessionId: string;
+  readonly projectId: string;
   anchors: FragmentAnchor[];
   linkedIds: string[];
   linkedCount: number;
@@ -20,17 +20,17 @@ export interface Fragment {
   decayScore: number;
   lastRecalledAt: number | null;
   recalledCount: number;
-  createdAt: number;
+  readonly createdAt: number;
   status: "active" | "archived" | "deleted";
 }
 
 export interface DistilledRule {
-  id: string;
+  readonly id: string;
   text: string;
   sourceFragmentIds: string[];
   weight: number;
   projectIds: string[];
-  createdAt: number;
+  readonly createdAt: number;
 }
 
 export interface SearchResult {
