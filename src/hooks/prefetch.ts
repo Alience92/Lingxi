@@ -1,15 +1,14 @@
 // UserPromptSubmit hook: reads hook event JSON from stdin, extracts user message, searches L1
-// Claude Code passes a JSON object: { session_id, transcript_path, prompt, ... }
-// Outputs [AgentMemory] context block for injection into system prompt
 
 import { openDb } from "../db/connection.js";
 import { explicitSearch } from "../core/retriever.js";
 import { getDb } from "../db/connection.js";
+import * as fs from "node:fs";
 
 async function main() {
   const projectId = process.env.AGENTMEMORY_PROJECT || "claude-auto-memory";
 
-  // Read hook input from stdin (Claude Code passes JSON event)
+  // Read hook input from stdin
   const chunks: Buffer[] = [];
   for await (const chunk of process.stdin) {
     chunks.push(Buffer.from(chunk));
@@ -17,30 +16,53 @@ async function main() {
   const rawInput = Buffer.concat(chunks).toString("utf-8").trim();
   if (!rawInput) return;
 
-  // Parse hook JSON to extract the actual user prompt
+  // DEBUG: save hook input to file so we can inspect the actual format
+  try {
+    const home = process.env.HOME || process.env.USERPROFILE || ".";
+    const debugDir = home + "/.agentmemory";
+    fs.mkdirSync(debugDir, { recursive: true });
+    fs.appendFileSync(debugDir + "/hook-debug.log", JSON.stringify({ time: new Date().toISOString(), input: rawInput }) + "\n");
+  } catch {}
+
+  // Try to extract the actual user message from whatever format Claude Code sends
   let userMessage = rawInput;
   try {
-    const hookEvent = JSON.parse(rawInput);
-    // UserPromptSubmit hook has the prompt in various fields
-    userMessage = hookEvent.prompt || hookEvent.text || hookEvent.message ||
-                  hookEvent.user_message || hookEvent.content || "";
-    if (typeof userMessage !== "string") userMessage = rawInput;
-    if (!userMessage.trim()) return;
-  } catch {
-    // Not JSON, use raw text directly
-  }
+    const obj = JSON.parse(rawInput);
+    // Claude Code UserPromptSubmit passes the prompt text. Try common field names.
+    const candidates = ["prompt", "text", "message", "user_message", "content", "prompt_text", "input", "query"];
+    let found = false;
+    for (const key of candidates) {
+      const val = (obj as any)[key];
+      if (typeof val === "string" && val.trim().length > 0 && !val.startsWith("{")) {
+        userMessage = val;
+        found = true;
+        break;
+      }
+    }
+    if (!found) {
+      // Try to guess: use the longest string field in the object
+      let longest = "";
+      for (const [k, v] of Object.entries(obj)) {
+        if (typeof v === "string" && v.length > longest.length && !v.startsWith("{")) {
+          longest = v;
+        }
+      }
+      if (longest) userMessage = longest;
+    }
+  } catch {}
+
+  if (!userMessage || userMessage === rawInput) return;
 
   openDb();
 
-  // Ensure session record exists
+  // Ensure session record
   try {
-    const hookEvent = JSON.parse(rawInput);
-    const sessionId = hookEvent.session_id || "unknown";
-    const db = getDb();
-    db.prepare(`INSERT OR REPLACE INTO sessions (id, project_id, started_at, pending_fragmentation) VALUES (?, ?, ?, 0)`).run(
+    const obj = JSON.parse(rawInput);
+    const sessionId = obj.session_id || obj.sessionId || "unknown";
+    getDb().prepare(`INSERT OR REPLACE INTO sessions (id, project_id, started_at, pending_fragmentation) VALUES (?, ?, ?, 0)`).run(
       sessionId, projectId, Date.now()
     );
-  } catch { /* best effort */ }
+  } catch {}
 
   const results = await explicitSearch(userMessage, projectId, 0.35, 5);
 
@@ -49,11 +71,8 @@ async function main() {
       const ch = r.fragment.anchors[0]?.channel ?? "?";
       return `[${ch}] ${r.fragment.summary}`;
     });
-    console.log(`[AgentMemory] 找到 ${results.length} 条相关记忆:\n${lines.join("\n")}`);
+    console.log(`[AgentMemory] ${results.length} 条相关记忆:\n${lines.join("\n")}`);
   }
-  // Silent on empty = no injection
 }
 
-main().catch(() => {
-  // Hook failures must never block the Agent
-});
+main().catch(() => {});
