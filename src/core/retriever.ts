@@ -18,7 +18,7 @@ export async function prefetch(
   const queryVec = await embed(queryText);
 
   // Get more candidates for reranking
-  const candidates = await vectorSearch(queryVec, projectId, 20, DEFAULT_MIN_SCORE * 0.6, queryText);
+  const candidates = await vectorSearch(queryVec, projectId, 20, DEFAULT_MIN_SCORE * 0.6);
 
   if (candidates.length === 0) return { contextBlock: "", fragmentIds: [], confidence: 0 };
 
@@ -37,10 +37,10 @@ export async function prefetch(
     if (usedIds.has(candidate.fragment.id)) continue;
     if (selected.length >= 3) break;
 
-    // MMR penalty: max similarity to any already-selected fragment
+    // MMR penalty: higher similarity to selected fragments should reduce score.
     let mmrPenalty = 0;
     for (const sel of selected) {
-      const sim = 1 - cosineSimilarity(
+      const sim = cosineSimilarity(
         await embed(candidate.fragment.summary),
         await embed(sel.fragment.summary)
       );

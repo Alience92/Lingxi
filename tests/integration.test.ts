@@ -14,6 +14,8 @@ import { parseFragmentationResponse, buildFragmentationPrompt } from "../src/cor
 import { detectBehaviorSignals, computeFeelWeight } from "../src/core/signal-channel.js";
 import { computeDecayScore, boostDecayScore } from "../src/core/decay.js";
 import { cosineSimilarity } from "../src/core/embedder.js";
+import { prefetch } from "../src/core/retriever.js";
+import { persistFragments } from "../src/db/repository.js";
 import * as os from "node:os";
 import * as fs from "node:fs";
 
@@ -108,5 +110,66 @@ describe("AgentMemory integration", () => {
     const result = engine.runDecay();
     expect(result.archived).toBe(0);
     expect(result.deleted).toBe(0);
+  });
+
+  it("engine: fragmentSession clears pending flag on empty fragmentation result", async () => {
+    const engine = new MemoryEngine({ apiKey: "test-key" });
+    await engine.compactSession({ transcript: "test transcript", sessionId: "pending-s1", projectId: "pending-p1" });
+
+    let session = getDb().prepare("SELECT pending_fragmentation FROM sessions WHERE id = ?").get("pending-s1") as { pending_fragmentation: number };
+    expect(session.pending_fragmentation).toBe(1);
+
+    const fragments = await engine.fragmentSession({ transcript: "test transcript", sessionId: "pending-s1", projectId: "pending-p1" });
+    expect(fragments).toHaveLength(0);
+
+    session = getDb().prepare("SELECT pending_fragmentation FROM sessions WHERE id = ?").get("pending-s1") as { pending_fragmentation: number };
+    expect(session.pending_fragmentation).toBe(0);
+  });
+
+  it("prefetch prefers diversity over duplicate summaries", async () => {
+    persistFragments({
+      sessionId: "prefetch-s1",
+      projectId: "prefetch-p1",
+      output: {
+        summary: "",
+        fragments: [
+          {
+            id: "dup-1",
+            sessionId: "prefetch-s1",
+            projectId: "prefetch-p1",
+            anchors: [{ channel: "WHAT", label: "GPU decision", weight: 100, source: "clustering", timestamp: Date.now() }],
+            linkedIds: [],
+            linkedCount: 0,
+            summary: "use GPU inference for this pipeline",
+            createdAt: Date.now(),
+          },
+          {
+            id: "dup-2",
+            sessionId: "prefetch-s1",
+            projectId: "prefetch-p1",
+            anchors: [{ channel: "WHAT", label: "GPU decision", weight: 100, source: "clustering", timestamp: Date.now() }],
+            linkedIds: [],
+            linkedCount: 0,
+            summary: "use GPU inference for this pipeline",
+            createdAt: Date.now(),
+          },
+          {
+            id: "diverse-1",
+            sessionId: "prefetch-s1",
+            projectId: "prefetch-p1",
+            anchors: [{ channel: "WHERE", label: "CPU fallback", weight: 80, source: "clustering", timestamp: Date.now() }],
+            linkedIds: [],
+            linkedCount: 0,
+            summary: "fallback to CPU when CUDA is unavailable",
+            createdAt: Date.now(),
+          },
+        ],
+      },
+    });
+
+    const result = await prefetch([{ role: "user", text: "should we use gpu or cpu fallback" }], "prefetch-p1");
+    expect(result.fragmentIds).toContain("dup-1");
+    expect(result.fragmentIds).toContain("diverse-1");
+    expect(result.fragmentIds).not.toContain("dup-2");
   });
 });

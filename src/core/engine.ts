@@ -30,8 +30,12 @@ export class MemoryEngine {
 
   // Path B: Async fragmentation after compaction
   async fragmentSession(input: FragmentationInput): Promise<Fragment[]> {
+    const db = getDb();
     const result = await this.callFragmenter(input);
-    if (result.fragments.length === 0) return [];
+    if (result.fragments.length === 0) {
+      db.prepare(`UPDATE sessions SET pending_fragmentation = 0 WHERE id = ?`).run(input.sessionId);
+      return [];
+    }
 
     return persistFragments({
       output: result,
