@@ -56,6 +56,19 @@ const TOOL_DEFINITIONS = [
     },
   },
   {
+    name: "memory_store",
+    description: "Store pre-fragmented memory fragments (from client-side fragmentation when no API key is configured).",
+    inputSchema: {
+      type: "object",
+      properties: {
+        fragments: { type: "array", items: { type: "object" }, description: "Array of {channel, label, weight, linkedTo, summary}" },
+        sessionId: { type: "string" },
+        projectId: { type: "string" },
+      },
+      required: ["fragments", "sessionId", "projectId"],
+    },
+  },
+  {
     name: "memory_recall_deep",
     description: "Deep 4-layer recall: searches active fragments, archive, transcripts, and project files.",
     inputSchema: {
