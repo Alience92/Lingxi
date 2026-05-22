@@ -1,6 +1,15 @@
-// MVP embedder: simple character n-gram hash vector (384-dim)
-// Production: replace with Anthropic API embeddings or local ONNX model
-// @xenova/transformers is blocked by sharp native dep on Windows — swap when available
+/**
+ * Baseline embedder: character n-gram hash vector (384-dim).
+ *
+ * IMPORTANT: This is a PLACEHOLDER for MVP testing only.
+ * - Does NOT capture semantic similarity — relies on character overlap.
+ * - Short Chinese queries may return 0 results against technical fragments.
+ * - Production MUST use a real embedding model (DeepSeek embeddings API,
+ *   bge-small-zh-v1.5 via ONNX, or @xenova/transformers when sharp is fixed).
+ *
+ * Token budget claim of ~50% savings depends on embedding quality.
+ * Baseline hash embedder will under-report similarity and miss valid matches.
+ */
 
 const DIM = 384;
 

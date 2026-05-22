@@ -4,9 +4,10 @@ import { embed, cosineSimilarity } from "./embedder.js";
 
 const DEFAULT_MIN_SCORE = 0.35;
 const DEFAULT_MAX_RESULTS = 6;
-const PREFETCH_CHAR_BUDGET = 150;
+// ~150 tokens ≈ 450 chars for CJK, 600 for English
+const PREFETCH_BUDGET_CHARS = 450;
 
-// P2: Silent associative prefetch
+// P2: Silent associative prefetch with anchor weighting + cluster + MMR
 export async function prefetch(
   messages: SessionContext["lastMessages"],
   projectId: string
@@ -15,25 +16,64 @@ export async function prefetch(
 
   const queryText = messages.slice(-3).map((m) => m.text).join("\n");
   const queryVec = await embed(queryText);
-  const results = await vectorSearch(queryVec, projectId, 10, DEFAULT_MIN_SCORE, queryText);
 
-  if (results.length === 0) return { contextBlock: "", fragmentIds: [], confidence: 0 };
+  // Get more candidates for reranking
+  const candidates = await vectorSearch(queryVec, projectId, 20, DEFAULT_MIN_SCORE * 0.6, queryText);
 
-  const topN = results.slice(0, 3);
-  let block = "";
-  const usedIds: string[] = [];
-  for (const r of topN) {
-    const anchor = r.fragment.anchors[0];
-    const channel = anchor ? anchor.channel : "WHAT";
-    const candidate = `${channel}: ${r.fragment.summary}`;
-    if (block.length + candidate.length + 2 <= PREFETCH_CHAR_BUDGET) {
-      block = block ? `${block}; ${candidate}` : candidate;
-      usedIds.push(r.fragment.id);
+  if (candidates.length === 0) return { contextBlock: "", fragmentIds: [], confidence: 0 };
+
+  // Rerank: composite score = vector × anchor_weight × decay_score
+  const reranked = candidates.map((r) => {
+    const maxAnchorWeight = Math.max(...r.fragment.anchors.map((a) => a.weight), 10) / 255;
+    const compositeScore = r.score * 0.5 + maxAnchorWeight * 0.3 + r.fragment.decayScore * 0.2;
+    return { ...r, compositeScore };
+  }).sort((a, b) => b.compositeScore - a.compositeScore);
+
+  // MMR: prefer diverse results — penalize fragments too similar to already-selected
+  const selected: typeof reranked = [];
+  const usedIds = new Set<string>();
+
+  for (const candidate of reranked) {
+    if (usedIds.has(candidate.fragment.id)) continue;
+    if (selected.length >= 3) break;
+
+    // MMR penalty: max similarity to any already-selected fragment
+    let mmrPenalty = 0;
+    for (const sel of selected) {
+      const sim = 1 - cosineSimilarity(
+        await embed(candidate.fragment.summary),
+        await embed(sel.fragment.summary)
+      );
+      mmrPenalty = Math.max(mmrPenalty, sim * 0.3);
+    }
+    const mmrScore = candidate.compositeScore - mmrPenalty;
+    if (mmrScore < DEFAULT_MIN_SCORE * 0.5 && selected.length > 0) continue;
+
+    selected.push(candidate);
+    usedIds.add(candidate.fragment.id);
+    // Also pull linked fragments into the cluster
+    for (const linkedId of candidate.fragment.linkedIds) {
+      usedIds.add(linkedId);
     }
   }
 
-  const confidence = topN.length > 0 ? Math.min(0.9, topN[0]?.score ?? 0) : 0;
-  return { contextBlock: block, fragmentIds: usedIds, confidence };
+  // Build context block within token budget
+  let block = "";
+  const fragmentIds: string[] = [];
+  for (const r of selected) {
+    const anchor = r.fragment.anchors[0];
+    const channel = anchor ? anchor.channel : "WHAT";
+    const maxWeight = Math.max(...r.fragment.anchors.map((a) => a.weight));
+    const signal = maxWeight > 50 ? "⚡" : "";
+    const candidate = `${signal}[${channel}] ${r.fragment.summary}`;
+    if (block.length + candidate.length + 2 <= PREFETCH_BUDGET_CHARS) {
+      block = block ? `${block}\n${candidate}` : candidate;
+      fragmentIds.push(r.fragment.id);
+    }
+  }
+
+  const confidence = selected.length > 0 ? Math.min(0.9, selected[0]?.compositeScore ?? 0) : 0;
+  return { contextBlock: block, fragmentIds, confidence };
 }
 
 // P3: Explicit search
@@ -62,6 +102,8 @@ async function vectorSearch(
   `).all(projectId) as Fragment[];
 
   const results: SearchResult[] = [];
+  const hitIds = new Set<string>();
+  const hitLinkedIds = new Map<string, string[]>(); // fragmentId → its linkedIds
 
   for (const fragment of rows) {
     const fragVec = await embed(fragment.summary);
@@ -72,27 +114,35 @@ async function vectorSearch(
         SELECT target_id FROM fragment_links WHERE source_id = ?
       `).all(fragment.id) as Array<{ target_id: string }>;
 
-      const matchedIds = [fragment.id, ...linkedRows.map((r) => r.target_id)];
-      const uniqueMatched = [...new Set(matchedIds)];
+      const linkedIds = linkedRows.map((r) => r.target_id);
+      hitIds.add(fragment.id);
+      hitLinkedIds.set(fragment.id, linkedIds);
 
       results.push({
         fragment,
         score,
-        matchedAnchors: uniqueMatched,
-        missingLinks: fragment.linkedCount - uniqueMatched.length + 1,
+        matchedAnchors: [fragment.id, ...linkedIds],
+        missingLinks: 0, // Filled in next pass
       });
 
-      // Log recall event for dreaming/promotion tracking
+      // Log recall event
       if (originalQuery) {
         db.prepare(`INSERT INTO recall_log (fragment_id, query, score, recalled_at) VALUES (?, ?, ?, ?)`).run(
           fragment.id, originalQuery, score, Date.now()
         );
-        // Boost fragment on recall
         db.prepare(`UPDATE fragments SET decay_score = 1.0, last_recalled_at = ?, recalled_count = recalled_count + 1 WHERE id = ?`).run(
           Date.now(), fragment.id
         );
       }
     }
+  }
+
+  // Compute real missingLinks: how many linkedIds are NOT in the hit set
+  for (const result of results) {
+    const linkedIds = hitLinkedIds.get(result.fragment.id) ?? [];
+    const missedLinks = linkedIds.filter((lid) => !hitIds.has(lid));
+    result.missingLinks = missedLinks.length;
+    result.matchedAnchors = linkedIds.filter((lid) => hitIds.has(lid));
   }
 
   return results

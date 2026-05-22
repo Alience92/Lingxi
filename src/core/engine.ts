@@ -1,5 +1,6 @@
 import type { FragmentationInput, Fragment } from "../types.js";
 import { getDb } from "../db/connection.js";
+import { persistFragments, deleteFragment } from "../db/repository.js";
 import { fragmentTranscript } from "./fragmenter.js";
 import { computeDecayScore } from "./decay.js";
 
@@ -12,67 +13,31 @@ export interface EngineConfig {
 export class MemoryEngine {
   constructor(private config: EngineConfig) {}
 
-  // Path A: Compaction-time sync summary
+  // Path A: Compaction-time sync summary (lightweight, no LLM fragmentation)
   async compactSession(input: FragmentationInput): Promise<string> {
-    const result = await this.callFragmenter(input);
-    return result.summary;
+    // Path A produces only a summary + archive transcript.
+    // Full fragmentation is deferred to Path B (fragmentSession).
+    const db = getDb();
+    db.prepare(`INSERT OR REPLACE INTO sessions (id, project_id, started_at, pending_fragmentation) VALUES (?, ?, ?, 1)`).run(
+      input.sessionId, input.projectId, Date.now()
+    );
+    // For MVP, the summary is a truncation of the raw transcript.
+    // Full LLM summarization is Path B's responsibility.
+    return input.transcript.length > 500
+      ? input.transcript.slice(0, 500) + "..."
+      : input.transcript;
   }
 
   // Path B: Async fragmentation after compaction
   async fragmentSession(input: FragmentationInput): Promise<Fragment[]> {
     const result = await this.callFragmenter(input);
+    if (result.fragments.length === 0) return [];
 
-    const db = getDb();
-
-    // Ensure session and project records exist
-    db.prepare(`INSERT OR IGNORE INTO projects (id, name, workspace_dir, created_at) VALUES (?, ?, ?, ?)`).run(
-      input.projectId, input.projectId, "", Date.now()
-    );
-    db.prepare(`INSERT OR REPLACE INTO sessions (id, project_id, started_at, pending_fragmentation) VALUES (?, ?, ?, 0)`).run(
-      input.sessionId, input.projectId, Date.now()
-    );
-
-    const fragments: Fragment[] = [];
-
-    const insertFrag = db.prepare(`INSERT INTO fragments (id, session_id, project_id, summary, linked_count, decay_score, created_at, status) VALUES (?, ?, ?, ?, ?, 1.0, ?, 'active')`);
-    const insertAnchor = db.prepare(`INSERT INTO fragment_anchors (fragment_id, channel, label, weight, source, timestamp) VALUES (?, ?, ?, ?, ?, ?)`);
-    const insertLink = db.prepare(`INSERT OR IGNORE INTO fragment_links (source_id, target_id) VALUES (?, ?)`);
-    const insertFts = db.prepare(`INSERT INTO fragments_fts (rowid, summary) VALUES (?, ?)`);
-
-    const insertAll = db.transaction(() => {
-      for (const raw of result.fragments) {
-        const f: Fragment = {
-          ...raw,
-          decayScore: 1.0,
-          lastRecalledAt: null,
-          recalledCount: 0,
-          status: "active",
-        };
-
-        insertFrag.run(f.id, f.sessionId, f.projectId, f.summary, f.linkedCount, f.createdAt);
-
-        for (const anchor of f.anchors) {
-          insertAnchor.run(f.id, anchor.channel, anchor.label, anchor.weight, anchor.source, anchor.timestamp);
-        }
-
-        for (const targetId of f.linkedIds) {
-          insertLink.run(f.id, targetId);
-        }
-
-        const rowidObj = db.prepare("SELECT rowid FROM fragments WHERE id = ?").get(f.id) as { rowid: number } | undefined;
-        if (rowidObj) {
-          insertFts.run(rowidObj.rowid, f.summary);
-        }
-
-        fragments.push(f);
-      }
+    return persistFragments({
+      output: result,
+      sessionId: input.sessionId,
+      projectId: input.projectId,
     });
-
-    insertAll();
-
-    db.prepare(`UPDATE sessions SET pending_fragmentation = 0 WHERE id = ?`).run(input.sessionId);
-
-    return fragments;
   }
 
   // Run decay on all active fragments
@@ -90,7 +55,7 @@ export class MemoryEngine {
           db.prepare(`UPDATE fragments SET status = 'archived', decay_score = 0 WHERE id = ?`).run(f.id);
           archived++;
         } else if (decay.status === "deleted") {
-          db.prepare(`DELETE FROM fragments WHERE id = ?`).run(f.id);
+          deleteFragment(f.id);
           deleted++;
         }
       }

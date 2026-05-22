@@ -48,15 +48,13 @@ export function buildToolHandlers(engine: MemoryEngine) {
     },
 
     async memory_store(params: { fragments: Array<{ channel: string; label: string; weight?: number; linkedTo?: number[]; summary: string }>; sessionId: string; projectId: string }) {
-      const db = getDb();
       const { parseFragmentationResponse, resolveLinks } = await import("../core/fragmenter.js");
+      const { persistFragments } = await import("../db/repository.js");
 
-      // Convert flat fragments array to FragmentationOutput format
       const rawJson = JSON.stringify(params.fragments);
       const output = parseFragmentationResponse(rawJson, params.sessionId, params.projectId);
       if (output.fragments.length === 0) return { stored: 0, error: "No valid fragments parsed" };
 
-      // Re-resolve links from raw input
       const rawFragments = params.fragments.map((f: any) => ({
         channel: f.channel,
         label: f.label,
@@ -66,24 +64,8 @@ export function buildToolHandlers(engine: MemoryEngine) {
       }));
       resolveLinks(output.fragments, rawFragments);
 
-      // Persist
-      const insertFrag = db.prepare(`INSERT INTO fragments (id, session_id, project_id, summary, linked_count, decay_score, created_at, status) VALUES (?, ?, ?, ?, ?, 1.0, ?, 'active')`);
-      const insertAnchor = db.prepare(`INSERT INTO fragment_anchors (fragment_id, channel, label, weight, source, timestamp) VALUES (?, ?, ?, ?, ?, ?)`);
-      const insertLink = db.prepare(`INSERT OR IGNORE INTO fragment_links (source_id, target_id) VALUES (?, ?)`);
-
-      db.transaction(() => {
-        for (const f of output.fragments) {
-          insertFrag.run(f.id, f.sessionId, f.projectId, f.summary, f.linkedCount, f.createdAt);
-          for (const anchor of f.anchors) {
-            insertAnchor.run(f.id, anchor.channel, anchor.label, anchor.weight, anchor.source, anchor.timestamp);
-          }
-          for (const targetId of f.linkedIds) {
-            insertLink.run(f.id, targetId);
-          }
-        }
-      })();
-
-      return { stored: output.fragments.length, fragments: output.fragments.map((f) => ({ id: f.id, summary: f.summary })) };
+      const persisted = persistFragments({ output, sessionId: params.sessionId, projectId: params.projectId });
+      return { stored: persisted.length, fragments: persisted.map((f) => ({ id: f.id, summary: f.summary })) };
     },
 
     async memory_search(params: { query: string; projectId: string; maxResults?: number; minScore?: number }) {
@@ -106,12 +88,54 @@ export function buildToolHandlers(engine: MemoryEngine) {
     },
 
     async dreaming(params: { projectId: string }) {
+      const db = getDb();
+
+      // Step 1: Decay
       const stats = engine.runDecay();
+
+      // Step 2: Manual distillation — cluster fragments with similar labels, merge ≥3 into L0 rules
+      const fragments = db.prepare(`
+        SELECT f.*, fa.label, fa.channel FROM fragments f
+        JOIN fragment_anchors fa ON fa.fragment_id = f.id
+        WHERE f.project_id = ? AND f.status = 'active'
+      `).all(params.projectId) as Array<{ id: string; summary: string; label: string; channel: string }>;
+
+      // Group by channel + label prefix (first 10 chars for fuzzy grouping)
+      const groups = new Map<string, Array<{ id: string; summary: string }>>();
+      for (const f of fragments) {
+        const key = `${f.channel}:${(f.label || f.summary).slice(0, 15)}`;
+        if (!groups.has(key)) groups.set(key, []);
+        groups.get(key)!.push({ id: f.id, summary: f.summary });
+      }
+
+      let distilled = 0;
+      for (const [, members] of groups) {
+        if (members.length >= 3) {
+          const ruleText = members.map((m) => m.summary).join("; ").slice(0, 100);
+          const ruleId = `rule-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+
+          db.prepare(`INSERT OR IGNORE INTO distilled_rules (id, text, weight, created_at) VALUES (?, ?, 1.0, ?)`).run(
+            ruleId, ruleText, Date.now()
+          );
+          for (const m of members) {
+            db.prepare(`INSERT OR IGNORE INTO rule_sources (rule_id, fragment_id, project_id) VALUES (?, ?, ?)`).run(
+              ruleId, m.id, params.projectId
+            );
+          }
+          distilled++;
+        }
+      }
+
+      const parts: string[] = [];
+      if (stats.archived + stats.deleted > 0) parts.push(`已清理 ${stats.archived + stats.deleted} 条过期记忆`);
+      if (distilled > 0) parts.push(`已蒸馏 ${distilled} 条规则（L0）`);
+      if (parts.length === 0) parts.push("记忆库状态良好，无需清理");
+
       return {
-        ...stats,
-        message: stats.archived + stats.deleted > 0
-          ? `已清理 ${stats.archived + stats.deleted} 条过期记忆。`
-          : "记忆库状态良好，无需清理。",
+        archived: stats.archived,
+        deleted: stats.deleted,
+        distilled,
+        message: parts.join("，") + "。",
       };
     },
 

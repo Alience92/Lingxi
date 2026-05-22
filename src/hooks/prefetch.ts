@@ -1,9 +1,7 @@
 // UserPromptSubmit hook: reads hook event JSON from stdin, extracts user message, searches L1
 
-import { openDb } from "../db/connection.js";
-import { explicitSearch } from "../core/retriever.js";
-import { getDb } from "../db/connection.js";
-import * as fs from "node:fs";
+import { openDb, getDb } from "../db/connection.js";
+import { prefetch } from "../core/retriever.js";
 
 async function main() {
   const projectId = process.env.AGENTMEMORY_PROJECT || "claude-auto-memory";
@@ -16,15 +14,7 @@ async function main() {
   const rawInput = Buffer.concat(chunks).toString("utf-8").trim();
   if (!rawInput) return;
 
-  // DEBUG: save hook input to file so we can inspect the actual format
-  try {
-    const home = process.env.HOME || process.env.USERPROFILE || ".";
-    const debugDir = home + "/.agentmemory";
-    fs.mkdirSync(debugDir, { recursive: true });
-    fs.appendFileSync(debugDir + "/hook-debug.log", JSON.stringify({ time: new Date().toISOString(), input: rawInput }) + "\n");
-  } catch {}
-
-  // Try to extract the actual user message from whatever format Claude Code sends
+  // Extract the actual user message from whatever format Claude Code sends
   let userMessage = rawInput;
   try {
     const obj = JSON.parse(rawInput);
@@ -64,14 +54,11 @@ async function main() {
     );
   } catch {}
 
-  const results = await explicitSearch(userMessage, projectId, 0.35, 5);
+  // Use unified P2 prefetch (anchor-weighted + clustered + MMR)
+  const pre = await prefetch([{ role: "user", text: userMessage }], projectId);
 
-  if (results.length > 0) {
-    const lines = results.slice(0, 3).map((r) => {
-      const ch = r.fragment.anchors[0]?.channel ?? "?";
-      return `[${ch}] ${r.fragment.summary}`;
-    });
-    console.log(`[AgentMemory] ${results.length} 条相关记忆:\n${lines.join("\n")}`);
+  if (pre.confidence > 0 && pre.contextBlock) {
+    console.log(`[AgentMemory] 相关记忆:\n${pre.contextBlock}`);
   }
 }
 

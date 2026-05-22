@@ -1,4 +1,4 @@
-import type { SearchResult, Fragment } from "../types.js";
+import type { SearchResult } from "../types.js";
 import { getDb } from "../db/connection.js";
 import { explicitSearch } from "./retriever.js";
 import * as fs from "node:fs";
@@ -21,22 +21,12 @@ export async function fourLayerRecall(
     return { fragments: l1Results, source: "L1" };
   }
 
-  // Layer 2: L1_archive (archived fragments, FTS5 search)
-  const db = getDb();
-  const ftsQuery = queryText.replace(/\s+/g, " AND ");
-  let archiveRows: Fragment[] = [];
-  try {
-    archiveRows = db.prepare(`
-      SELECT f.* FROM fragments f
-      WHERE f.project_id = ? AND f.status = 'archived'
-      AND f.id IN (SELECT rowid FROM fragments_fts WHERE fragments_fts MATCH ?)
-      LIMIT 5
-    `).all(projectId, ftsQuery) as Fragment[];
-  } catch {
-    archiveRows = [];
-  }
+  // Layer 2: L1_archive (archived fragments, FTS5 search via repository)
+  const { searchArchiveFragments } = await import("../db/repository.js");
+  const archiveRows = searchArchiveFragments(queryText, projectId, 5);
 
   if (archiveRows.length > 0) {
+    const db = getDb();
     for (const row of archiveRows) {
       db.prepare(`UPDATE fragments SET status = 'active', decay_score = 0.5 WHERE id = ?`).run(row.id);
     }
@@ -48,18 +38,25 @@ export async function fourLayerRecall(
     };
   }
 
-  // Layer 3: Raw transcript files
+  // Layer 3: Raw transcript files — substring match + trigger on-the-fly fragmentation hint
   const transcriptDir = path.join(workspaceDir, "transcripts");
   if (fs.existsSync(transcriptDir)) {
     const files = fs.readdirSync(transcriptDir).filter((f) => f.endsWith(".jsonl")).slice(-30);
     for (const file of files) {
       try {
         const content = fs.readFileSync(path.join(transcriptDir, file), "utf-8");
-        if (content.toLowerCase().includes(queryText.toLowerCase())) {
+        const lowerContent = content.toLowerCase();
+        const lowerQuery = queryText.toLowerCase();
+        if (lowerContent.includes(lowerQuery)) {
+          // Extract surrounding context (±300 chars around first match)
+          const idx = lowerContent.indexOf(lowerQuery);
+          const start = Math.max(0, idx - 300);
+          const end = Math.min(content.length, idx + lowerQuery.length + 300);
+          const snippet = content.slice(start, end);
           return {
             fragments: [],
             source: "L3_transcript",
-            message: `记得不是很清楚，但在转录文件 ${file} 里有提到相关内容...`,
+            message: `记得不是很清楚，但在转录文件 ${file} 里有提到相关内容。建议对该转录执行 memory_remember 进行碎片化：\n...${snippet.slice(0, 200)}...`,
           };
         }
       } catch {
@@ -68,14 +65,27 @@ export async function fourLayerRecall(
     }
   }
 
-  // Layer 4: Project design files (date-correlated)
+  // Layer 4: Project design files (date-correlated by filename patterns)
   const designDirs = ["设计文档", "design-docs", "docs", "specs"];
+  // Extract date patterns from query to narrow search
+  const datePattern = /\d{4}[-/]\d{1,2}[-/]\d{1,2}|\d{4}\.(0?[1-9]|1[0-2])|202[0-6]/;
+  const dateMatch = queryText.match(datePattern);
   for (const dir of designDirs) {
     const fullPath = path.join(workspaceDir, dir);
     if (!fs.existsSync(fullPath)) continue;
     try {
-      const designFiles = fs.readdirSync(fullPath).filter((f) => f.endsWith(".md"));
-      for (const file of designFiles) {
+      const designFiles = fs.readdirSync(fullPath)
+        .filter((f) => f.endsWith(".md"))
+        // If a date was found in the query, prefer files matching that date
+        .sort((a, b) => {
+          if (dateMatch) {
+            const aMatch = a.includes(dateMatch[0]!) ? -1 : 1;
+            const bMatch = b.includes(dateMatch[0]!) ? -1 : 1;
+            return aMatch - bMatch;
+          }
+          return b.localeCompare(a); // Newest first
+        });
+      for (const file of designFiles.slice(0, 20)) {
         try {
           const content = fs.readFileSync(path.join(fullPath, file), "utf-8");
           if (content.toLowerCase().includes(queryText.toLowerCase())) {
