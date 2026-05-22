@@ -1,6 +1,6 @@
 import type { Fragment, SearchResult, PrefetchResult, SessionContext } from "../types.js";
 import { getDb } from "../db/connection.js";
-import { embed, cosineSimilarity } from "./embedder.js";
+import { getCurrentEmbedder, cosineSimilarity } from "./embedder.js";
 
 export const DEFAULT_MIN_SCORE = 0.18;
 const DEFAULT_MAX_RESULTS = 6;
@@ -18,7 +18,7 @@ export async function prefetch(
   if (messages.length === 0) return { contextBlock: "", fragmentIds: [], confidence: 0 };
 
   const queryText = messages.slice(-3).map((m) => m.text).join("\n");
-  const queryVec = await embed(queryText, "query");
+  const queryVec = await getCurrentEmbedder().embed(queryText, "query");
 
   // Get more candidates for reranking
   const candidates = await vectorSearch(queryVec, projectId, 20, DEFAULT_MIN_SCORE * 0.6);
@@ -45,8 +45,8 @@ export async function prefetch(
     let maxSim = 0;
     for (const sel of selected) {
       const sim = cosineSimilarity(
-        await embed(candidate.fragment.summary),
-        await embed(sel.fragment.summary)
+        await getCurrentEmbedder().embed(candidate.fragment.summary),
+        await getCurrentEmbedder().embed(sel.fragment.summary)
       );
       maxSim = Math.max(maxSim, sim);
       mmrPenalty = Math.max(mmrPenalty, sim * PREFETCH_MMR_PENALTY_FACTOR);
@@ -90,7 +90,7 @@ export async function explicitSearch(
   minScore: number = DEFAULT_MIN_SCORE,
   maxResults: number = DEFAULT_MAX_RESULTS
 ): Promise<SearchResult[]> {
-  const queryVec = await embed(query, "query");
+  const queryVec = await getCurrentEmbedder().embed(query, "query");
   return await vectorSearch(queryVec, projectId, maxResults, minScore, {
     recallMode: "explicit",
     query,
@@ -142,7 +142,7 @@ async function vectorSearch(
   const hitLinkedIds = new Map<string, string[]>(); // fragmentId → its linkedIds
 
   for (const fragment of rows) {
-    const fragVec = await embed(fragment.summary);
+    const fragVec = await getCurrentEmbedder().embed(fragment.summary);
     const score = cosineSimilarity(queryVec, fragVec);
 
     if (score >= minScore) {

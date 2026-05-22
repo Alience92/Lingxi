@@ -16,10 +16,8 @@
     "node": ">=18"
   },
   "dependencies": {
-    "@anthropic-ai/sdk": "^0.98.0",
     "@modelcontextprotocol/sdk": "^1.29.0",
     "better-sqlite3": "^12.10.0",
-    "onnxruntime-node": "^1.26.0",
     "openai": "^6.39.0",
     "sqlite-vec": "^0.1.9",
     "uuid": "^14.0.0",

@@ -1,13 +1,5 @@
 import { vi, describe, it, expect, beforeAll, afterAll } from "vitest";
 
-// Mock @xenova/transformers to avoid loading the "sharp" native module
-// (which wasn't built because npm install was run with --ignore-scripts).
-// The only import from embedder.ts used in these tests is cosineSimilarity,
-// which is a pure math function and does not use the pipeline.
-vi.mock("@xenova/transformers", () => ({
-  pipeline: vi.fn().mockResolvedValue(vi.fn()),
-}));
-
 import { openDb, closeDb, getDb } from "../src/db/connection.js";
 import { MemoryEngine } from "../src/core/engine.js";
 import { parseFragmentationResponse, buildFragmentationPrompt } from "../src/core/fragmenter.js";

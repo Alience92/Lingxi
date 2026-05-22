@@ -7,113 +7,128 @@
  * - API returns an error
  *
  * MiniMax: POST /v1/embeddings?GroupId=xxx  | model: embo-01  | 1536-dim
- * OpenAI:  POST /v1/embeddings              | model: configurable | varies
+ * OpenAI:  POST /v1/embeddings              | model: configurable | 1536-dim
+ *
+ * Hash fallback also uses 1536-dim to avoid dimension mismatch when the
+ * API fails mid-session — cosine similarity between hash and API vectors
+ * is mathematically valid (same length), even if semantic quality degrades.
  */
 
-const DIM = 384;
-const EMBEDDING_MODEL = "text-embedding-3-small";
+const DIM = 1536;
+const OPENAI_MODEL = "text-embedding-3-small";
 
-// ── Configuration ────────────────────────────────────────────────────
+// ── Singleton accessor (set by engine constructor) ──────────────────
 
-let _apiKey = "";
-let _baseURL = "https://api.deepseek.com";
-let _groupId = "";
+let _currentEmbedder: Embedder | null = null;
 
-export function configureEmbedder(apiKey: string, baseURL?: string): void {
-  _apiKey = apiKey;
-  if (baseURL) {
-    _baseURL = baseURL;
-    // Extract GroupId from MiniMax-style base URL: "https://api.minimax.chat/v1?GroupId=xxx"
-    const m = baseURL.match(/[?&]GroupId=([^&]+)/);
-    if (m) _groupId = m[1]!;
+export function setCurrentEmbedder(e: Embedder): void {
+  _currentEmbedder = e;
+}
+
+export function getCurrentEmbedder(): Embedder {
+  if (!_currentEmbedder) {
+    // Lazy fallback: hash-only embedder when no engine is configured
+    _currentEmbedder = new Embedder("", "");
   }
+  return _currentEmbedder;
 }
 
-function isMiniMax(): boolean {
-  return _baseURL.includes("minimax");
-}
-
-// ── Public API ──────────────────────────────────────────────────────
+// ── Embedder class (one instance per engine) ────────────────────────
 
 export type EmbedPurpose = "store" | "query";
 
-export async function embed(text: string, purpose: EmbedPurpose = "store"): Promise<number[]> {
-  if (_apiKey && _apiKey.length > 10 && _apiKey !== "test-key") {
+export class Embedder {
+  private apiKey: string;
+  private baseURL: string;
+  private groupId: string;
+
+  constructor(apiKey: string, baseURL = "https://api.deepseek.com") {
+    this.apiKey = apiKey;
+    this.baseURL = baseURL;
+    this.groupId = "";
+    const m = baseURL.match(/[?&]GroupId=([^&]+)/);
+    if (m) this.groupId = m[1]!;
+  }
+
+  private isMiniMax(): boolean {
+    return this.baseURL.includes("minimax");
+  }
+
+  async embed(text: string, purpose: EmbedPurpose = "store"): Promise<number[]> {
+    if (this.apiKey && this.apiKey.length > 10 && this.apiKey !== "test-key") {
+      try {
+        return await this.embedViaApi(text, purpose);
+      } catch {
+        // Fall through to hash fallback on any error
+      }
+    }
+    return embedHash(text);
+  }
+
+  private async embedViaApi(text: string, purpose: EmbedPurpose): Promise<number[]> {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 15_000);
+
     try {
-      return await embedViaApi(text, purpose);
-    } catch {
-      // Fall through to hash fallback on any error
+      if (this.isMiniMax()) {
+        return await this.embedMiniMax(text, purpose, controller.signal);
+      }
+      return await this.embedOpenAI(text, controller.signal);
+    } finally {
+      clearTimeout(timer);
     }
   }
-  return embedHash(text);
-}
 
-async function embedViaApi(text: string, purpose: EmbedPurpose): Promise<number[]> {
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), 15_000);
+  // ── MiniMax API ───────────────────────────────────────────────────
 
-  try {
-    if (isMiniMax()) {
-      return await embedMiniMax(text, purpose, controller.signal);
+  private async embedMiniMax(text: string, purpose: EmbedPurpose, signal: AbortSignal): Promise<number[]> {
+    const url = `${this.baseURL}/v1/embeddings${this.groupId ? `?GroupId=${this.groupId}` : ""}`;
+    const body: Record<string, unknown> = {
+      model: "embo-01",
+      texts: [text],
+      type: purpose === "query" ? "query" : "db",
+    };
+
+    const response = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "Authorization": `Bearer ${this.apiKey}` },
+      body: JSON.stringify(body),
+      signal,
+    });
+
+    if (!response.ok) throw new Error(`MiniMax embeddings returned ${response.status}`);
+
+    const data = await response.json() as { vectors?: number[][]; base_resp?: { status_code?: number } };
+    if (data.base_resp?.status_code && data.base_resp.status_code !== 0) {
+      throw new Error(`MiniMax API error: ${data.base_resp.status_code}`);
     }
-    return await embedOpenAI(text, controller.signal);
-  } finally {
-    clearTimeout(timer);
+    const vec = data.vectors?.[0];
+    if (!vec || vec.length === 0) throw new Error("Empty embedding returned");
+
+    return normalize(vec);
+  }
+
+  // ── OpenAI-compatible API ──────────────────────────────────────────
+
+  private async embedOpenAI(text: string, signal: AbortSignal): Promise<number[]> {
+    const response = await fetch(`${this.baseURL}/v1/embeddings`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "Authorization": `Bearer ${this.apiKey}` },
+      body: JSON.stringify({ model: OPENAI_MODEL, input: text, encoding_format: "float" }),
+      signal,
+    });
+
+    if (!response.ok) throw new Error(`Embedding API returned ${response.status}`);
+
+    const data = await response.json() as { data: Array<{ embedding: number[] }> };
+    const vec = data.data?.[0]?.embedding;
+    if (!vec || vec.length === 0) throw new Error("Empty embedding returned");
+
+    return normalize(vec);
   }
 }
 
-// ── MiniMax API ─────────────────────────────────────────────────────
-
-async function embedMiniMax(text: string, purpose: EmbedPurpose, signal: AbortSignal): Promise<number[]> {
-  const url = `${_baseURL}/v1/embeddings${_groupId ? `?GroupId=${_groupId}` : ""}`;
-  const body: Record<string, unknown> = {
-    model: "embo-01",
-    texts: [text],
-    type: purpose === "query" ? "query" : "db",
-  };
-
-  const response = await fetch(url, {
-    method: "POST",
-    headers: { "Content-Type": "application/json", "Authorization": `Bearer ${_apiKey}` },
-    body: JSON.stringify(body),
-    signal,
-  });
-
-  if (!response.ok) throw new Error(`MiniMax embeddings returned ${response.status}`);
-
-  const data = await response.json() as { vectors?: number[][]; base_resp?: { status_code?: number } };
-  if (data.base_resp?.status_code && data.base_resp.status_code !== 0) {
-    throw new Error(`MiniMax API error: ${data.base_resp.status_code}`);
-  }
-  const vec = data.vectors?.[0];
-  if (!vec || vec.length === 0) throw new Error("Empty embedding returned");
-
-  // Normalize to unit vector
-  const norm = Math.sqrt(vec.reduce((s, v) => s + v * v, 0));
-  return norm === 0 ? vec : vec.map((v) => v / norm);
-}
-
-// ── OpenAI-compatible API ────────────────────────────────────────────
-
-async function embedOpenAI(text: string, signal: AbortSignal): Promise<number[]> {
-  const response = await fetch(`${_baseURL}/v1/embeddings`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json", "Authorization": `Bearer ${_apiKey}` },
-    body: JSON.stringify({ model: EMBEDDING_MODEL, input: text, encoding_format: "float" }),
-    signal,
-  });
-
-  if (!response.ok) throw new Error(`Embedding API returned ${response.status}`);
-
-  const data = await response.json() as { data: Array<{ embedding: number[] }> };
-  const vec = data.data?.[0]?.embedding;
-  if (!vec || vec.length === 0) throw new Error("Empty embedding returned");
-
-  const norm = Math.sqrt(vec.reduce((s, v) => s + v * v, 0));
-  return norm === 0 ? vec : vec.map((v) => v / norm);
-}
-
-// ── n-gram hash fallback ────────────────────────────────────────────
+// ── n-gram hash fallback (1536-dim, same as API output) ─────────────
 
 function simpleHash(str: string, seed: number): number {
   let h = seed;
@@ -138,6 +153,10 @@ function embedHash(text: string): number[] {
     vec[idx] += 1;
   }
 
+  return normalize(vec);
+}
+
+function normalize(vec: number[]): number[] {
   const norm = Math.sqrt(vec.reduce((s, v) => s + v * v, 0));
   return norm === 0 ? vec : vec.map((v) => v / norm);
 }
