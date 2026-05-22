@@ -1,6 +1,6 @@
 import type { FragmentationInput, FragmentationOutput, Channel, SignalSource, Fragment } from "../types.js";
 import { v4 as uuid } from "uuid";
-import { Anthropic } from "@anthropic-ai/sdk";
+import OpenAI from "openai";
 
 const FRAGMENT_PROMPT = `将以下对话拆分为记忆碎片。对每段有实质内容的对话，输出JSON数组。
 
@@ -104,19 +104,20 @@ export function resolveLinks(
 export async function fragmentTranscript(
   input: FragmentationInput,
   apiKey: string,
-  model: string
+  model: string,
+  baseURL: string = "https://api.deepseek.com"
 ): Promise<FragmentationOutput> {
   const prompt = buildFragmentationPrompt(input.transcript);
 
-  const anthropic = new Anthropic({ apiKey });
-  const response = await anthropic.messages.create({
+  const client = new OpenAI({ apiKey, baseURL });
+  const response = await client.chat.completions.create({
     model,
     max_tokens: 4096,
+    temperature: 0.3,
     messages: [{ role: "user", content: prompt }],
   });
 
-  const contentBlock = response.content[0];
-  const content = contentBlock?.type === "text" ? contentBlock.text : "";
+  const content = response.choices[0]?.message?.content ?? "";
   if (!content) return { fragments: [], summary: "" };
 
   const output = parseFragmentationResponse(content, input.sessionId, input.projectId);

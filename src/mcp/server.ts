@@ -94,7 +94,7 @@ const TOOL_DEFINITIONS = [
 
 export async function startServer(apiKey: string, dbPath?: string) {
   openDb(dbPath);
-  const engine = new MemoryEngine({ apiKey });
+  const engine = new MemoryEngine({ apiKey, baseURL: "https://api.deepseek.com" });
   const handlers = buildToolHandlers(engine);
 
   const server = new Server(

@@ -6,6 +6,7 @@ import { computeDecayScore } from "./decay.js";
 export interface EngineConfig {
   apiKey: string;
   model?: string;
+  baseURL?: string;
 }
 
 export class MemoryEngine {
@@ -95,6 +96,6 @@ export class MemoryEngine {
     if (!this.config.apiKey || this.config.apiKey === "test-key") {
       return { fragments: [], summary: "" };
     }
-    return await fragmentTranscript(input, this.config.apiKey, this.config.model ?? "claude-haiku-4-5");
+    return await fragmentTranscript(input, this.config.apiKey, this.config.model ?? "deepseek-chat", this.config.baseURL);
   }
 }
