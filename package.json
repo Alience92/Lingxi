@@ -1,0 +1,30 @@
+{
+  "name": "agentmemory",
+  "version": "1.0.0",
+  "description": "AgentMemory - cross-platform Agent memory plugin",
+  "type": "module",
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.98.0",
+    "@modelcontextprotocol/sdk": "^1.29.0",
+    "@types/node": "^25.9.1",
+    "better-sqlite3": "^12.10.0",
+    "onnxruntime-node": "^1.26.0",
+    "sqlite-vec": "^0.1.9",
+    "typescript": "^6.0.3",
+    "uuid": "^14.0.0",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^7.6.13",
+    "@types/uuid": "^10.0.0",
+    "vitest": "^4.1.7"
+  }
+}
