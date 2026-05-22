@@ -8,10 +8,6 @@ import * as fs from "node:fs";
 import * as path from "node:path";
 import { v4 as uuid } from "uuid";
 
-function buildRuleFingerprint(projectId: string, channel: string, label: string): string {
-  return `${projectId}::${channel}::${label.trim().toLowerCase()}`;
-}
-
 function hasApiKey(engine: MemoryEngine): boolean {
   return !!(engine as any).config?.apiKey && (engine as any).config?.apiKey.length > 10;
 }
@@ -23,10 +19,21 @@ export function buildToolHandlers(engine: MemoryEngine) {
         return await explicitSearch(params.query, params.projectId);
       }
       const db = getDb();
-      return db.prepare(`
+      const fragments = db.prepare(`
         SELECT * FROM fragments WHERE project_id = ? AND status = 'active'
         ORDER BY created_at DESC LIMIT 10
-      `).all(params.projectId);
+      `).all(params.projectId) as Array<{ id: string; decay_score: number; recalled_count: number; last_recalled_at: number | null }>;
+
+      // Bump recall counters so dreaming doesn't treat these as stale
+      const now = Date.now();
+      const bump = db.prepare(`
+        UPDATE fragments SET last_recalled_at = ?, recalled_count = recalled_count + 1, decay_score = 1.0 WHERE id = ?
+      `);
+      for (const f of fragments) {
+        bump.run(now, f.id);
+      }
+
+      return fragments;
     },
 
     async memory_remember(params: { transcript: string; sessionId: string; projectId: string }) {
@@ -94,62 +101,14 @@ export function buildToolHandlers(engine: MemoryEngine) {
     async dreaming(params: { projectId: string }) {
       const db = getDb();
 
+      // Ensure FK enforcement is on for this connection
+      db.pragma("foreign_keys = ON");
+
       // Step 1: Decay
       const stats = engine.runDecay();
 
-      // Step 2: Manual distillation — cluster fragments with similar labels, merge ≥3 into L0 rules
-      const fragments = db.prepare(`
-        SELECT
-          f.id,
-          f.summary,
-          MIN(fa.label) AS label,
-          MIN(fa.channel) AS channel
-        FROM fragments f
-        JOIN fragment_anchors fa ON fa.fragment_id = f.id
-        WHERE f.project_id = ? AND f.status = 'active'
-        GROUP BY f.id, f.summary
-      `).all(params.projectId) as Array<{ id: string; summary: string; label: string; channel: string }>;
-
-      // Group by channel + label prefix (first 10 chars for fuzzy grouping)
-      const groups = new Map<string, Array<{ id: string; summary: string; label: string; channel: string }>>();
-      for (const f of fragments) {
-        const key = `${f.channel}:${(f.label || f.summary).slice(0, 15)}`;
-        if (!groups.has(key)) groups.set(key, []);
-        groups.get(key)!.push({ id: f.id, summary: f.summary, label: f.label, channel: f.channel });
-      }
-
-      let distilled = 0;
-      for (const [groupKey, members] of groups) {
-        if (members.length >= 3) {
-          const exemplar = members[0];
-          const labelBase = groupKey.split(":").slice(1).join(":");
-          const channel = exemplar?.channel ?? "WHAT";
-          const fingerprint = buildRuleFingerprint(params.projectId, channel, labelBase);
-
-          const existingRule = db.prepare(`SELECT id FROM distilled_rules WHERE fingerprint = ?`).get(fingerprint) as { id: string } | undefined;
-          if (existingRule) {
-            for (const m of members) {
-              db.prepare(`INSERT OR IGNORE INTO rule_sources (rule_id, fragment_id, project_id) VALUES (?, ?, ?)`).run(
-                existingRule.id, m.id, params.projectId
-              );
-            }
-            continue;
-          }
-
-          const ruleText = members.map((m) => m.summary).join("; ").slice(0, 100);
-          const ruleId = `rule-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
-
-          db.prepare(`INSERT OR IGNORE INTO distilled_rules (id, fingerprint, text, weight, created_at) VALUES (?, ?, ?, 1.0, ?)`).run(
-            ruleId, fingerprint, ruleText, Date.now()
-          );
-          for (const m of members) {
-            db.prepare(`INSERT OR IGNORE INTO rule_sources (rule_id, fragment_id, project_id) VALUES (?, ?, ?)`).run(
-              ruleId, m.id, params.projectId
-            );
-          }
-          distilled++;
-        }
-      }
+      // Step 2: Distillation — cluster similar labels, merge ≥3 into L0 rules
+      const distilled = engine.runDistillation(params.projectId);
 
       const parts: string[] = [];
       if (stats.archived + stats.deleted > 0) parts.push(`已清理 ${stats.archived + stats.deleted} 条过期记忆`);

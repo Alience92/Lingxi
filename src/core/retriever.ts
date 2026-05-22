@@ -2,8 +2,11 @@ import type { Fragment, SearchResult, PrefetchResult, SessionContext } from "../
 import { getDb } from "../db/connection.js";
 import { embed, cosineSimilarity } from "./embedder.js";
 
-const DEFAULT_MIN_SCORE = 0.35;
+export const DEFAULT_MIN_SCORE = 0.18;
 const DEFAULT_MAX_RESULTS = 6;
+// Prefetch MMR diversity threshold — independent of search minScore to keep filtering strict
+const PREFETCH_MMR_MIN_SCORE = 0.18;
+const PREFETCH_MMR_PENALTY_FACTOR = 0.6;
 // ~150 tokens ≈ 450 chars for CJK, 600 for English
 const PREFETCH_BUDGET_CHARS = 450;
 
@@ -39,15 +42,19 @@ export async function prefetch(
 
     // MMR penalty: higher similarity to selected fragments should reduce score.
     let mmrPenalty = 0;
+    let maxSim = 0;
     for (const sel of selected) {
       const sim = cosineSimilarity(
         await embed(candidate.fragment.summary),
         await embed(sel.fragment.summary)
       );
-      mmrPenalty = Math.max(mmrPenalty, sim * 0.3);
+      maxSim = Math.max(maxSim, sim);
+      mmrPenalty = Math.max(mmrPenalty, sim * PREFETCH_MMR_PENALTY_FACTOR);
     }
+    // Near-duplicate (sim > 0.95): always skip, regardless of composite score
+    if (maxSim > 0.95 && selected.length > 0) continue;
     const mmrScore = candidate.compositeScore - mmrPenalty;
-    if (mmrScore < DEFAULT_MIN_SCORE * 0.5 && selected.length > 0) continue;
+    if (mmrScore < PREFETCH_MMR_MIN_SCORE && selected.length > 0) continue;
 
     selected.push(candidate);
     usedIds.add(candidate.fragment.id);
@@ -110,6 +117,25 @@ async function vectorSearch(
     SELECT * FROM fragments
     WHERE project_id = ? AND status = 'active' AND decay_score > 0
   `).all(projectId) as Fragment[];
+
+  // Hydrate anchors and linkedIds — raw DB rows only have scalar columns
+  for (const row of rows) {
+    const anchorRows = db.prepare(`
+      SELECT channel, label, weight, source, timestamp FROM fragment_anchors WHERE fragment_id = ?
+    `).all(row.id) as Array<{ channel: string; label: string; weight: number; source: string; timestamp: number }>;
+    row.anchors = anchorRows.map((a) => ({
+      channel: a.channel as import("../types.js").Channel,
+      label: a.label,
+      weight: a.weight,
+      source: a.source as import("../types.js").SignalSource,
+      timestamp: a.timestamp,
+    }));
+
+    const linkRows = db.prepare(`
+      SELECT target_id FROM fragment_links WHERE source_id = ?
+    `).all(row.id) as Array<{ target_id: string }>;
+    row.linkedIds = linkRows.map((l) => l.target_id);
+  }
 
   const results: SearchResult[] = [];
   const hitIds = new Set<string>();

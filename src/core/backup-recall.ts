@@ -1,6 +1,6 @@
 import type { SearchResult } from "../types.js";
 import { getDb } from "../db/connection.js";
-import { explicitSearch } from "./retriever.js";
+import { explicitSearch, DEFAULT_MIN_SCORE } from "./retriever.js";
 import * as fs from "node:fs";
 import * as path from "node:path";
 
@@ -16,7 +16,7 @@ export async function fourLayerRecall(
   workspaceDir: string
 ): Promise<RecallResult> {
   // Layer 1: Active L1 fragments
-  const l1Results = await explicitSearch(queryText, projectId, 0.35, 5);
+  const l1Results = await explicitSearch(queryText, projectId, DEFAULT_MIN_SCORE, 5);
   if (l1Results.length > 0) {
     return { fragments: l1Results, source: "L1" };
   }

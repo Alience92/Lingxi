@@ -43,6 +43,23 @@ export function scanExistingMemoryFiles(workspaceDir: string): InstallEstimate {
     }
   }
 
+  // Fallback: also scan the workspaceDir itself for .md files directly.
+  // This handles the case where the user passes the memory directory itself
+  // rather than the project root (patterns like "memory/*.md" would resolve
+  // to a non-existent subdirectory inside an already-named memory folder).
+  for (const entry of fs.readdirSync(workspaceDir)) {
+    if (entry.endsWith(".md") && entry.toUpperCase() !== "MEMORY.MD") {
+      const fullPath = path.join(workspaceDir, entry);
+      try {
+        const stat = fs.statSync(fullPath);
+        if (stat.isFile() && !files.includes(fullPath)) {
+          files.push(fullPath);
+          totalBytes += stat.size;
+        }
+      } catch { /* skip unreadable */ }
+    }
+  }
+
   // Also scan transcripts
   const transcriptDir = path.join(workspaceDir, "transcripts");
   if (fs.existsSync(transcriptDir)) {

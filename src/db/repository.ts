@@ -39,6 +39,8 @@ export function persistFragments(input: PersistInput): Fragment[] {
   `);
 
   const persist = db.transaction(() => {
+    // Phase 1: insert all fragments, anchors, and FTS entries first
+    // (fragment_links FK requires targets to exist, so defer links to phase 2)
     for (const raw of output.fragments) {
       const f: Fragment = {
         ...raw,
@@ -54,10 +56,6 @@ export function persistFragments(input: PersistInput): Fragment[] {
         insertAnchor.run(f.id, anchor.channel, anchor.label, anchor.weight, anchor.source, anchor.timestamp);
       }
 
-      for (const targetId of f.linkedIds) {
-        insertLink.run(f.id, targetId);
-      }
-
       // FTS: insert using the actual SQLite rowid (not the TEXT UUID)
       const row = db.prepare("SELECT rowid FROM fragments WHERE id = ?").get(f.id) as { rowid: number } | undefined;
       if (row) {
@@ -65,6 +63,13 @@ export function persistFragments(input: PersistInput): Fragment[] {
       }
 
       fragments.push(f);
+    }
+
+    // Phase 2: insert all links now that every fragment exists
+    for (const f of fragments) {
+      for (const targetId of f.linkedIds) {
+        insertLink.run(f.id, targetId);
+      }
     }
   });
 
@@ -76,10 +81,20 @@ export function persistFragments(input: PersistInput): Fragment[] {
 export function deleteFragment(fragmentId: string): void {
   const db = getDb();
   const row = db.prepare("SELECT rowid FROM fragments WHERE id = ?").get(fragmentId) as { rowid: number } | undefined;
-  if (row) {
-    db.prepare("INSERT INTO fragments_fts (fragments_fts, rowid, summary) VALUES ('delete', ?, ?)").run(row.rowid, "");
-  }
-  db.prepare("DELETE FROM fragments WHERE id = ?").run(fragmentId);
+
+  const cleanup = db.transaction(() => {
+    // Explicitly delete child records before the parent, avoiding reliance on CASCADE
+    db.prepare("DELETE FROM recall_log WHERE fragment_id = ?").run(fragmentId);
+    db.prepare("DELETE FROM fragment_links WHERE source_id = ? OR target_id = ?").run(fragmentId, fragmentId);
+    db.prepare("DELETE FROM fragment_anchors WHERE fragment_id = ?").run(fragmentId);
+
+    if (row) {
+      db.prepare("INSERT INTO fragments_fts (fragments_fts, rowid, summary) VALUES ('delete', ?, ?)").run(row.rowid, "");
+    }
+    db.prepare("DELETE FROM fragments WHERE id = ?").run(fragmentId);
+  });
+
+  cleanup();
 }
 
 // Fix backup-recall archive query: use correct rowid mapping
