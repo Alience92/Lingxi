@@ -18,7 +18,7 @@ export async function prefetch(
   if (messages.length === 0) return { contextBlock: "", fragmentIds: [], confidence: 0 };
 
   const queryText = messages.slice(-3).map((m) => m.text).join("\n");
-  const queryVec = await embed(queryText);
+  const queryVec = await embed(queryText, "query");
 
   // Get more candidates for reranking
   const candidates = await vectorSearch(queryVec, projectId, 20, DEFAULT_MIN_SCORE * 0.6);
@@ -90,7 +90,7 @@ export async function explicitSearch(
   minScore: number = DEFAULT_MIN_SCORE,
   maxResults: number = DEFAULT_MAX_RESULTS
 ): Promise<SearchResult[]> {
-  const queryVec = await embed(query);
+  const queryVec = await embed(query, "query");
   return await vectorSearch(queryVec, projectId, maxResults, minScore, {
     recallMode: "explicit",
     query,
