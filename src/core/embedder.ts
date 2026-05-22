@@ -1,43 +1,74 @@
 /**
- * Semantic embedder: uses @xenova/transformers with all-MiniLM-L6-v2 (384-dim).
+ * Semantic embedder: uses OpenAI-compatible embeddings API (e.g. DeepSeek).
  *
- * Falls back to n-gram hash if the ONNX model fails to load (e.g. first-run
- * download blocked by firewall). The hash fallback is character-overlap only
- * and will produce lower-quality search results, especially for Chinese.
+ * Falls back to n-gram hash when:
+ * - No API key configured
+ * - Network error / timeout
+ * - API returns an error
+ *
+ * The hash fallback is character-overlap only and will produce lower-quality
+ * search results, especially for Chinese queries.
  */
 
-import { pipeline, type FeatureExtractionPipeline } from "@xenova/transformers";
-
 const DIM = 384;
-const MODEL = "Xenova/all-MiniLM-L6-v2";
+const EMBEDDING_MODEL = "text-embedding-3-small";
 
-let _pipeline: FeatureExtractionPipeline | null = null;
-let _initError = false;
+// ── Configuration (populated lazily from engine) ────────────────────
 
-async function getPipeline(): Promise<FeatureExtractionPipeline | null> {
-  if (_pipeline) return _pipeline;
-  if (_initError) return null;
-  try {
-    _pipeline = await pipeline("feature-extraction", MODEL);
-    return _pipeline;
-  } catch (e) {
-    _initError = true;
-    console.warn(`[AgentMemory] ONNX embedding model failed to load, falling back to n-gram hash. Error: ${String(e).slice(0, 120)}`);
-    return null;
-  }
+let _apiKey = "";
+let _baseURL = "https://api.deepseek.com";
+
+export function configureEmbedder(apiKey: string, baseURL?: string): void {
+  _apiKey = apiKey;
+  if (baseURL) _baseURL = baseURL;
 }
 
+// ── Public API ──────────────────────────────────────────────────────
+
 export async function embed(text: string): Promise<number[]> {
-  const pipe = await getPipeline();
-  if (pipe) {
+  if (_apiKey && _apiKey.length > 10 && _apiKey !== "test-key") {
     try {
-      const result = await pipe(text, { pooling: "mean", normalize: true });
-      return Array.from(result.data);
+      return await embedViaApi(text);
     } catch {
-      // Fall through to hash fallback on per-call errors
+      // Fall through to hash fallback on any error
     }
   }
   return embedHash(text);
+}
+
+async function embedViaApi(text: string): Promise<number[]> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 15_000);
+
+  try {
+    const response = await fetch(`${_baseURL}/v1/embeddings`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${_apiKey}`,
+      },
+      body: JSON.stringify({
+        model: EMBEDDING_MODEL,
+        input: text,
+        encoding_format: "float",
+      }),
+      signal: controller.signal,
+    });
+
+    if (!response.ok) {
+      throw new Error(`Embedding API returned ${response.status}`);
+    }
+
+    const data = await response.json() as { data: Array<{ embedding: number[] }> };
+    const vec = data.data?.[0]?.embedding;
+    if (!vec || vec.length === 0) throw new Error("Empty embedding returned");
+
+    // Normalize to unit vector
+    const norm = Math.sqrt(vec.reduce((s, v) => s + v * v, 0));
+    return norm === 0 ? vec : vec.map((v) => v / norm);
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
 // ── n-gram hash fallback ────────────────────────────────────────────

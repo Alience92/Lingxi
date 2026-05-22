@@ -3,6 +3,7 @@ import { getDb } from "../db/connection.js";
 import { persistFragments, deleteFragment } from "../db/repository.js";
 import { fragmentTranscript } from "./fragmenter.js";
 import { computeDecayScore } from "./decay.js";
+import { configureEmbedder } from "./embedder.js";
 
 export interface EngineConfig {
   apiKey: string;
@@ -11,7 +12,9 @@ export interface EngineConfig {
 }
 
 export class MemoryEngine {
-  constructor(private config: EngineConfig) {}
+  constructor(private config: EngineConfig) {
+    configureEmbedder(config.apiKey, config.baseURL);
+  }
 
   // Path A: Compaction-time sync summary (lightweight, no LLM fragmentation)
   async compactSession(input: FragmentationInput): Promise<string> {
