@@ -1,0 +1,107 @@
+import { Server } from "@modelcontextprotocol/sdk/server/index.js";
+import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
+import { CallToolRequestSchema, ListToolsRequestSchema } from "@modelcontextprotocol/sdk/types.js";
+import { MemoryEngine } from "../core/engine.js";
+import { buildToolHandlers } from "./tools.js";
+import { openDb } from "../db/connection.js";
+
+const TOOL_DEFINITIONS = [
+  {
+    name: "memory_recall",
+    description: "Recall relevant memories for the current context. Call without query to get recent project fragments.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        query: { type: "string", description: "Optional search query" },
+        projectId: { type: "string", description: "Project identifier" },
+        workspaceDir: { type: "string", description: "Workspace directory path" },
+      },
+      required: ["projectId", "workspaceDir"],
+    },
+  },
+  {
+    name: "memory_remember",
+    description: "Store a conversation segment as searchable memory fragments.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        transcript: { type: "string", description: "Conversation transcript to fragment" },
+        sessionId: { type: "string" },
+        projectId: { type: "string" },
+      },
+      required: ["transcript", "sessionId", "projectId"],
+    },
+  },
+  {
+    name: "memory_search",
+    description: "Explicit semantic search across memory fragments.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        query: { type: "string" },
+        projectId: { type: "string" },
+        maxResults: { type: "number", default: 6 },
+        minScore: { type: "number", default: 0.35 },
+      },
+      required: ["query", "projectId"],
+    },
+  },
+  {
+    name: "memory_get",
+    description: "Read a specific memory fragment and its linked fragments.",
+    inputSchema: {
+      type: "object",
+      properties: { fragmentId: { type: "string" } },
+      required: ["fragmentId"],
+    },
+  },
+  {
+    name: "memory_recall_deep",
+    description: "Deep 4-layer recall: searches active fragments, archive, transcripts, and project files.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        query: { type: "string" },
+        projectId: { type: "string" },
+        workspaceDir: { type: "string" },
+      },
+      required: ["query", "projectId", "workspaceDir"],
+    },
+  },
+  {
+    name: "dreaming",
+    description: "Manually trigger memory cleanup and decay processing.",
+    inputSchema: {
+      type: "object",
+      properties: { projectId: { type: "string" } },
+      required: ["projectId"],
+    },
+  },
+];
+
+export async function startServer(apiKey: string, dbPath?: string) {
+  openDb(dbPath);
+  const engine = new MemoryEngine({ apiKey });
+  const handlers = buildToolHandlers(engine);
+
+  const server = new Server(
+    { name: "agentmemory", version: "1.0.0" },
+    { capabilities: { tools: {} } }
+  );
+
+  server.setRequestHandler(ListToolsRequestSchema, async () => ({ tools: TOOL_DEFINITIONS }));
+
+  server.setRequestHandler(CallToolRequestSchema, async (request) => {
+    const { name, arguments: args } = request.params;
+    const handler = (handlers as Record<string, Function>)[name];
+    if (!handler) {
+      return { content: [{ type: "text", text: `Unknown tool: ${name}` }], isError: true };
+    }
+    const result = await handler(args ?? {});
+    return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+  });
+
+  const transport = new StdioServerTransport();
+  await server.connect(transport);
+  console.error("AgentMemory MCP server started");
+}
