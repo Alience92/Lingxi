@@ -1,6 +1,6 @@
 # AgentMemory v3 — Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [x]`) syntax for tracking.
 
 **Goal:** Build a cross-platform Agent memory plugin that fragments conversations into 4-channel searchable memory, with silent associative prefetch and 4-layer backup recall.
 
@@ -67,7 +67,7 @@ D:\AgentMemory\
 - Create: `D:\AgentMemory\vitest.config.ts`
 - Create: `D:\AgentMemory\src\types.ts`
 
-- [ ] **Step 1: Initialize project**
+- [x] **Step 1: Initialize project**
 
 ```bash
 cd D:\AgentMemory
@@ -85,7 +85,7 @@ export default defineConfig({
 });
 ```
 
-- [ ] **Step 2: Write types**
+- [x] **Step 2: Write types**
 
 ```typescript
 // src/types.ts
@@ -166,14 +166,14 @@ export interface InstallEstimate {
 }
 ```
 
-- [ ] **Step 3: Verify build**
+- [x] **Step 3: Verify build**
 
 ```bash
 npx tsc --noEmit
 ```
 Expected: No errors.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add -A && git commit -m "feat: project scaffold, types, and dependencies"
@@ -187,7 +187,7 @@ git add -A && git commit -m "feat: project scaffold, types, and dependencies"
 - Create: `D:\AgentMemory\src\db\connection.ts`
 - Create: `D:\AgentMemory\src\db\schema.ts`
 
-- [ ] **Step 1: Write schema DDL**
+- [x] **Step 1: Write schema DDL**
 
 ```typescript
 // src/db/schema.ts
@@ -269,7 +269,7 @@ CREATE TABLE IF NOT EXISTS projects (
 export const VECTOR_DIMENSIONS = 384;
 ```
 
-- [ ] **Step 2: Write connection manager**
+- [x] **Step 2: Write connection manager**
 
 ```typescript
 // src/db/connection.ts
@@ -306,7 +306,7 @@ export function getDb(): Database.Database {
 }
 ```
 
-- [ ] **Step 3: Test schema creation**
+- [x] **Step 3: Test schema creation**
 
 ```typescript
 // tests/db/schema.test.ts
@@ -347,7 +347,7 @@ describe("Database schema", () => {
 Run: `npx vitest run tests/db/schema.test.ts`
 Expected: 2 tests pass.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add -A && git commit -m "feat: database schema and connection manager"
@@ -361,7 +361,7 @@ git add -A && git commit -m "feat: database schema and connection manager"
 - Create: `D:\AgentMemory\src\core\embedder.ts`
 - Create: `D:\AgentMemory\tests\core\embedder.test.ts`
 
-- [ ] **Step 1: Write embedder**
+- [x] **Step 1: Write embedder**
 
 ```typescript
 // src/core/embedder.ts
@@ -422,7 +422,7 @@ export function cosineSimilarity(a: number[], b: number[]): number {
 }
 ```
 
-- [ ] **Step 2: Add tokenizer dependency + wire up**
+- [x] **Step 2: Add tokenizer dependency + wire up**
 
 ```bash
 npm install @xenova/transformers
@@ -448,7 +448,7 @@ export async function embed(text: string): Promise<number[]> {
 }
 ```
 
-- [ ] **Step 3: Test embedding**
+- [x] **Step 3: Test embedding**
 
 ```typescript
 // tests/core/embedder.test.ts
@@ -478,7 +478,7 @@ describe("embedder", () => {
 Run: `npx vitest run tests/core/embedder.test.ts`
 Expected: 3 tests pass (may take ~10s for model download on first run).
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add -A && git commit -m "feat: embedding service with ONNX + bge-small-zh"
@@ -492,7 +492,7 @@ git add -A && git commit -m "feat: embedding service with ONNX + bge-small-zh"
 - Create: `D:\AgentMemory\src\core\fragmenter.ts`
 - Create: `D:\AgentMemory\tests\core\fragmenter.test.ts`
 
-- [ ] **Step 1: Write fragmentation prompt + parser**
+- [x] **Step 1: Write fragmentation prompt + parser**
 
 ```typescript
 // src/core/fragmenter.ts
@@ -573,7 +573,7 @@ export function parseFragmentationResponse(
 }
 ```
 
-- [ ] **Step 2: Add bidirectional link resolution**
+- [x] **Step 2: Add bidirectional link resolution**
 
 ```typescript
 export function resolveLinks(fragments: FragmentationOutput["fragments"], rawFragments: RawFragment[]): void {
@@ -599,7 +599,7 @@ export function resolveLinks(fragments: FragmentationOutput["fragments"], rawFra
 }
 ```
 
-- [ ] **Step 3: Write fragmentation orchestrator (calls LLM)**
+- [x] **Step 3: Write fragmentation orchestrator (calls LLM)**
 
 ```typescript
 import { Anthropic } from "@anthropic-ai/sdk";
@@ -624,7 +624,7 @@ export async function fragmentTranscript(
 }
 ```
 
-- [ ] **Step 4: Test parser**
+- [x] **Step 4: Test parser**
 
 ```typescript
 // tests/core/fragmenter.test.ts
@@ -671,7 +671,7 @@ describe("fragmenter", () => {
 Run: `npx vitest run tests/core/fragmenter.test.ts`
 Expected: 4 tests pass.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add -A && git commit -m "feat: 4-channel fragmenter with LLM prompt and parser"
@@ -685,7 +685,7 @@ git add -A && git commit -m "feat: 4-channel fragmenter with LLM prompt and pars
 - Create: `D:\AgentMemory\src\core\signal-channel.ts`
 - Create: `D:\AgentMemory\tests\core\signal-channel.test.ts`
 
-- [ ] **Step 1: Write signal detector**
+- [x] **Step 1: Write signal detector**
 
 ```typescript
 // src/core/signal-channel.ts
@@ -771,7 +771,7 @@ export function computeFeelWeight(
 }
 ```
 
-- [ ] **Step 2: Test signals**
+- [x] **Step 2: Test signals**
 
 ```typescript
 // tests/core/signal-channel.test.ts
@@ -832,7 +832,7 @@ describe("signal-channel", () => {
 Run: `npx vitest run tests/core/signal-channel.test.ts`
 Expected: 9 tests pass.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add -A && git commit -m "feat: dual-source signal channel (behavioral + clustering)"
@@ -846,7 +846,7 @@ git add -A && git commit -m "feat: dual-source signal channel (behavioral + clus
 - Create: `D:\AgentMemory\src\core\decay.ts`
 - Create: `D:\AgentMemory\tests\core\decay.test.ts`
 
-- [ ] **Step 1: Write decay calculator**
+- [x] **Step 1: Write decay calculator**
 
 ```typescript
 // src/core/decay.ts
@@ -899,7 +899,7 @@ export function boostDecayScore(fragment: { decayScore: number; recalledCount: n
 }
 ```
 
-- [ ] **Step 2: Test decay**
+- [x] **Step 2: Test decay**
 
 ```typescript
 // tests/core/decay.test.ts
@@ -951,7 +951,7 @@ describe("decay", () => {
 Run: `npx vitest run tests/core/decay.test.ts`
 Expected: 7 tests pass.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add -A && git commit -m "feat: sandglass decay with 7-day protection and recall boost"
@@ -965,7 +965,7 @@ git add -A && git commit -m "feat: sandglass decay with 7-day protection and rec
 - Create: `D:\AgentMemory\src\core\retriever.ts`
 - Create: `D:\AgentMemory\tests\core\retriever.test.ts`
 
-- [ ] **Step 1: Write retriever**
+- [x] **Step 1: Write retriever**
 
 ```typescript
 // src/core/retriever.ts
@@ -1067,7 +1067,7 @@ async function vectorSearch(
 }
 ```
 
-- [ ] **Step 2: Write tests with mock DB**
+- [x] **Step 2: Write tests with mock DB**
 
 ```typescript
 // tests/core/retriever.test.ts
@@ -1117,7 +1117,7 @@ describe("retriever", () => {
 Run: `npx vitest run tests/core/retriever.test.ts`
 Expected: 3 tests pass.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add -A && git commit -m "feat: P2 prefetch + P3 explicit search retriever"
@@ -1131,7 +1131,7 @@ git add -A && git commit -m "feat: P2 prefetch + P3 explicit search retriever"
 - Create: `D:\AgentMemory\src\core\backup-recall.ts`
 - Create: `D:\AgentMemory\tests\core\backup-recall.test.ts`
 
-- [ ] **Step 1: Write backup recall chain**
+- [x] **Step 1: Write backup recall chain**
 
 ```typescript
 // src/core/backup-recall.ts
@@ -1223,7 +1223,7 @@ export async function fourLayerRecall(
 }
 ```
 
-- [ ] **Step 2: Test backup recall**
+- [x] **Step 2: Test backup recall**
 
 ```typescript
 // tests/core/backup-recall.test.ts
@@ -1265,7 +1265,7 @@ describe("backup-recall", () => {
 Run: `npx vitest run tests/core/backup-recall.test.ts`
 Expected: 2 tests pass.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add -A && git commit -m "feat: 4-layer backup recall (L1→archive→transcript→design files)"
@@ -1279,7 +1279,7 @@ git add -A && git commit -m "feat: 4-layer backup recall (L1→archive→transcr
 - Create: `D:\AgentMemory\src\core\engine.ts`
 - Create: `D:\AgentMemory\tests\core\engine.test.ts`
 
-- [ ] **Step 1: Write engine**
+- [x] **Step 1: Write engine**
 
 ```typescript
 // src/core/engine.ts
@@ -1378,7 +1378,7 @@ export class MemoryEngine {
 }
 ```
 
-- [ ] **Step 2: Test engine**
+- [x] **Step 2: Test engine**
 
 ```typescript
 // tests/core/engine.test.ts
@@ -1411,7 +1411,7 @@ describe("MemoryEngine", () => {
 Run: `npx vitest run tests/core/engine.test.ts`
 Expected: 2 tests pass.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add -A && git commit -m "feat: core engine orchestrator (Path A + B + decay)"
@@ -1425,7 +1425,7 @@ git add -A && git commit -m "feat: core engine orchestrator (Path A + B + decay)
 - Create: `D:\AgentMemory\src\adapters\claude-code.ts`
 - Create: `D:\AgentMemory\tests\adapters\claude-code.test.ts`
 
-- [ ] **Step 1: Write Claude Code adapter**
+- [x] **Step 1: Write Claude Code adapter**
 
 ```typescript
 // src/adapters/claude-code.ts
@@ -1486,7 +1486,7 @@ This project uses AgentMemory for persistent cross-session memory.
 }
 ```
 
-- [ ] **Step 2: Test hook config generation**
+- [x] **Step 2: Test hook config generation**
 
 ```typescript
 // tests/adapters/claude-code.test.ts
@@ -1515,7 +1515,7 @@ describe("Claude Code adapter", () => {
 Run: `npx vitest run tests/adapters/claude-code.test.ts`
 Expected: 2 tests pass.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add -A && git commit -m "feat: Claude Code/OpenClaw hook adapter"
@@ -1529,7 +1529,7 @@ git add -A && git commit -m "feat: Claude Code/OpenClaw hook adapter"
 - Create: `D:\AgentMemory\src\adapters\generic.ts`
 - Create: `D:\AgentMemory\tests\adapters\generic.test.ts`
 
-- [ ] **Step 1: Write generic adapter**
+- [x] **Step 1: Write generic adapter**
 
 ```typescript
 // src/adapters/generic.ts
@@ -1563,7 +1563,7 @@ export function generateReinforcementMessage(
 }
 ```
 
-- [ ] **Step 2: Test generic adapter**
+- [x] **Step 2: Test generic adapter**
 
 ```typescript
 // tests/adapters/generic.test.ts
@@ -1609,7 +1609,7 @@ describe("Generic adapter", () => {
 Run: `npx vitest run tests/adapters/generic.test.ts`
 Expected: 6 tests pass.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add -A && git commit -m "feat: generic MCP adapter with heartbeat and reinforcement"
@@ -1623,7 +1623,7 @@ git add -A && git commit -m "feat: generic MCP adapter with heartbeat and reinfo
 - Create: `D:\AgentMemory\src\mcp\server.ts`
 - Create: `D:\AgentMemory\src\mcp\tools.ts`
 
-- [ ] **Step 1: Write tools**
+- [x] **Step 1: Write tools**
 
 ```typescript
 // src/mcp/tools.ts
@@ -1688,7 +1688,7 @@ export function buildToolHandlers(engine: MemoryEngine) {
 }
 ```
 
-- [ ] **Step 2: Write MCP server bootstrap**
+- [x] **Step 2: Write MCP server bootstrap**
 
 ```typescript
 // src/mcp/server.ts
@@ -1799,7 +1799,7 @@ export async function startServer(apiKey: string, dbPath?: string) {
 }
 ```
 
-- [ ] **Step 3: Write entry point**
+- [x] **Step 3: Write entry point**
 
 ```typescript
 // src/index.ts
@@ -1817,7 +1817,7 @@ startServer(apiKey).catch((err) => {
 });
 ```
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add -A && git commit -m "feat: MCP server with 6 tools and stdio transport"
@@ -1831,7 +1831,7 @@ git add -A && git commit -m "feat: MCP server with 6 tools and stdio transport"
 - Create: `D:\AgentMemory\src\mcp\install.ts`
 - Create: `D:\AgentMemory\tests\mcp\install.test.ts`
 
-- [ ] **Step 1: Write installer**
+- [x] **Step 1: Write installer**
 
 ```typescript
 // src/mcp/install.ts
@@ -1931,7 +1931,7 @@ export function injectAgentsMdAppendix(workspaceDir: string, appendix: string): 
 }
 ```
 
-- [ ] **Step 2: Test installer**
+- [x] **Step 2: Test installer**
 
 ```typescript
 // tests/mcp/install.test.ts
@@ -1967,7 +1967,7 @@ describe("installer", () => {
 Run: `npx vitest run tests/mcp/install.test.ts`
 Expected: 3 tests pass.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add -A && git commit -m "feat: first-run installer with batch import and prompt injection"
@@ -1981,7 +1981,7 @@ git add -A && git commit -m "feat: first-run installer with batch import and pro
 - Modify: `D:\AgentMemory\package.json`
 - Create: `D:\AgentMemory\tests\integration.test.ts`
 
-- [ ] **Step 1: Add package scripts**
+- [x] **Step 1: Add package scripts**
 
 ```json
 {
@@ -2007,7 +2007,7 @@ git add -A && git commit -m "feat: first-run installer with batch import and pro
 }
 ```
 
-- [ ] **Step 2: Write integration test**
+- [x] **Step 2: Write integration test**
 
 ```typescript
 // tests/integration.test.ts
@@ -2046,21 +2046,21 @@ describe("Integration: engine + DB", () => {
 Run: `npx vitest run tests/integration.test.ts`
 Expected: 1 test pass.
 
-- [ ] **Step 3: Full test suite**
+- [x] **Step 3: Full test suite**
 
 ```bash
 npx vitest run
 ```
 Expected: All tests pass (~40 tests across 11 test files).
 
-- [ ] **Step 4: Build**
+- [x] **Step 4: Build**
 
 ```bash
 npm run build
 ```
 Expected: `dist/` directory created with compiled JS.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add -A && git commit -m "feat: integration test, package scripts, and build pipeline"
