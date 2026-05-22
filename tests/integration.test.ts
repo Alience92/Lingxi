@@ -16,6 +16,7 @@ import { computeDecayScore, boostDecayScore } from "../src/core/decay.js";
 import { cosineSimilarity } from "../src/core/embedder.js";
 import { prefetch } from "../src/core/retriever.js";
 import { persistFragments } from "../src/db/repository.js";
+import { explicitSearch } from "../src/core/retriever.js";
 import * as os from "node:os";
 import * as fs from "node:fs";
 
@@ -105,6 +106,11 @@ describe("AgentMemory integration", () => {
     expect(names).toContain("projects");
   });
 
+  it("DB: distilled_rules has fingerprint column", () => {
+    const columns = getDb().prepare("PRAGMA table_info(distilled_rules)").all() as Array<{ name: string }>;
+    expect(columns.some((column) => column.name === "fingerprint")).toBe(true);
+  });
+
   it("engine: runDecay on empty DB returns zeros", () => {
     const engine = new MemoryEngine({ apiKey: "test-key" });
     const result = engine.runDecay();
@@ -171,5 +177,35 @@ describe("AgentMemory integration", () => {
     expect(result.fragmentIds).toContain("dup-1");
     expect(result.fragmentIds).toContain("diverse-1");
     expect(result.fragmentIds).not.toContain("dup-2");
+  });
+
+  it("prefetch does not write recall logs, explicit search does", async () => {
+    persistFragments({
+      sessionId: "recall-s1",
+      projectId: "recall-p1",
+      output: {
+        summary: "",
+        fragments: [
+          {
+            id: "recall-frag-1",
+            sessionId: "recall-s1",
+            projectId: "recall-p1",
+            anchors: [{ channel: "WHAT", label: "Recall test", weight: 90, source: "clustering", timestamp: Date.now() }],
+            linkedIds: [],
+            linkedCount: 0,
+            summary: "recall log should only be written by explicit search",
+            createdAt: Date.now(),
+          },
+        ],
+      },
+    });
+
+    await prefetch([{ role: "user", text: "recall log explicit search" }], "recall-p1");
+    let count = getDb().prepare("SELECT COUNT(*) as count FROM recall_log WHERE fragment_id = ?").get("recall-frag-1") as { count: number };
+    expect(count.count).toBe(0);
+
+    await explicitSearch("recall log explicit search", "recall-p1");
+    count = getDb().prepare("SELECT COUNT(*) as count FROM recall_log WHERE fragment_id = ?").get("recall-frag-1") as { count: number };
+    expect(count.count).toBe(1);
   });
 });

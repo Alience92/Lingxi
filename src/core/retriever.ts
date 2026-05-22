@@ -84,7 +84,15 @@ export async function explicitSearch(
   maxResults: number = DEFAULT_MAX_RESULTS
 ): Promise<SearchResult[]> {
   const queryVec = await embed(query);
-  return await vectorSearch(queryVec, projectId, maxResults, minScore, query);
+  return await vectorSearch(queryVec, projectId, maxResults, minScore, {
+    recallMode: "explicit",
+    query,
+  });
+}
+
+interface SearchOptions {
+  recallMode?: "prefetch" | "explicit";
+  query?: string;
 }
 
 async function vectorSearch(
@@ -92,9 +100,11 @@ async function vectorSearch(
   projectId: string,
   limit: number,
   minScore: number,
-  originalQuery: string = ""
+  options: SearchOptions = {}
 ): Promise<SearchResult[]> {
   const db = getDb();
+  const recallMode = options.recallMode ?? "prefetch";
+  const originalQuery = options.query ?? "";
 
   const rows = db.prepare(`
     SELECT * FROM fragments
@@ -125,8 +135,8 @@ async function vectorSearch(
         missingLinks: 0, // Filled in next pass
       });
 
-      // Log recall event
-      if (originalQuery) {
+      // Log recall events only for explicit user-triggered search.
+      if (recallMode === "explicit" && originalQuery) {
         db.prepare(`INSERT INTO recall_log (fragment_id, query, score, recalled_at) VALUES (?, ?, ?, ?)`).run(
           fragment.id, originalQuery, score, Date.now()
         );

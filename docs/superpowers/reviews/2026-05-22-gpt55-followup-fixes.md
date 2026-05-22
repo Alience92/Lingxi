@@ -7,6 +7,8 @@
 1. 修复 `prefetch()` 的 MMR 惩罚方向
 2. 修复 `fragmentSession()` 在零碎片结果下未清理 `pending_fragmentation` 的问题
 3. 补充回归测试，覆盖上述两项行为
+4. 修复 `prefetch` 污染 `recall_log` 的问题
+5. 修复 `dreaming` 重复生成 L0 规则的问题
 
 ## 代码变更
 
@@ -38,9 +40,32 @@
 
 1. `fragmentSession` 在零碎片返回时会清理 pending 标志
 2. `prefetch` 在重复候选和多样候选同时存在时，会保留多样结果并压制重复结果
+3. `prefetch` 不写 `recall_log`，显式搜索才写 `recall_log`
+
+## 追加修复
+
+### 3. 区分 prefetch 与 explicit search 的 recall 统计路径
+
+文件：`src/core/retriever.ts`
+
+- 为底层检索增加 `recallMode`
+- `prefetch` 走静默路径，不写 `recall_log`，也不提升 `recalled_count`
+- `explicitSearch` 才会记录召回日志并提升活跃度
+
+效果：静默预取和用户主动搜索的统计口径分离，衰减与召回分析更可信。
+
+### 4. 为 L0 蒸馏规则引入稳定去重键
+
+文件：`src/db/schema.ts`、`src/mcp/tools.ts`
+
+- 为 `distilled_rules` 新增 `fingerprint` 唯一键
+- `dreaming` 生成规则前先查重，已有规则只补充 `rule_sources`
+- 蒸馏输入按 `fragment_id` 去重，避免多 anchor 导致一条碎片被重复计数
+
+效果：重复执行 `dreaming` 不会持续膨胀规则库，L0 更稳定。
 
 ## 建议后续继续跟进
 
-1. 区分 `prefetch` 与 `explicit search` 的 recall 统计路径，避免静默预取污染召回日志
-2. 为 `dreaming` 的 L0 蒸馏增加去重键，避免重复生成规则
-3. 在 SessionStart 链路中真正消费 `distilled_rules`
+1. 在 SessionStart 链路中真正消费 `distilled_rules`
+2. 为已有数据库增加 schema migration，确保旧库自动补齐 `fingerprint` 字段
+3. 为 `dreaming` 增加“规则更新”策略，而不是仅做首次插入

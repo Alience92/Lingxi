@@ -31,6 +31,7 @@ CREATE TABLE IF NOT EXISTS fragment_links (
 
 CREATE TABLE IF NOT EXISTS distilled_rules (
   id TEXT PRIMARY KEY,
+  fingerprint TEXT NOT NULL UNIQUE,
   text TEXT NOT NULL,
   weight REAL NOT NULL DEFAULT 1.0,
   created_at INTEGER NOT NULL

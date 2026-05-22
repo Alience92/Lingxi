@@ -8,6 +8,10 @@ import * as fs from "node:fs";
 import * as path from "node:path";
 import { v4 as uuid } from "uuid";
 
+function buildRuleFingerprint(projectId: string, channel: string, label: string): string {
+  return `${projectId}::${channel}::${label.trim().toLowerCase()}`;
+}
+
 function hasApiKey(engine: MemoryEngine): boolean {
   return !!(engine as any).config?.apiKey && (engine as any).config?.apiKey.length > 10;
 }
@@ -95,27 +99,48 @@ export function buildToolHandlers(engine: MemoryEngine) {
 
       // Step 2: Manual distillation — cluster fragments with similar labels, merge ≥3 into L0 rules
       const fragments = db.prepare(`
-        SELECT f.*, fa.label, fa.channel FROM fragments f
+        SELECT
+          f.id,
+          f.summary,
+          MIN(fa.label) AS label,
+          MIN(fa.channel) AS channel
+        FROM fragments f
         JOIN fragment_anchors fa ON fa.fragment_id = f.id
         WHERE f.project_id = ? AND f.status = 'active'
+        GROUP BY f.id, f.summary
       `).all(params.projectId) as Array<{ id: string; summary: string; label: string; channel: string }>;
 
       // Group by channel + label prefix (first 10 chars for fuzzy grouping)
-      const groups = new Map<string, Array<{ id: string; summary: string }>>();
+      const groups = new Map<string, Array<{ id: string; summary: string; label: string; channel: string }>>();
       for (const f of fragments) {
         const key = `${f.channel}:${(f.label || f.summary).slice(0, 15)}`;
         if (!groups.has(key)) groups.set(key, []);
-        groups.get(key)!.push({ id: f.id, summary: f.summary });
+        groups.get(key)!.push({ id: f.id, summary: f.summary, label: f.label, channel: f.channel });
       }
 
       let distilled = 0;
-      for (const [, members] of groups) {
+      for (const [groupKey, members] of groups) {
         if (members.length >= 3) {
+          const exemplar = members[0];
+          const labelBase = groupKey.split(":").slice(1).join(":");
+          const channel = exemplar?.channel ?? "WHAT";
+          const fingerprint = buildRuleFingerprint(params.projectId, channel, labelBase);
+
+          const existingRule = db.prepare(`SELECT id FROM distilled_rules WHERE fingerprint = ?`).get(fingerprint) as { id: string } | undefined;
+          if (existingRule) {
+            for (const m of members) {
+              db.prepare(`INSERT OR IGNORE INTO rule_sources (rule_id, fragment_id, project_id) VALUES (?, ?, ?)`).run(
+                existingRule.id, m.id, params.projectId
+              );
+            }
+            continue;
+          }
+
           const ruleText = members.map((m) => m.summary).join("; ").slice(0, 100);
           const ruleId = `rule-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
 
-          db.prepare(`INSERT OR IGNORE INTO distilled_rules (id, text, weight, created_at) VALUES (?, ?, 1.0, ?)`).run(
-            ruleId, ruleText, Date.now()
+          db.prepare(`INSERT OR IGNORE INTO distilled_rules (id, fingerprint, text, weight, created_at) VALUES (?, ?, ?, 1.0, ?)`).run(
+            ruleId, fingerprint, ruleText, Date.now()
           );
           for (const m of members) {
             db.prepare(`INSERT OR IGNORE INTO rule_sources (rule_id, fragment_id, project_id) VALUES (?, ?, ?)`).run(

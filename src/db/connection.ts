@@ -18,7 +18,18 @@ export function openDb(dbPath?: string): Database.Database {
   db.pragma("journal_mode = WAL");
   db.pragma("foreign_keys = ON");
   db.exec(SCHEMA_SQL);
+  ensureSchemaMigrations(db);
   return db;
+}
+
+function ensureSchemaMigrations(database: Database.Database): void {
+  const distilledRuleColumns = database.prepare(`PRAGMA table_info(distilled_rules)`).all() as Array<{ name: string }>;
+  const hasFingerprint = distilledRuleColumns.some((column) => column.name === "fingerprint");
+  if (!hasFingerprint) {
+    database.exec(`ALTER TABLE distilled_rules ADD COLUMN fingerprint TEXT`);
+    database.exec(`UPDATE distilled_rules SET fingerprint = id WHERE fingerprint IS NULL`);
+    database.exec(`CREATE UNIQUE INDEX IF NOT EXISTS idx_distilled_rules_fingerprint ON distilled_rules(fingerprint)`);
+  }
 }
 
 export function closeDb(): void {
