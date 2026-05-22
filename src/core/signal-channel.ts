@@ -71,5 +71,5 @@ export function computeFeelWeight(
     ? Math.max(...behaviorSignals.map((s) => s.weight))
     : 0;
   const clusteringWeight = clusteringSignal?.weight ?? 0;
-  return Math.min(255, Math.max(10, maxBehavior || clusteringWeight || 10));
+  return Math.min(255, Math.max(10, Math.max(maxBehavior, clusteringWeight, 10)));
 }

@@ -6,6 +6,7 @@
   "scripts": {
     "build": "tsc",
     "test": "vitest run",
+    "test:integration": "vitest run tests/integration.test.ts",
     "typecheck": "tsc --noEmit"
   },
   "keywords": [],
