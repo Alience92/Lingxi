@@ -23,6 +23,15 @@ export class MemoryEngine {
     const result = await this.callFragmenter(input);
 
     const db = getDb();
+
+    // Ensure session and project records exist
+    db.prepare(`INSERT OR IGNORE INTO projects (id, name, workspace_dir, created_at) VALUES (?, ?, ?, ?)`).run(
+      input.projectId, input.projectId, "", Date.now()
+    );
+    db.prepare(`INSERT OR REPLACE INTO sessions (id, project_id, started_at, pending_fragmentation) VALUES (?, ?, ?, 0)`).run(
+      input.sessionId, input.projectId, Date.now()
+    );
+
     const fragments: Fragment[] = [];
 
     const insertFrag = db.prepare(`INSERT INTO fragments (id, session_id, project_id, summary, linked_count, decay_score, created_at, status) VALUES (?, ?, ?, ?, ?, 1.0, ?, 'active')`);

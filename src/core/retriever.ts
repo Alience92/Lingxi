@@ -15,7 +15,7 @@ export async function prefetch(
 
   const queryText = messages.slice(-3).map((m) => m.text).join("\n");
   const queryVec = await embed(queryText);
-  const results = await vectorSearch(queryVec, projectId, 10, DEFAULT_MIN_SCORE);
+  const results = await vectorSearch(queryVec, projectId, 10, DEFAULT_MIN_SCORE, queryText);
 
   if (results.length === 0) return { contextBlock: "", fragmentIds: [], confidence: 0 };
 
@@ -44,14 +44,15 @@ export async function explicitSearch(
   maxResults: number = DEFAULT_MAX_RESULTS
 ): Promise<SearchResult[]> {
   const queryVec = await embed(query);
-  return await vectorSearch(queryVec, projectId, maxResults, minScore);
+  return await vectorSearch(queryVec, projectId, maxResults, minScore, query);
 }
 
 async function vectorSearch(
   queryVec: number[],
   projectId: string,
   limit: number,
-  minScore: number
+  minScore: number,
+  originalQuery: string = ""
 ): Promise<SearchResult[]> {
   const db = getDb();
 
@@ -80,6 +81,17 @@ async function vectorSearch(
         matchedAnchors: uniqueMatched,
         missingLinks: fragment.linkedCount - uniqueMatched.length + 1,
       });
+
+      // Log recall event for dreaming/promotion tracking
+      if (originalQuery) {
+        db.prepare(`INSERT INTO recall_log (fragment_id, query, score, recalled_at) VALUES (?, ?, ?, ?)`).run(
+          fragment.id, originalQuery, score, Date.now()
+        );
+        // Boost fragment on recall
+        db.prepare(`UPDATE fragments SET decay_score = 1.0, last_recalled_at = ?, recalled_count = recalled_count + 1 WHERE id = ?`).run(
+          Date.now(), fragment.id
+        );
+      }
     }
   }
 
