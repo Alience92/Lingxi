@@ -19,7 +19,6 @@
     "@modelcontextprotocol/sdk": "^1.29.0",
     "better-sqlite3": "^12.10.0",
     "openai": "^6.39.0",
-    "sqlite-vec": "^0.1.9",
     "uuid": "^14.0.0",
     "zod": "^4.4.3"
   },
