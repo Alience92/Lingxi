@@ -72,8 +72,8 @@ async function main() {
         bestConfidence = pre.confidence;
         bestBlock = pre.contextBlock;
       }
-    } catch {
-      // Project might not have fragments — skip silently
+    } catch (e) {
+      console.error(`[AgentMemory] prefetch error for project ${pid}:`, (e as Error).message?.slice(0, 120) || e);
     }
   }
 
