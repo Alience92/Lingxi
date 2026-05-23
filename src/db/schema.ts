@@ -9,7 +9,8 @@ CREATE TABLE IF NOT EXISTS fragments (
   last_recalled_at INTEGER,
   recalled_count INTEGER NOT NULL DEFAULT 0,
   created_at INTEGER NOT NULL,
-  status TEXT NOT NULL DEFAULT 'active'
+  status TEXT NOT NULL DEFAULT 'active',
+  vector BLOB
 );
 
 CREATE TABLE IF NOT EXISTS fragment_anchors (

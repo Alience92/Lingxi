@@ -126,7 +126,7 @@ describe("AgentMemory integration", () => {
   });
 
   it("prefetch prefers diversity over duplicate summaries", async () => {
-    persistFragments({
+    await persistFragments({
       sessionId: "prefetch-s1",
       projectId: "prefetch-p1",
       output: {
@@ -172,10 +172,10 @@ describe("AgentMemory integration", () => {
     expect(result.fragmentIds).not.toContain("dup-2");
   });
 
-  it("persists forward-reference links correctly (P0 regression)", () => {
+  it("persists forward-reference links correctly (P0 regression)", async () => {
     // Fragment 0 links to 1 and 2 — both come after it in the array.
     // This simulates resolveLinks output where linkedTo indices map to later UUIDs.
-    const fragments = persistFragments({
+    const fragments = await persistFragments({
       sessionId: "fwdref-s1",
       projectId: "fwdref-p1",
       output: {
@@ -230,7 +230,7 @@ describe("AgentMemory integration", () => {
   });
 
   it("prefetch does not write recall logs, explicit search does", async () => {
-    persistFragments({
+    await persistFragments({
       sessionId: "recall-s1",
       projectId: "recall-p1",
       output: {
@@ -293,7 +293,7 @@ describe("AgentMemory integration", () => {
     expect(result.message).toContain("session-1.jsonl");
   });
 
-  it("runDistillation merges ≥3 similar-label fragments into L0 rule", () => {
+  it("runDistillation merges ≥3 similar-label fragments into L0 rule", async () => {
     const db = getDb();
     const distProject = "distill-p1";
     db.prepare(`INSERT OR IGNORE INTO projects (id, name, workspace_dir, created_at) VALUES (?, ?, ?, ?)`).run(
@@ -302,7 +302,7 @@ describe("AgentMemory integration", () => {
 
     // Create 3 fragments with same channel + similar label prefix
     const engine = new MemoryEngine({ apiKey: "test-key" });
-    persistFragments({
+    await persistFragments({
       sessionId: "distill-s1",
       projectId: distProject,
       output: {

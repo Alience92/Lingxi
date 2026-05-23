@@ -23,12 +23,20 @@ export function openDb(dbPath?: string): Database.Database {
 }
 
 function ensureSchemaMigrations(database: Database.Database): void {
+  // Migration 1: fingerprint column on distilled_rules
   const distilledRuleColumns = database.prepare(`PRAGMA table_info(distilled_rules)`).all() as Array<{ name: string }>;
   const hasFingerprint = distilledRuleColumns.some((column) => column.name === "fingerprint");
   if (!hasFingerprint) {
     database.exec(`ALTER TABLE distilled_rules ADD COLUMN fingerprint TEXT`);
     database.exec(`UPDATE distilled_rules SET fingerprint = id WHERE fingerprint IS NULL`);
     database.exec(`CREATE UNIQUE INDEX IF NOT EXISTS idx_distilled_rules_fingerprint ON distilled_rules(fingerprint)`);
+  }
+
+  // Migration 2: vector column for embedding persistence
+  const fragmentColumns = database.prepare(`PRAGMA table_info(fragments)`).all() as Array<{ name: string }>;
+  const hasVector = fragmentColumns.some((column) => column.name === "vector");
+  if (!hasVector) {
+    database.exec(`ALTER TABLE fragments ADD COLUMN vector BLOB`);
   }
 }
 

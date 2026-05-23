@@ -43,7 +43,7 @@ export class MemoryEngine {
       return [];
     }
 
-    return persistFragments({
+    return await persistFragments({
       output: result,
       sessionId: input.sessionId,
       projectId: input.projectId,

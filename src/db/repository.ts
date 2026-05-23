@@ -1,8 +1,9 @@
 // Unified persistence layer — single source of truth for all fragment writes
-// Ensures FTS, anchors, links, sessions, and projects are always written atomically
+// Ensures FTS, anchors, links, sessions, projects, and embedding vectors
 
 import type { Fragment, FragmentationOutput } from "../types.js";
 import { getDb } from "./connection.js";
+import { getCurrentEmbedder } from "../core/embedder.js";
 
 export interface PersistInput {
   output: FragmentationOutput;
@@ -11,9 +12,22 @@ export interface PersistInput {
   workspaceDir?: string;
 }
 
-export function persistFragments(input: PersistInput): Fragment[] {
+export async function persistFragments(input: PersistInput): Promise<Fragment[]> {
   const db = getDb();
   const { output, sessionId, projectId, workspaceDir } = input;
+
+  // Compute embeddings asynchronously before the sync transaction
+  const embedder = getCurrentEmbedder();
+  const vectors = new Map<string, Float32Array>();
+  for (const raw of output.fragments) {
+    try {
+      const vec = await embedder.embed(raw.summary, "store");
+      vectors.set(raw.id, new Float32Array(vec));
+    } catch {
+      // Embedding failed — store NULL, will compute on first retrieval
+    }
+  }
+
   const fragments: Fragment[] = [];
 
   // Ensure project record
@@ -27,8 +41,8 @@ export function persistFragments(input: PersistInput): Fragment[] {
   );
 
   const insertFrag = db.prepare(`
-    INSERT INTO fragments (id, session_id, project_id, summary, linked_count, decay_score, created_at, status)
-    VALUES (?, ?, ?, ?, ?, 1.0, ?, 'active')
+    INSERT INTO fragments (id, session_id, project_id, summary, linked_count, decay_score, created_at, status, vector)
+    VALUES (?, ?, ?, ?, ?, 1.0, ?, 'active', ?)
   `);
   const insertAnchor = db.prepare(`
     INSERT INTO fragment_anchors (fragment_id, channel, label, weight, source, timestamp)
@@ -50,7 +64,8 @@ export function persistFragments(input: PersistInput): Fragment[] {
         status: "active",
       };
 
-      insertFrag.run(f.id, f.sessionId, f.projectId, f.summary, f.linkedCount, f.createdAt);
+      const vec = vectors.get(f.id);
+      insertFrag.run(f.id, f.sessionId, f.projectId, f.summary, f.linkedCount, f.createdAt, vec ?? null);
 
       for (const anchor of f.anchors) {
         insertAnchor.run(f.id, anchor.channel, anchor.label, anchor.weight, anchor.source, anchor.timestamp);

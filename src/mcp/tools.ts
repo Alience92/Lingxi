@@ -85,7 +85,7 @@ export function buildToolHandlers(engine: MemoryEngine) {
       }));
       resolveLinks(output.fragments, rawFragments);
 
-      const persisted = persistFragments({ output, sessionId: params.sessionId, projectId: params.projectId });
+      const persisted = await persistFragments({ output, sessionId: params.sessionId, projectId: params.projectId });
       return { stored: persisted.length, fragments: persisted.map((f) => ({ id: f.id, summary: f.summary })) };
     },
 

@@ -127,10 +127,19 @@ async function vectorSearch(
   // Per-query embedding cache — avoid recomputing the same fragment vector
   const cache = new Map<string, number[]>();
 
+  // Decode persisted vectors (Float32Array BLOB → number[])
+  const persistedVectors = new Map<string, number[]>();
+
   // Map snake_case DB columns → camelCase Fragment fields + hydrate anchors/links
   const rows: Fragment[] = [];
   for (const r of rawRows) {
     const id = r.id as string;
+
+    // Decode persisted vector if present
+    if (r.vector instanceof Buffer && r.vector.length >= 4) {
+      const floats = new Float32Array(r.vector.buffer, r.vector.byteOffset, r.vector.length / 4);
+      persistedVectors.set(id, Array.from(floats));
+    }
     const anchorRows = db.prepare(`
       SELECT channel, label, weight, source, timestamp FROM fragment_anchors WHERE fragment_id = ?
     `).all(id) as Array<{ channel: string; label: string; weight: number; source: string; timestamp: number }>;
@@ -166,8 +175,14 @@ async function vectorSearch(
   const hitLinkedIds = new Map<string, string[]>(); // fragmentId → its linkedIds
 
   for (const fragment of rows) {
-    // Embed once and cache — MMR in prefetch() reuses this
-    const fragVec = await embedder.embed(fragment.summary);
+    let fragVec: number[];
+    const persisted = persistedVectors.get(fragment.id);
+    if (persisted) {
+      fragVec = persisted;
+    } else {
+      // Embed once and cache — MMR in prefetch() reuses this
+      fragVec = await embedder.embed(fragment.summary);
+    }
     cache.set(fragment.id, fragVec);
     const score = cosineSimilarity(queryVec, fragVec);
 
