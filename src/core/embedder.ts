@@ -27,8 +27,10 @@ export function setCurrentEmbedder(e: Embedder): void {
 
 export function getCurrentEmbedder(): Embedder {
   if (!_currentEmbedder) {
-    // Lazy fallback: hash-only embedder when no engine is configured
-    _currentEmbedder = new Embedder("", "");
+    // Lazy fallback: read env vars for hook subprocesses that don't go through engine
+    const key = process.env.AGENTMEMORY_API_KEY || process.env.DEEPSEEK_API_KEY || "";
+    const url = process.env.AGENTMEMORY_EMBEDDING_URL || "https://api.minimax.chat";
+    _currentEmbedder = new Embedder(key, url);
   }
   return _currentEmbedder;
 }

@@ -79,6 +79,8 @@ async function main() {
 
   if (bestConfidence > 0 && bestBlock) {
     console.log(`[AgentMemory] 相关记忆:\n${bestBlock}`);
+  } else {
+    console.log(`[AgentMemory] 未找到相关记忆（查询了 ${projectIds.length} 个项目）`);
   }
 }
 
