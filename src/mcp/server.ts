@@ -41,7 +41,7 @@ const TOOL_DEFINITIONS = [
         query: { type: "string" },
         projectId: { type: "string" },
         maxResults: { type: "number", default: 6 },
-        minScore: { type: "number", default: 0.35 },
+        minScore: { type: "number", description: "Lower = more results. Default adapts to embedder: ~0.30 with API, ~0.12 with hash." },
       },
       required: ["query", "projectId"],
     },

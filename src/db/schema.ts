@@ -75,4 +75,4 @@ CREATE TABLE IF NOT EXISTS projects (
 );
 `;
 
-export const VECTOR_DIMENSIONS = 384;
+export const VECTOR_DIMENSIONS = 1536;
