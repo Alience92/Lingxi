@@ -49,11 +49,11 @@ export function buildToolHandlers(engine: MemoryEngine) {
     },
 
     async memory_remember(params: { transcript: string; sessionId: string; projectId: string }) {
-      // If no API key, return prompt for Agent's own LLM to process
-      if (!hasApiKey(engine)) {
+      // If no fragmentation-capable API key, return prompt for Agent's LLM
+      if (!engine.canFragment()) {
         return promptModeResult(params);
       }
-      // Server-side fragmentation (has API key)
+      // Server-side fragmentation
       try {
         const fragments = await engine.fragmentSession({
           transcript: params.transcript,
@@ -63,7 +63,6 @@ export function buildToolHandlers(engine: MemoryEngine) {
         if (fragments.length === 0) return promptModeResult(params);
         return { mode: "server", count: fragments.length, fragments: fragments.map((f) => ({ id: f.id, summary: f.summary })) };
       } catch {
-        // API call failed (e.g. key doesn't support chat completions) — fall back to prompt mode
         return promptModeResult(params);
       }
     },

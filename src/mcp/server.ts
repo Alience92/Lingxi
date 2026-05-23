@@ -107,8 +107,15 @@ const TOOL_DEFINITIONS = [
 
 export async function startServer(apiKey: string, dbPath?: string) {
   openDb(dbPath);
-  const baseURL = process.env.AGENTMEMORY_EMBEDDING_URL || "https://api.deepseek.com";
-  const engine = new MemoryEngine({ apiKey, baseURL });
+  const baseURL = process.env.AGENTMEMORY_EMBEDDING_URL || "https://api.minimax.chat";
+  const fragmentationKey = process.env.DEEPSEEK_API_KEY || process.env.ANTHROPIC_AUTH_TOKEN || "";
+  const fragmentationBaseURL = process.env.DEEPSEEK_BASE_URL || "https://api.deepseek.com";
+  const engine = new MemoryEngine({
+    apiKey,
+    baseURL,
+    fragmentationKey,
+    fragmentationBaseURL,
+  });
   const handlers = buildToolHandlers(engine);
 
   const server = new Server(

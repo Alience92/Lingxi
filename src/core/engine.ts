@@ -6,7 +6,12 @@ import { computeDecayScore } from "./decay.js";
 import { Embedder, setCurrentEmbedder } from "./embedder.js";
 
 export interface EngineConfig {
+  /** API key for embeddings (MiniMax, OpenAI, etc.). Falls back to env vars. */
   apiKey: string;
+  /** API key for LLM fragmentation (DeepSeek, OpenAI, etc.). Falls back to apiKey if unset. */
+  fragmentationKey?: string;
+  /** Base URL for LLM fragmentation. Defaults to DeepSeek if fragmentationKey is set. */
+  fragmentationBaseURL?: string;
   model?: string;
   baseURL?: string;
 }
@@ -17,6 +22,12 @@ export class MemoryEngine {
   constructor(private config: EngineConfig) {
     this.embedder = new Embedder(config.apiKey, config.baseURL);
     setCurrentEmbedder(this.embedder);
+  }
+
+  /** Whether server-side fragmentation is available. False → prompt-mode. */
+  canFragment(): boolean {
+    const key = this.config.fragmentationKey || this.config.apiKey;
+    return !!(key && key.length > 10 && key !== "test-key");
   }
 
   // Path A: Compaction-time sync summary (lightweight, no LLM fragmentation)
@@ -137,9 +148,11 @@ export class MemoryEngine {
 
   // Internal: call LLM fragmenter
   private async callFragmenter(input: FragmentationInput) {
-    if (!this.config.apiKey || this.config.apiKey === "test-key") {
+    const key = this.config.fragmentationKey || this.config.apiKey;
+    if (!key || key === "test-key" || key.length <= 10) {
       return { fragments: [], summary: "" };
     }
-    return await fragmentTranscript(input, this.config.apiKey, this.config.model ?? "deepseek-chat", this.config.baseURL);
+    const baseURL = this.config.fragmentationBaseURL || "https://api.deepseek.com";
+    return await fragmentTranscript(input, key, this.config.model ?? "deepseek-chat", baseURL);
   }
 }
