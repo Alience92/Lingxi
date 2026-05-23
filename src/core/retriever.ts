@@ -2,7 +2,7 @@ import type { Fragment, SearchResult, PrefetchResult, SessionContext } from "../
 import { getDb } from "../db/connection.js";
 import { getCurrentEmbedder, cosineSimilarity } from "./embedder.js";
 
-export const DEFAULT_MIN_SCORE = 0.18;
+export const DEFAULT_MIN_SCORE = 0.30;
 const DEFAULT_MAX_RESULTS = 6;
 // Prefetch MMR diversity threshold — independent of search minScore to keep filtering strict
 const PREFETCH_MMR_MIN_SCORE = 0.18;
