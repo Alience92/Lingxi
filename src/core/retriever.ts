@@ -119,31 +119,46 @@ async function vectorSearch(
   const originalQuery = options.query ?? "";
   const embedder = getCurrentEmbedder();
 
-  const rows = db.prepare(`
+  const rawRows = db.prepare(`
     SELECT * FROM fragments
     WHERE project_id = ? AND status = 'active' AND decay_score > 0
-  `).all(projectId) as Fragment[];
+  `).all(projectId) as Array<Record<string, unknown>>;
 
   // Per-query embedding cache — avoid recomputing the same fragment vector
   const cache = new Map<string, number[]>();
 
-  // Hydrate anchors and linkedIds — raw DB rows only have scalar columns
-  for (const row of rows) {
+  // Map snake_case DB columns → camelCase Fragment fields + hydrate anchors/links
+  const rows: Fragment[] = [];
+  for (const r of rawRows) {
+    const id = r.id as string;
     const anchorRows = db.prepare(`
       SELECT channel, label, weight, source, timestamp FROM fragment_anchors WHERE fragment_id = ?
-    `).all(row.id) as Array<{ channel: string; label: string; weight: number; source: string; timestamp: number }>;
-    row.anchors = anchorRows.map((a) => ({
-      channel: a.channel as import("../types.js").Channel,
-      label: a.label,
-      weight: a.weight,
-      source: a.source as import("../types.js").SignalSource,
-      timestamp: a.timestamp,
-    }));
+    `).all(id) as Array<{ channel: string; label: string; weight: number; source: string; timestamp: number }>;
 
     const linkRows = db.prepare(`
       SELECT target_id FROM fragment_links WHERE source_id = ?
-    `).all(row.id) as Array<{ target_id: string }>;
-    row.linkedIds = linkRows.map((l) => l.target_id);
+    `).all(id) as Array<{ target_id: string }>;
+
+    rows.push({
+      id,
+      sessionId: r.session_id as string,
+      projectId: r.project_id as string,
+      summary: r.summary as string,
+      linkedCount: r.linked_count as number,
+      decayScore: r.decay_score as number,
+      lastRecalledAt: r.last_recalled_at as number | null,
+      recalledCount: r.recalled_count as number,
+      createdAt: r.created_at as number,
+      status: r.status as "active" | "archived" | "deleted",
+      anchors: anchorRows.map((a) => ({
+        channel: a.channel as import("../types.js").Channel,
+        label: a.label,
+        weight: a.weight,
+        source: a.source as import("../types.js").SignalSource,
+        timestamp: a.timestamp,
+      })),
+      linkedIds: linkRows.map((l) => l.target_id),
+    });
   }
 
   const results: SearchResult[] = [];
