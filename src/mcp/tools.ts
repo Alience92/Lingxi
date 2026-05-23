@@ -8,6 +8,18 @@ import * as fs from "node:fs";
 import * as path from "node:path";
 import { v4 as uuid } from "uuid";
 
+function promptModeResult(params: { transcript: string; sessionId: string; projectId: string }) {
+  const prompt = buildFragmentationPrompt(params.transcript);
+  return {
+    mode: "prompt",
+    prompt,
+    transcript: params.transcript,
+    sessionId: params.sessionId,
+    projectId: params.projectId,
+    instructions: "用你的LLM处理以上prompt和transcript，得到JSON数组后调用memory_store(fragments, sessionId, projectId)保存。fragments是channel/label/weight/linkedTo/summary的JSON数组。",
+  };
+}
+
 function hasApiKey(engine: MemoryEngine): boolean {
   return !!(engine as any).config?.apiKey && (engine as any).config?.apiKey.length > 10;
 }
@@ -39,23 +51,21 @@ export function buildToolHandlers(engine: MemoryEngine) {
     async memory_remember(params: { transcript: string; sessionId: string; projectId: string }) {
       // If no API key, return prompt for Agent's own LLM to process
       if (!hasApiKey(engine)) {
-        const prompt = buildFragmentationPrompt(params.transcript);
-        return {
-          mode: "prompt",
-          prompt,
+        return promptModeResult(params);
+      }
+      // Server-side fragmentation (has API key)
+      try {
+        const fragments = await engine.fragmentSession({
           transcript: params.transcript,
           sessionId: params.sessionId,
           projectId: params.projectId,
-          instructions: "用你的LLM处理以上prompt和transcript，得到JSON数组后调用memory_store(fragments, sessionId, projectId)保存。fragments是channel/label/weight/linkedTo/summary的JSON数组。",
-        };
+        });
+        if (fragments.length === 0) return promptModeResult(params);
+        return { mode: "server", count: fragments.length, fragments: fragments.map((f) => ({ id: f.id, summary: f.summary })) };
+      } catch {
+        // API call failed (e.g. key doesn't support chat completions) — fall back to prompt mode
+        return promptModeResult(params);
       }
-      // Server-side fragmentation (has API key)
-      const fragments = await engine.fragmentSession({
-        transcript: params.transcript,
-        sessionId: params.sessionId,
-        projectId: params.projectId,
-      });
-      return { mode: "server", count: fragments.length, fragments: fragments.map((f) => ({ id: f.id, summary: f.summary })) };
     },
 
     async memory_store(params: { fragments: Array<{ channel: string; label: string; weight?: number; linkedTo?: number[]; summary: string }>; sessionId: string; projectId: string }) {

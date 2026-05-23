@@ -1,0 +1,39 @@
+- [2026-05-22-agent-memory-mvp](2026-05-22-agent-memory-mvp.md) — 2026-05-22 AgentMemory MVP 验证完成：5 bug修复、embedder升级MiniMax、23测试全绿、蒸馏+SessionStart hook跑通
+- [user-preferences](user-preferences.md) — 用户角色、协作偏好、语言偏好
+- [deferred-hot-swappable-skills](deferred-hot-swappable-skills.md) — 2026-05-15：热插拔 Skill 讨论推迟，基础版不够用但留待后续，优先打包 1.0
+- [project-state](project-state.md) — 2026-05-16：用户有完整UI设计系统包，v1-v8迭代确认AI手绘SVG不可行，需用真实素材+CSS Sprite，DeepSeek设计能力不足建议切Opus
+- [feedback-design-assets-not-svg](feedback-design-assets-not-svg.md) — 永远不要AI手绘SVG替代设计素材，用真实导出PNG/SVG引用
+- [feedback-model-choice-design](feedback-model-choice-design.md) — DeepSeek做设计审美差，视觉/字体/配色任务切换Claude Opus
+- [feedback-model-config-bridge](feedback-model-config-bridge.md) — dev 模式前端不读 SQLite，需后端端点桥接；MiniMax 免费 Key 不支持文本模型
+- [product-vision](product-vision.md) — "蒸馏自己"短视频编导Agent系统核心愿景和四个维度
+- [feedback-ask-before-acting](feedback-ask-before-acting.md) — 动手前必须先问清所有细节，得到允许后才能执行（已覆盖 auto-approve-all）
+- [feedback-ask-before-implement](feedback-ask-before-implement.md) — ⚠️ 永久铁律：任何代码修改前先讨论确认全部细节，得到明确许可后才能动手
+- [feedback-be-critical](feedback-be-critical.md) — 存在更好方式或用户方案有问题时必须直接说出来，不绕弯子
+- [knowledge-graph-obsidian-karpathy](knowledge-graph-obsidian-karpathy.md) — 知识库未来方向：Obsidian双链+Karpathy数据质量，已确认待实现
+- [bug-antd-menu-infinite-loop](bug-antd-menu-infinite-loop.md) — Ant Design Menu+useMemo 在 React 19 下无限循环的 bug 记录和修复方案
+- [rule-version-isolation](rule-version-isolation.md) — ⚠️ 铁律：禁止跨分支复制文件，1.0/2.0 各改各的
+- [auto-approve-all](auto-approve-all.md) — ⚠️ 已被 feedback-ask-before-acting 覆盖
+- [save-memory-before-compaction](save-memory-before-compaction.md) — 上下文压缩前必须保存记忆
+- [feedback-fixes](feedback-fixes.md) — 本轮修复的关键经验和模式（渲染崩溃、超时、模型配置、路径问题）
+- [feedback-large-tasks](feedback-large-tasks.md) — 大工作量任务启动前先征询用户同意
+- [feedback-persistence-pitfalls](feedback-persistence-pitfalls.md) — Electron 持久化陷阱：electron/main.ts 改后必须重编译 + localStorage 数组替换必须写回
+- [feedback-ai-type-safety](feedback-ai-type-safety.md) — AI 返回字段类型不可信，数组方法调用前必须 safeArr() 类型守卫
+- [feedback-prompt-json-keys](feedback-prompt-json-keys.md) — Prompt 输出 JSON key 必须与报告组件对齐，否则数据静默丢失
+- [feedback-verify-git-before-memory](feedback-verify-git-before-memory.md) — 写项目状态记忆前必须 git log 验证，不能凭计划文件推断功能是否已实施
+- [web-search-implementation](web-search-implementation.md) — 网络搜索+参考来源功能：6项需求按P0/P1/P2优先级排列，含抖音爬取风险评估和使用须知
+- [feedback-react-stale-closures](feedback-react-stale-closures.md) — React async handler 中 setState 不立即更新当前闭包值，需用局部变量传异步结果
+- [feedback-loading-unmount](feedback-loading-unmount.md) — loading 早期 return 导致 React 卸载输入组件丢失表单状态，需用 display:none 替代卸载
+- [2026-05-19-bugfix-round](2026-05-19-bugfix-round.md) — 2026-05-19 16项bug修复记录：8个已修，8个待讨论
+- [2026-05-19-session-summary](2026-05-19-session-summary.md) — 2026-05-19 全天工作记录：v1.1→v1.3版本迭代、框架系统重构、扣子调研归档、知识库修复、剩余4项待讨论(#9 #12 #13 #16)
+- [feedback-write-design-doc-immediately](feedback-write-design-doc-immediately.md) — 铁律：讨论结果第一时间写入设计文档，不等批量处理
+- [feedback-use-superpowers-skills](feedback-use-superpowers-skills.md) — 重大工作必须走 superpowers 流程：brainstorming → writing-plans → 执行
+- [2026-05-20-session-final](2026-05-20-session-final.md) — 2026-05-20 16项Bug全部结案，v1.3迭代完成，2条新规则写入
+- [2026-05-21-session-summary](2026-05-21-session-summary.md) — 2026-05-21 打包完成、7项修复、知识库导出、API精简为单槽位
+- [gpt55-review-remaining](gpt55-review-remaining.md) — 2026-05-21 GPT-5.5审查剩余4项未修评估：仅#4 Phase配置化需2.0前修
+- [2026-05-21-v1-final](2026-05-21-v1-final.md) — 2026-05-21 v1.0 最终定型：GPT-5.5审查全部结案、GitHub推送、安装包148MB
+- [2026-05-21-2.0-kickoff](2026-05-21-2.0-kickoff.md) — 2026-05-21 2.0启动讨论：架构对比、5项决议
+- [2026-05-21-2.0-knowledge-architecture](2026-05-21-2.0-knowledge-architecture.md) — 2026-05-21 2.0知识库完整架构：小模型流水线、三层评判、多通道活性、沙漏衰减、Agent记忆
+- [agent-memory-system-design](agent-memory-system-design.md) — Agent记忆系统完整设计：根因分析、三种形态、生命周期、运行时架构、关键技术组件 · 副本：D:\AgentMemory\design-docs\
+- [2026-05-22-agent-memory-deep-dive](2026-05-22-agent-memory-deep-dive.md) — 2026-05-22 记忆系统深度讨论 · 副本：D:\AgentMemory\design-docs\
+- [agent-memory-v3-final-design](agent-memory-v3-final-design.md) — v3最终设计定稿 · 副本：D:\AgentMemory\design-docs\
+- [agent-memory-v3-spec](D:\AgentMemory\docs\superpowers\specs\2026-05-22-agent-memory-v3-design.md) — v3正式Spec（实现入口）
