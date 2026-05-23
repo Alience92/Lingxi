@@ -1,5 +1,29 @@
 # Changelog
 
+## 2026-05-23 (r2) — Performance & Production Hardening
+
+### Performance
+- **Batch embedding API**: `embedBatch()` replaces N serial API calls → 12.3x prefetch speedup (16.8s→1.4s)
+- **Batch SQL queries**: anchors and links loaded in 2 queries total instead of 2N per-row queries
+- **Prefetch timing instrumentation**: `AGENTMEMORY_PERF_TIMING=1` outputs embed/search/MMR/cache breakdown
+
+### Bug Fixes
+- **Embedding URL mismatch**: `batch-process-transcripts.mjs` didn't pass `baseURL` → MiniMax key hit DeepSeek endpoint → hash fallback → 451 fragments with broken vectors. Fixed + re-processed all 32 transcripts.
+- **Silent fragmentation failure**: large transcripts returning 0 fragments now create fallback summary fragments via `buildFallbackFragment()`
+
+### Features
+- **PostCompact hook**: marks compacted sessions with `pending_fragmentation=1`, SessionStart auto-detects
+- **Batch transcript processing**: `scripts/batch-process-transcripts.mjs` handles all 36 .jsonl transcripts including 113MB giant in 17 chunks
+- **564 fragments** across 44 sessions, 5 L0 distilled rules
+
+### Architecture
+- `Embedder.embedBatch()` for single-API-call multi-text embedding
+- `vectorSearch` refactored: batch-load anchors/links with `IN(...)` clauses
+- `MemoryEngine.buildFallbackFragment()` prevents content loss on API failures
+- `getLastPrefetchTiming()` exposes timing data to hook subprocesses
+
+---
+
 ## 2026-05-23 — MVP Validation & Integration Testing
 
 ### Features

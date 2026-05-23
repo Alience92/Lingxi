@@ -21,19 +21,43 @@ const PREFETCH_MMR_PENALTY_FACTOR = 0.6;
 // ~150 tokens ≈ 450 chars for CJK, 600 for English
 const PREFETCH_BUDGET_CHARS = 450;
 
-// P2: Silent associative prefetch with anchor weighting + cluster + MMR
+// ── Prefetch timing instrumentation ──────────────────────────────────
+
+export interface PrefetchTiming {
+  embedMs: number;
+  vectorSearchMs: number;
+  mmrMs: number;
+  totalMs: number;
+  cacheHits: number;
+  cacheMisses: number;
+  candidatesFound: number;
+  selectedCount: number;
+}
+
+let _lastPrefetchTiming: PrefetchTiming | null = null;
+export function getLastPrefetchTiming(): PrefetchTiming | null {
+  return _lastPrefetchTiming;
+}
+
+const PERF_TIMING = process.env.AGENTMEMORY_PERF_TIMING === "1";
+
+// ── P2: Silent associative prefetch with anchor weighting + cluster + MMR
+
 export async function prefetch(
   messages: SessionContext["lastMessages"],
   projectId: string
 ): Promise<PrefetchResult> {
+  const t0 = Date.now();
   if (messages.length === 0) return { contextBlock: "", fragmentIds: [], confidence: 0 };
 
   const queryText = messages.slice(-3).map((m) => m.text).join("\n");
   const embedder = getCurrentEmbedder();
   const queryVec = await embedder.embed(queryText, "query");
+  const tEmbed = Date.now();
 
   // Get more candidates for reranking — also get the per-query embedding cache
-  const { results: candidates, cache } = await vectorSearch(queryVec, projectId, 20, getDefaultMinScore() * 0.6);
+  const { results: candidates, cache, cacheHits, cacheMisses } = await vectorSearch(queryVec, projectId, 20, getDefaultMinScore() * 0.6);
+  const tSearch = Date.now();
 
   if (candidates.length === 0) return { contextBlock: "", fragmentIds: [], confidence: 0 };
 
@@ -73,6 +97,7 @@ export async function prefetch(
       usedIds.add(linkedId);
     }
   }
+  const tMMR = Date.now();
 
   // Build context block within token budget
   let block = "";
@@ -90,6 +115,23 @@ export async function prefetch(
   }
 
   const confidence = selected.length > 0 ? Math.min(0.9, selected[0]?.compositeScore ?? 0) : 0;
+  const tTotal = Date.now();
+
+  _lastPrefetchTiming = {
+    embedMs: tEmbed - t0,
+    vectorSearchMs: tSearch - tEmbed,
+    mmrMs: tMMR - tSearch,
+    totalMs: tTotal - t0,
+    cacheHits,
+    cacheMisses,
+    candidatesFound: candidates.length,
+    selectedCount: selected.length,
+  };
+
+  if (PERF_TIMING) {
+    console.error(`[AgentMemory] prefetch timing: embed=${tEmbed - t0}ms search=${tSearch - tEmbed}ms mmr=${tMMR - tSearch}ms total=${tTotal - t0}ms | cache hits=${cacheHits} misses=${cacheMisses} | candidates=${candidates.length} selected=${selected.length}`);
+  }
+
   return { contextBlock: block, fragmentIds, confidence };
 }
 
@@ -117,6 +159,8 @@ interface SearchOptions {
 interface VectorSearchResult {
   results: SearchResult[];
   cache: Map<string, number[]>;  // fragmentId → embedding vector
+  cacheHits: number;
+  cacheMisses: number;
 }
 
 async function vectorSearch(
@@ -136,29 +180,53 @@ async function vectorSearch(
     WHERE project_id = ? AND status = 'active' AND decay_score > 0
   `).all(projectId) as Array<Record<string, unknown>>;
 
-  // Per-query embedding cache — avoid recomputing the same fragment vector
+  if (rawRows.length === 0) {
+    return { results: [], cache: new Map(), cacheHits: 0, cacheMisses: 0 };
+  }
+
+  const allIds = rawRows.map((r) => r.id as string);
+
+  // Batch-load anchors and links (3 queries total instead of 2N)
+  const anchorMap = new Map<string, Array<{ channel: string; label: string; weight: number; source: string; timestamp: number }>>();
+  const linkMap = new Map<string, string[]>();
+
+  const anchorRows = db.prepare(`
+    SELECT fragment_id, channel, label, weight, source, timestamp
+    FROM fragment_anchors WHERE fragment_id IN (${allIds.map(() => "?").join(",")})
+  `).all(...allIds) as Array<{ fragment_id: string; channel: string; label: string; weight: number; source: string; timestamp: number }>;
+
+  for (const a of anchorRows) {
+    if (!anchorMap.has(a.fragment_id)) anchorMap.set(a.fragment_id, []);
+    anchorMap.get(a.fragment_id)!.push(a);
+  }
+
+  const linkRows = db.prepare(`
+    SELECT source_id, target_id FROM fragment_links
+    WHERE source_id IN (${allIds.map(() => "?").join(",")})
+  `).all(...allIds) as Array<{ source_id: string; target_id: string }>;
+
+  for (const l of linkRows) {
+    if (!linkMap.has(l.source_id)) linkMap.set(l.source_id, []);
+    linkMap.get(l.source_id)!.push(l.target_id);
+  }
+
+  // Per-query embedding cache
   const cache = new Map<string, number[]>();
-
-  // Decode persisted vectors (Float32Array BLOB → number[])
   const persistedVectors = new Map<string, number[]>();
+  let cacheHits = 0;
+  let cacheMisses = 0;
 
-  // Map snake_case DB columns → camelCase Fragment fields + hydrate anchors/links
+  // Build fragment objects with batched anchors/links
   const rows: Fragment[] = [];
   for (const r of rawRows) {
     const id = r.id as string;
-
-    // Decode persisted vector if present
     if (r.vector instanceof Buffer && r.vector.length >= 4) {
       const floats = new Float32Array(r.vector.buffer, r.vector.byteOffset, r.vector.length / 4);
       persistedVectors.set(id, Array.from(floats));
     }
-    const anchorRows = db.prepare(`
-      SELECT channel, label, weight, source, timestamp FROM fragment_anchors WHERE fragment_id = ?
-    `).all(id) as Array<{ channel: string; label: string; weight: number; source: string; timestamp: number }>;
 
-    const linkRows = db.prepare(`
-      SELECT target_id FROM fragment_links WHERE source_id = ?
-    `).all(id) as Array<{ target_id: string }>;
+    const anchors = anchorMap.get(id) ?? [];
+    const linkedIds = linkMap.get(id) ?? [];
 
     rows.push({
       id,
@@ -171,50 +239,55 @@ async function vectorSearch(
       recalledCount: r.recalled_count as number,
       createdAt: r.created_at as number,
       status: r.status as "active" | "archived" | "deleted",
-      anchors: anchorRows.map((a) => ({
+      anchors: anchors.map((a) => ({
         channel: a.channel as import("../types.js").Channel,
         label: a.label,
         weight: a.weight,
         source: a.source as import("../types.js").SignalSource,
         timestamp: a.timestamp,
       })),
-      linkedIds: linkRows.map((l) => l.target_id),
+      linkedIds,
     });
+  }
+
+  // Batch-embed fragments without persisted vectors (1 API call vs N)
+  const missingIds: string[] = [];
+  const missingTexts: string[] = [];
+  for (const fragment of rows) {
+    const persisted = persistedVectors.get(fragment.id);
+    if (persisted) {
+      cache.set(fragment.id, persisted);
+      cacheHits++;
+    } else {
+      missingIds.push(fragment.id);
+      missingTexts.push(fragment.summary);
+    }
+  }
+
+  if (missingTexts.length > 0) {
+    const batchVecs = await embedder.embedBatch(missingTexts, "store");
+    for (let i = 0; i < missingIds.length; i++) {
+      cache.set(missingIds[i]!, batchVecs[i]!);
+      cacheMisses++;
+    }
   }
 
   const results: SearchResult[] = [];
   const hitIds = new Set<string>();
-  const hitLinkedIds = new Map<string, string[]>(); // fragmentId → its linkedIds
 
   for (const fragment of rows) {
-    let fragVec: number[];
-    const persisted = persistedVectors.get(fragment.id);
-    if (persisted) {
-      fragVec = persisted;
-    } else {
-      // Embed once and cache — MMR in prefetch() reuses this
-      fragVec = await embedder.embed(fragment.summary);
-    }
-    cache.set(fragment.id, fragVec);
+    const fragVec = cache.get(fragment.id)!;
     const score = cosineSimilarity(queryVec, fragVec);
 
     if (score >= minScore) {
-      const linkedRows = db.prepare(`
-        SELECT target_id FROM fragment_links WHERE source_id = ?
-      `).all(fragment.id) as Array<{ target_id: string }>;
-
-      const linkedIds = linkedRows.map((r) => r.target_id);
       hitIds.add(fragment.id);
-      hitLinkedIds.set(fragment.id, linkedIds);
-
       results.push({
         fragment,
         score,
-        matchedAnchors: [fragment.id, ...linkedIds],
-        missingLinks: 0, // Filled in next pass
+        matchedAnchors: fragment.linkedIds,
+        missingLinks: 0,
       });
 
-      // Log recall events only for explicit user-triggered search.
       if (recallMode === "explicit" && originalQuery) {
         db.prepare(`INSERT INTO recall_log (fragment_id, query, score, recalled_at) VALUES (?, ?, ?, ?)`).run(
           fragment.id, originalQuery, score, Date.now()
@@ -226,9 +299,9 @@ async function vectorSearch(
     }
   }
 
-  // Compute real missingLinks: how many linkedIds are NOT in the hit set
+  // Compute missingLinks from preloaded link map (no extra queries)
   for (const result of results) {
-    const linkedIds = hitLinkedIds.get(result.fragment.id) ?? [];
+    const linkedIds = linkMap.get(result.fragment.id) ?? [];
     const missedLinks = linkedIds.filter((lid) => !hitIds.has(lid));
     result.missingLinks = missedLinks.length;
     result.matchedAnchors = linkedIds.filter((lid) => hitIds.has(lid));
@@ -237,5 +310,7 @@ async function vectorSearch(
   return {
     results: results.sort((a, b) => b.score - a.score).slice(0, limit),
     cache,
+    cacheHits,
+    cacheMisses,
   };
 }

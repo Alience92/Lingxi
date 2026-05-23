@@ -50,6 +50,18 @@ export class MemoryEngine {
     const db = getDb();
     const result = await this.callFragmenter(input);
     if (result.fragments.length === 0) {
+      // Fallback: if API returned no fragments but transcript has substance,
+      // create a basic summary fragment so content isn't silently lost.
+      const fallback = this.buildFallbackFragment(input);
+      if (fallback) {
+        const persisted = await persistFragments({
+          output: { fragments: [fallback], summary: fallback.summary },
+          sessionId: input.sessionId,
+          projectId: input.projectId,
+        });
+        db.prepare(`UPDATE sessions SET pending_fragmentation = 0 WHERE id = ?`).run(input.sessionId);
+        return persisted;
+      }
       db.prepare(`UPDATE sessions SET pending_fragmentation = 0 WHERE id = ?`).run(input.sessionId);
       return [];
     }
@@ -59,6 +71,38 @@ export class MemoryEngine {
       sessionId: input.sessionId,
       projectId: input.projectId,
     });
+  }
+
+  private buildFallbackFragment(input: FragmentationInput) {
+    const text = input.transcript.trim();
+    // Only create fallback for substantial transcripts (> 500 chars of user/assistant content)
+    const meaningfulLines = text.split("\n").filter(
+      (l) => l.startsWith("User:") || l.startsWith("Assistant:")
+    );
+    if (meaningfulLines.length < 5) return null;
+
+    const sample = meaningfulLines
+      .slice(0, 10)
+      .map((l) => l.slice(0, 100))
+      .join("; ");
+    const summary = sample.slice(0, 50);
+
+    return {
+      id: `fallback-${input.sessionId.slice(0, 8)}-${Date.now()}`,
+      sessionId: input.sessionId,
+      projectId: input.projectId,
+      anchors: [{
+        channel: "WHAT" as const,
+        label: `会话摘要: ${summary}`,
+        weight: 10,
+        source: "clustering" as const,
+        timestamp: Date.now(),
+      }],
+      linkedIds: [] as string[],
+      linkedCount: 0,
+      summary,
+      createdAt: Date.now(),
+    };
   }
 
   // Run decay on all active fragments

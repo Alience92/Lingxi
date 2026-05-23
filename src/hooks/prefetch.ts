@@ -2,7 +2,9 @@
 // runs prefetch across ALL known projects, outputs relevant memories to stdout
 
 import { openDb, getDb } from "../db/connection.js";
-import { prefetch } from "../core/retriever.js";
+import { prefetch, getLastPrefetchTiming } from "../core/retriever.js";
+
+const HOOK_TIMING = process.env.AGENTMEMORY_PERF_TIMING === "1";
 
 async function main() {
   // Read hook input from stdin
@@ -65,20 +67,28 @@ async function main() {
   let bestBlock = "";
   let bestConfidence = 0;
 
-  // Debug logging disabled for production
-console.error(`[AgentMemory] debug: query="${userMessage.slice(0, 80)}", projects=${projectIds.join(",")}`);
+  const tHookStart = Date.now();
 
   for (const pid of projectIds) {
     try {
       const pre = await prefetch([{ role: "user", text: userMessage }], pid);
-      // Debug logging disabled for production
-console.error(`[AgentMemory] debug: project=${pid} confidence=${pre.confidence.toFixed(3)} fragmentIds=${pre.fragmentIds.join(",")}`);
       if (pre.confidence > bestConfidence && pre.contextBlock) {
         bestConfidence = pre.confidence;
         bestBlock = pre.contextBlock;
       }
     } catch (e) {
       console.error(`[AgentMemory] prefetch error for project ${pid}:`, (e as Error).message?.slice(0, 120) || e);
+    }
+  }
+
+  const tHookTotal = Date.now() - tHookStart;
+
+  if (HOOK_TIMING) {
+    const t = getLastPrefetchTiming();
+    if (t) {
+      console.error(`[AgentMemory] timing: hook=${tHookTotal}ms prefetch(embed=${t.embedMs}ms search=${t.vectorSearchMs}ms mmr=${t.mmrMs}ms total=${t.totalMs}ms) cache(hits=${t.cacheHits} misses=${t.cacheMisses}) candidates=${t.candidatesFound}→${t.selectedCount}`);
+    } else {
+      console.error(`[AgentMemory] timing: hook=${tHookTotal}ms (no detail)`);
     }
   }
 

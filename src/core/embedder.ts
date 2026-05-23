@@ -72,6 +72,19 @@ export class Embedder {
     return embedHash(text);
   }
 
+  /** Batch embed multiple texts in a single API call. Falls back to hash if API fails. */
+  async embedBatch(texts: string[], purpose: EmbedPurpose = "store"): Promise<number[][]> {
+    if (texts.length === 0) return [];
+    if (this.apiKey && this.apiKey.length > 10 && this.apiKey !== "test-key") {
+      try {
+        return await this.embedBatchViaApi(texts, purpose);
+      } catch {
+        // Fall through to hash fallback
+      }
+    }
+    return texts.map((t) => embedHash(t));
+  }
+
   private async embedViaApi(text: string, purpose: EmbedPurpose): Promise<number[]> {
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), 15_000);
@@ -87,6 +100,40 @@ export class Embedder {
   }
 
   // ── MiniMax API ───────────────────────────────────────────────────
+
+  private async embedBatchViaApi(texts: string[], purpose: EmbedPurpose): Promise<number[][]> {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 30_000);
+    try {
+      if (this.isMiniMax()) {
+        const url = `${this.baseURL}/v1/embeddings${this.groupId ? `?GroupId=${this.groupId}` : ""}`;
+        const response = await fetch(url, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "Authorization": `Bearer ${this.apiKey}` },
+          body: JSON.stringify({ model: "embo-01", texts, type: purpose === "query" ? "query" : "db" }),
+          signal: controller.signal,
+        });
+        if (!response.ok) throw new Error(`MiniMax batch embeddings returned ${response.status}`);
+        const data = await response.json() as { vectors?: number[][]; base_resp?: { status_code?: number } };
+        if (data.base_resp?.status_code && data.base_resp.status_code !== 0) {
+          throw new Error(`MiniMax API error: ${data.base_resp.status_code}`);
+        }
+        return (data.vectors ?? []).map((v) => normalize(v));
+      }
+      // OpenAI-compatible batch
+      const response = await fetch(`${this.baseURL}/v1/embeddings`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${this.apiKey}` },
+        body: JSON.stringify({ model: OPENAI_MODEL, input: texts, encoding_format: "float" }),
+        signal: controller.signal,
+      });
+      if (!response.ok) throw new Error(`Batch embedding API returned ${response.status}`);
+      const data = await response.json() as { data: Array<{ embedding: number[] }> };
+      return (data.data ?? []).map((d) => normalize(d.embedding));
+    } finally {
+      clearTimeout(timer);
+    }
+  }
 
   private async embedMiniMax(text: string, purpose: EmbedPurpose, signal: AbortSignal): Promise<number[]> {
     const url = `${this.baseURL}/v1/embeddings${this.groupId ? `?GroupId=${this.groupId}` : ""}`;
