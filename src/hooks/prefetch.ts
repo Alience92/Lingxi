@@ -1,11 +1,10 @@
-// UserPromptSubmit hook: reads hook event JSON from stdin, extracts user message, searches L1
+// UserPromptSubmit hook: reads hook event JSON from stdin, extracts user message,
+// runs prefetch across ALL known projects, outputs relevant memories to stdout
 
 import { openDb, getDb } from "../db/connection.js";
 import { prefetch } from "../core/retriever.js";
 
 async function main() {
-  const projectId = process.env.AGENTMEMORY_PROJECT || "claude-auto-memory";
-
   // Read hook input from stdin
   const chunks: Buffer[] = [];
   for await (const chunk of process.stdin) {
@@ -18,7 +17,6 @@ async function main() {
   let userMessage = rawInput;
   try {
     const obj = JSON.parse(rawInput);
-    // Claude Code UserPromptSubmit passes the prompt text. Try common field names.
     const candidates = ["prompt", "text", "message", "user_message", "content", "prompt_text", "input", "query"];
     let found = false;
     for (const key of candidates) {
@@ -30,7 +28,6 @@ async function main() {
       }
     }
     if (!found) {
-      // Try to guess: use the longest string field in the object
       let longest = "";
       for (const [k, v] of Object.entries(obj)) {
         if (typeof v === "string" && v.length > longest.length && !v.startsWith("{")) {
@@ -44,21 +41,44 @@ async function main() {
   if (!userMessage || userMessage === rawInput) return;
 
   openDb();
+  const db = getDb();
 
-  // Ensure session record
+  // Record session under every known project
+  let sessionId = "unknown";
   try {
     const obj = JSON.parse(rawInput);
-    const sessionId = obj.session_id || obj.sessionId || "unknown";
-    getDb().prepare(`INSERT OR REPLACE INTO sessions (id, project_id, started_at, pending_fragmentation) VALUES (?, ?, ?, 0)`).run(
-      sessionId, projectId, Date.now()
-    );
+    sessionId = obj.session_id || obj.sessionId || "unknown";
   } catch {}
 
-  // Use unified P2 prefetch (anchor-weighted + clustered + MMR)
-  const pre = await prefetch([{ role: "user", text: userMessage }], projectId);
+  const projectIds = (db.prepare("SELECT id FROM projects").all() as Array<{ id: string }>).map((p) => p.id);
+  if (projectIds.length === 0) {
+    projectIds.push(process.env.AGENTMEMORY_PROJECT || "claude-auto-memory");
+  }
 
-  if (pre.confidence > 0 && pre.contextBlock) {
-    console.log(`[AgentMemory] 相关记忆:\n${pre.contextBlock}`);
+  for (const pid of projectIds) {
+    db.prepare(`INSERT OR IGNORE INTO sessions (id, project_id, started_at, pending_fragmentation) VALUES (?, ?, ?, 0)`).run(
+      sessionId, pid, Date.now()
+    );
+  }
+
+  // Run prefetch across all projects, collect the best results
+  let bestBlock = "";
+  let bestConfidence = 0;
+
+  for (const pid of projectIds) {
+    try {
+      const pre = await prefetch([{ role: "user", text: userMessage }], pid);
+      if (pre.confidence > bestConfidence && pre.contextBlock) {
+        bestConfidence = pre.confidence;
+        bestBlock = pre.contextBlock;
+      }
+    } catch {
+      // Project might not have fragments — skip silently
+    }
+  }
+
+  if (bestConfidence > 0 && bestBlock) {
+    console.log(`[AgentMemory] 相关记忆:\n${bestBlock}`);
   }
 }
 
