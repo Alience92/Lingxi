@@ -18,10 +18,11 @@ export async function prefetch(
   if (messages.length === 0) return { contextBlock: "", fragmentIds: [], confidence: 0 };
 
   const queryText = messages.slice(-3).map((m) => m.text).join("\n");
-  const queryVec = await getCurrentEmbedder().embed(queryText, "query");
+  const embedder = getCurrentEmbedder();
+  const queryVec = await embedder.embed(queryText, "query");
 
-  // Get more candidates for reranking
-  const candidates = await vectorSearch(queryVec, projectId, 20, DEFAULT_MIN_SCORE * 0.6);
+  // Get more candidates for reranking — also get the per-query embedding cache
+  const { results: candidates, cache } = await vectorSearch(queryVec, projectId, 20, DEFAULT_MIN_SCORE * 0.6);
 
   if (candidates.length === 0) return { contextBlock: "", fragmentIds: [], confidence: 0 };
 
@@ -40,25 +41,23 @@ export async function prefetch(
     if (usedIds.has(candidate.fragment.id)) continue;
     if (selected.length >= 3) break;
 
-    // MMR penalty: higher similarity to selected fragments should reduce score.
+    // MMR penalty: reuse cached embeddings from vectorSearch
     let mmrPenalty = 0;
     let maxSim = 0;
+    const candVec = cache.get(candidate.fragment.id);
     for (const sel of selected) {
-      const sim = cosineSimilarity(
-        await getCurrentEmbedder().embed(candidate.fragment.summary),
-        await getCurrentEmbedder().embed(sel.fragment.summary)
-      );
+      const selVec = cache.get(sel.fragment.id);
+      if (!candVec || !selVec) continue;
+      const sim = cosineSimilarity(candVec, selVec);
       maxSim = Math.max(maxSim, sim);
       mmrPenalty = Math.max(mmrPenalty, sim * PREFETCH_MMR_PENALTY_FACTOR);
     }
-    // Near-duplicate (sim > 0.95): always skip, regardless of composite score
     if (maxSim > 0.95 && selected.length > 0) continue;
     const mmrScore = candidate.compositeScore - mmrPenalty;
     if (mmrScore < PREFETCH_MMR_MIN_SCORE && selected.length > 0) continue;
 
     selected.push(candidate);
     usedIds.add(candidate.fragment.id);
-    // Also pull linked fragments into the cluster
     for (const linkedId of candidate.fragment.linkedIds) {
       usedIds.add(linkedId);
     }
@@ -91,15 +90,21 @@ export async function explicitSearch(
   maxResults: number = DEFAULT_MAX_RESULTS
 ): Promise<SearchResult[]> {
   const queryVec = await getCurrentEmbedder().embed(query, "query");
-  return await vectorSearch(queryVec, projectId, maxResults, minScore, {
+  const { results } = await vectorSearch(queryVec, projectId, maxResults, minScore, {
     recallMode: "explicit",
     query,
   });
+  return results;
 }
 
 interface SearchOptions {
   recallMode?: "prefetch" | "explicit";
   query?: string;
+}
+
+interface VectorSearchResult {
+  results: SearchResult[];
+  cache: Map<string, number[]>;  // fragmentId → embedding vector
 }
 
 async function vectorSearch(
@@ -108,15 +113,19 @@ async function vectorSearch(
   limit: number,
   minScore: number,
   options: SearchOptions = {}
-): Promise<SearchResult[]> {
+): Promise<VectorSearchResult> {
   const db = getDb();
   const recallMode = options.recallMode ?? "prefetch";
   const originalQuery = options.query ?? "";
+  const embedder = getCurrentEmbedder();
 
   const rows = db.prepare(`
     SELECT * FROM fragments
     WHERE project_id = ? AND status = 'active' AND decay_score > 0
   `).all(projectId) as Fragment[];
+
+  // Per-query embedding cache — avoid recomputing the same fragment vector
+  const cache = new Map<string, number[]>();
 
   // Hydrate anchors and linkedIds — raw DB rows only have scalar columns
   for (const row of rows) {
@@ -142,7 +151,9 @@ async function vectorSearch(
   const hitLinkedIds = new Map<string, string[]>(); // fragmentId → its linkedIds
 
   for (const fragment of rows) {
-    const fragVec = await getCurrentEmbedder().embed(fragment.summary);
+    // Embed once and cache — MMR in prefetch() reuses this
+    const fragVec = await embedder.embed(fragment.summary);
+    cache.set(fragment.id, fragVec);
     const score = cosineSimilarity(queryVec, fragVec);
 
     if (score >= minScore) {
@@ -181,7 +192,8 @@ async function vectorSearch(
     result.matchedAnchors = linkedIds.filter((lid) => hitIds.has(lid));
   }
 
-  return results
-    .sort((a, b) => b.score - a.score)
-    .slice(0, limit);
+  return {
+    results: results.sort((a, b) => b.score - a.score).slice(0, limit),
+    cache,
+  };
 }

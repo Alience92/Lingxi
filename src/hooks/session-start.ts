@@ -112,10 +112,14 @@ async function main() {
     }
   }
 
-  // Record current session (under the primary project)
-  db.prepare(`INSERT OR REPLACE INTO sessions (id, project_id, started_at, pending_fragmentation) VALUES (?, ?, ?, 0)`).run(
+  // Record current session (under the primary project).
+  // Use INSERT OR IGNORE to avoid overwriting pending_fragmentation=1
+  // that may have been set by compactSession() in a previous run.
+  db.prepare(`INSERT OR IGNORE INTO sessions (id, project_id, started_at, pending_fragmentation) VALUES (?, ?, ?, 0)`).run(
     sessionId, projectIds[0] || defaultProjectId, Date.now()
   );
+  // If the row already existed, make sure started_at is refreshed
+  db.prepare(`UPDATE sessions SET started_at = ? WHERE id = ?`).run(Date.now(), sessionId);
 
   // ── Output ────────────────────────────────────────────────────────
 
