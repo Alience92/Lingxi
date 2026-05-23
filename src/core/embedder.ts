@@ -52,6 +52,11 @@ export class Embedder {
     if (m) this.groupId = m[1]!;
   }
 
+  /** Whether this embedder will use hash fallback (no API key configured). */
+  isHashOnly(): boolean {
+    return !this.apiKey || this.apiKey.length <= 10 || this.apiKey === "test-key";
+  }
+
   private isMiniMax(): boolean {
     return this.baseURL.includes("minimax");
   }

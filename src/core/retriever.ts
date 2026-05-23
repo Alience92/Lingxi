@@ -2,8 +2,19 @@ import type { Fragment, SearchResult, PrefetchResult, SessionContext } from "../
 import { getDb } from "../db/connection.js";
 import { getCurrentEmbedder, cosineSimilarity } from "./embedder.js";
 
-export const DEFAULT_MIN_SCORE = 0.30;
+const API_MIN_SCORE = 0.30;
+const HASH_MIN_SCORE = 0.12;
 const DEFAULT_MAX_RESULTS = 6;
+
+function getDefaultMinScore(): number {
+  try {
+    return getCurrentEmbedder().isHashOnly() ? HASH_MIN_SCORE : API_MIN_SCORE;
+  } catch {
+    return HASH_MIN_SCORE;
+  }
+}
+
+export const DEFAULT_MIN_SCORE = API_MIN_SCORE; // legacy constant for external callers
 // Prefetch MMR diversity threshold — independent of search minScore to keep filtering strict
 const PREFETCH_MMR_MIN_SCORE = 0.18;
 const PREFETCH_MMR_PENALTY_FACTOR = 0.6;
@@ -22,7 +33,7 @@ export async function prefetch(
   const queryVec = await embedder.embed(queryText, "query");
 
   // Get more candidates for reranking — also get the per-query embedding cache
-  const { results: candidates, cache } = await vectorSearch(queryVec, projectId, 20, DEFAULT_MIN_SCORE * 0.6);
+  const { results: candidates, cache } = await vectorSearch(queryVec, projectId, 20, getDefaultMinScore() * 0.6);
 
   if (candidates.length === 0) return { contextBlock: "", fragmentIds: [], confidence: 0 };
 
@@ -86,9 +97,10 @@ export async function prefetch(
 export async function explicitSearch(
   query: string,
   projectId: string,
-  minScore: number = DEFAULT_MIN_SCORE,
+  minScore?: number,
   maxResults: number = DEFAULT_MAX_RESULTS
 ): Promise<SearchResult[]> {
+  minScore = minScore ?? getDefaultMinScore();
   const queryVec = await getCurrentEmbedder().embed(query, "query");
   const { results } = await vectorSearch(queryVec, projectId, maxResults, minScore, {
     recallMode: "explicit",
