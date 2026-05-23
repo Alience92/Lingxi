@@ -65,9 +65,12 @@ async function main() {
   let bestBlock = "";
   let bestConfidence = 0;
 
+  console.error(`[AgentMemory] debug: query="${userMessage.slice(0, 80)}", projects=${projectIds.join(",")}`);
+
   for (const pid of projectIds) {
     try {
       const pre = await prefetch([{ role: "user", text: userMessage }], pid);
+      console.error(`[AgentMemory] debug: project=${pid} confidence=${pre.confidence.toFixed(3)} fragmentIds=${pre.fragmentIds.join(",")}`);
       if (pre.confidence > bestConfidence && pre.contextBlock) {
         bestConfidence = pre.confidence;
         bestBlock = pre.contextBlock;
