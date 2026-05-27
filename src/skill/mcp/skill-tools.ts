@@ -3,6 +3,7 @@ import { explicitSearch, buildMemoryEvent } from "../../core/retriever.js";
 import { fourLayerRecall } from "../../core/backup-recall.js";
 import { getDb } from "../../db/connection.js";
 import { buildFragmentationPrompt, parseFragmentationResponse, resolveLinks } from "../../core/fragmenter.js";
+import { getMemoryHealth } from "../../core/health.js";
 import { scanExistingMemoryFiles, buildInstallMessage, injectAgentsMdAppendix } from "./install.js";
 import * as fs from "node:fs";
 import * as path from "node:path";
@@ -400,6 +401,10 @@ export function buildToolHandlers(engine: MemoryEngine) {
 
       // Step 3: Just scanning, return estimate
       return { estimate, imported: false, message };
+    },
+
+    memory_health(params: { projectId: string }) {
+      return getMemoryHealth(params.projectId);
     },
   };
 }

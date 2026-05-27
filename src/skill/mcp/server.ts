@@ -216,6 +216,15 @@ const TOOL_DEFINITIONS = [
     },
   },
   {
+    name: "memory_health",
+    description: "Get memory system health report: fragment counts, channel balance (WHAT/FEEL/WHO/WHERE), query stats (24h), and active alerts (backlog, zero-hit rate, channel bias, dreaming stall).",
+    inputSchema: {
+      type: "object",
+      properties: { projectId: { type: "string", description: "Project identifier" } },
+      required: ["projectId"],
+    },
+  },
+  {
     name: "memory_alias",
     description: "Manage terminology aliases for symbol grounding. Map old terms to new canonical terms so queries using either name can find matching fragments. Example: 'MEM-SYM' -> '灵犀' so old fragments with 'MEM-SYM' are found by queries using '灵犀'.",
     inputSchema: {

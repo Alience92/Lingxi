@@ -1,5 +1,11 @@
-// PostCompact: mark session for fragmentation, store compact_summary + task_brief
+// PostCompact: mark session for fragmentation + spawn background worker
 import { openDb, getDb } from "../../db/connection.js";
+import * as path from "node:path";
+import { spawn } from "node:child_process";
+import { fileURLToPath } from "node:url";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 async function main() {
   const chunks: Buffer[] = [];
@@ -40,6 +46,21 @@ async function main() {
       compacted_at = excluded.compacted_at,
       pending_fragmentation = excluded.pending_fragmentation
   `).run(sessionId, projectId, existing?.started_at ?? compactedAt, compactSummary, taskBrief, compactedAt);
+
+  // Lazy fragmentation: claim + spawn background worker
+  const claimed = db.prepare(
+    `UPDATE sessions SET pending_fragmentation = 2, locked_at = ? WHERE id = ? AND pending_fragmentation = 1`
+  ).run(Date.now(), sessionId);
+
+  if (claimed.changes > 0) {
+    const workerPath = path.join(__dirname, "auto-fragment.js");
+    spawn("node", [workerPath, `--project=${projectId}`, `--sessions=${sessionId}`], {
+      detached: true,
+      stdio: "ignore",
+      windowsHide: true,
+    }).unref();
+    console.error(`[AgentMemory] 后台碎片化已启动: ${sessionId.slice(0, 8)}`);
+  }
 
   console.log(`[AgentMemory] Session ${sessionId.slice(0, 8)} flagged.`);
 }

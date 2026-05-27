@@ -1,6 +1,13 @@
-// SessionStart hook: L0 rules + cross-session continuity + active_context
+// SessionStart: L0 rules + cross-session continuity + active_context + stall recovery
 import { openDb, getDb } from "../../db/connection.js";
 import { CONSTITUTIONAL_WEIGHT_THRESHOLD } from "../../core/decay.js";
+import * as path from "node:path";
+import { spawn } from "node:child_process";
+import { fileURLToPath } from "node:url";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const STALE_LOCK_MS = 30 * 60 * 1000; // 30 min — worker died, reclaim
 
 async function main() {
   const chunks: Buffer[] = [];
@@ -17,6 +24,36 @@ async function main() {
   db.prepare(`INSERT OR IGNORE INTO projects (id, name, workspace_dir, created_at) VALUES (?, ?, '', ?)`).run(projectId, projectId, Date.now());
   db.prepare(`INSERT OR IGNORE INTO sessions (id, project_id, started_at, pending_fragmentation) VALUES (?, ?, ?, 0)`).run(sessionId, projectId, Date.now());
   db.prepare(`UPDATE sessions SET started_at = ? WHERE id = ?`).run(Date.now(), sessionId);
+
+  // Stall recovery: reclaim dead-locked sessions + catch up pending ones
+  const staleThreshold = Date.now() - STALE_LOCK_MS;
+  const recovered = db.prepare(
+    `UPDATE sessions SET pending_fragmentation = 1, locked_at = NULL WHERE project_id = ? AND pending_fragmentation = 2 AND locked_at < ?`
+  ).run(projectId, staleThreshold);
+  if (recovered.changes > 0) {
+    console.error(`[AgentMemory] 恢复 ${recovered.changes} 个死锁会话`);
+  }
+
+  // Opportunistic catch-up: claim + spawn worker for one pending session
+  const pending = db.prepare(
+    `SELECT id FROM sessions WHERE project_id = ? AND pending_fragmentation = 1 ORDER BY started_at ASC LIMIT 1`
+  ).get(projectId) as { id: string } | undefined;
+
+  if (pending) {
+    const claimed = db.prepare(
+      `UPDATE sessions SET pending_fragmentation = 2, locked_at = ? WHERE id = ? AND pending_fragmentation = 1`
+    ).run(Date.now(), pending.id);
+
+    if (claimed.changes > 0) {
+      const workerPath = path.join(__dirname, "auto-fragment.js");
+      spawn("node", [workerPath, `--project=${projectId}`, `--sessions=${pending.id}`], {
+        detached: true,
+        stdio: "ignore",
+        windowsHide: true,
+      }).unref();
+      console.error(`[AgentMemory] 后台碎片化补触发: ${pending.id.slice(0, 8)}`);
+    }
+  }
 
   // L0 distilled rules
   const rules = db.prepare(`

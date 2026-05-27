@@ -2,60 +2,88 @@ import type { FragmentationInput, FragmentationOutput, Channel, SignalSource, Fr
 import { v4 as uuid } from "uuid";
 import OpenAI from "openai";
 
-const FRAGMENT_PROMPT = `将以下对话拆分为记忆碎片。对每段有实质内容的对话，输出JSON数组。
+const FRAGMENT_PROMPT = `你是记忆提取专家。分析以下对话，严格按 JSON 数组格式输出记忆碎片。
 
-### 通道判别规则（重要：先判断类型，再选通道）
+### 核心原则：四通道强制覆盖
 
-**FEEL通道 ≠ 用户表达了观点。FEEL = 用户对Agent的工作/行为表达了情绪反馈。**
-判定FEEL的充要条件：用户的话直接回应Agent的行为、结果、错误、或工作方式，且包含情绪信号。
+对话中同时存在 WHAT（内容）、WHERE（场景）、WHO（人物）、FEEL（反馈）四类信息。
+你的任务不是"选最重要的那个"——是**把每类信息都提取出来**。
 
-FEEL 具体判据（weight 赋值标准）：
-- 纠正(80)：用户指出Agent犯了具体错误，且给出了正确方向。
-  例："不是这样，你应该用A而不是B" / "你搞错了，之前说的不是这个意思"
-- 挫败(90)：用户对结果/流程/Agent行为表达不满、失望、不耐烦。
-  例："又来了""你怎么又忘了""我真的无语了""这个问题说了多少次了"
-- 紧迫(50)：用户要求优先或加速处理某个事项。
-  例："先做这个""这个比较急""别的不用管，先把这个修了"
-- 忽略(40)：Agent提出了建议但用户跳过或选了另一个方向。
-- 确认(30)：用户明确认可Agent的工作方向或结果。
+### 通道判定规则
 
-**以下情况不是FEEL，应归入WHAT**：
-- 用户陈述一个事实或观点（即使涉及情绪词汇如"烦""难"）→ WHAT
-- 用户描述项目中的问题（不是指责Agent）→ WHAT
-- 用户说"我之前/上次说的是X"（是纠正事实，不是纠正Agent）→ WHAT
-- 用户对项目/代码/设计表达挫败（不是对Agent）→ WHAT
+**WHAT — 实质内容**（必须提取）
+- 决策、方案、需求、背景、约束、技术细节
+- 任何有实质信息内容的对话都应产生 WHAT 碎片
 
-判断方法：问自己"这句话是针对Agent行为/工作的吗？" 不是 → WHAT。是 → 再判断哪个FEEL子类。
+**WHERE — 场景/环境**（有信息时必须提取，不可跳过）
+- 文件路径（/src/auth/login.ts, D:/project/...）
+- 项目名称、模块名称、数据库表名
+- 工具/平台（VSCode, Claude Code, GitHub, Docker）
+- 时间节点（deadline、版本号、里程碑）
+- ⚠️ 如果原文提到了任何文件、项目、工具、路径 → 必须产生 WHERE 碎片
 
-**WHAT通道**：记录所有实质信息——决策、需求、背景、约束、技术细节。
-**WHO通道**：记录人际关系信息——提到具体人或团队时的角色、协作方式。
-**WHERE通道**：记录场景/环境信息——在什么平台、用什么工具、什么时间节点。
+**WHO — 人物/角色**（有信息时必须提取，不可跳过）
+- 说话人身份（用户、PM、后端工程师）
+- 协作关系（谁负责什么、向谁汇报）
+- 提到的具体人或团队
+- ⚠️ 如果原文提到了任何角色、人名、协作关系 → 必须产生 WHO 碎片
 
-每条碎片包含以下字段（所有字段均为必填，不可省略）：
+**FEEL — 用户对Agent行为的情绪反馈**（精确判据）
+- 纠正(80)：用户指出Agent犯了具体错误并给出正确方向
+- 挫败(90)：用户对Agent行为表达不满、失望、不耐烦
+- 紧迫(50)：用户要求优先或加速处理
+- 确认(30)：用户明确认可Agent的工作方向或结果
+- ⚠️ 以下不是FEEL，应归入WHAT：陈述观点、描述项目问题（不是指责Agent）、纠正事实而非纠正Agent行为
 
-- channel: "WHAT"|"FEEL"|"WHO"|"WHERE"
-- label: ≤50字的压缩描述
-- weight: 0-255的权重（WHAT/WHO/WHERE默认weight=10）
-- summary: ≤50字的完整碎片文本
-- linkedTo: 同时产生的其他碎片序号(0-based数组)，不关联的写[]
+判断方法：问自己"这句话是针对Agent行为/工作方式的吗？" 不是 → WHAT。是 → 判断FEEL子类。
 
-- is_decision: boolean 【必填】该片段是否包含架构/技术/产品决策。判据：说话人明确做出了选择或决定了方向。
-  例 true → "决定用Redis替代Memcached""选了方案A不要方案B""定下来用React不用Vue"
-  例 false → "Redis很快"（陈述事实）"可以考虑用Redis"（提议未定）
+### 输出格式
 
-- is_todo: boolean 【必填】该片段是否包含待办事项或后续行动计划。判据：有明确的下一步动作。
-  例 true → "下一步要写单元测试""明天更新文档""这个bug需要修""记得加日志"
-  例 false → "测试通过了"（已完成）"代码有bug"（描述问题）
+每条碎片包含（所有字段必填，不可省略）：
+{
+  "channel": "WHAT"|"FEEL"|"WHO"|"WHERE",
+  "label": "≤50字压缩描述",
+  "weight": 0-255,
+  "summary": "≤50字完整碎片文本",
+  "linkedTo": [],
+  "is_decision": true/false,
+  "is_todo": true/false,
+  "is_preference": true/false
+}
 
-- is_preference: boolean 【必填】该片段是否表达了对工作方式、沟通风格或工具使用的个人偏好。判据：主观倾向而非客观事实。
-  例 true → "我喜欢先看代码再看文档""别用ORM手写SQL更清晰""每次改完跑一遍测试再提交"
-  例 false → "代码规范要求用Prettier"（客观规则）
+weight 规则：
+- WHAT / WHO / WHERE：默认 10
+- FEEL：按上述判据（纠正80/挫败90/紧迫50/确认30）
 
-三者互斥：每条碎片至多一个为true。纯事实/纯信息碎片可以全部为false。
-⚠️ 每个字段都必须出现在JSON中，不可省略。省略会导致数据静默丢失。
+is_decision / is_todo / is_preference 三者互斥（至多一个为true）。
+纯事实碎片可全部为 false。
 
-丢弃：闲聊、纯确认（"好的""知道了"无实质内容）、重复内容、无信息过渡语。
-如果某段对话不产生碎片，跳过。
+### 示例（好的输出）
+
+对话: "我要在 D:/project/src/auth.ts 里把 JWT 换成 RS256。后端老张说这样更安全。"
+输出:
+[
+  {"channel":"WHAT","label":"JWT换RS256","weight":10,"summary":"决定将auth.ts中的JWT替换为RS256","linkedTo":[1,2],"is_decision":true,"is_todo":true,"is_preference":false},
+  {"channel":"WHERE","label":"auth.ts文件","weight":10,"summary":"涉及文件 D:/project/src/auth.ts","linkedTo":[0],"is_decision":false,"is_todo":false,"is_preference":false},
+  {"channel":"WHO","label":"后端老张","weight":10,"summary":"老张（后端）建议RS256更安全","linkedTo":[0],"is_decision":false,"is_todo":false,"is_preference":false}
+]
+↑ 注意：一条对话产生了 WHAT + WHERE + WHO 三条碎片。这是正确的。
+
+### 示例（坏的输出——缺少通道）
+
+对话: "在 D:/project/src/auth.ts 把 JWT 换成 RS256，后端老张说更安全"
+输出: [{"channel":"WHAT","label":"JWT换RS256",...}]
+↑ 错误：漏掉了 WHERE（auth.ts文件路径）和 WHO（老张）。
+
+### 自检清单（输出前逐项确认）
+
+1. 对话中提到了文件/项目/工具？ → 有 WHERE 碎片吗？
+2. 对话中提到了人/角色/团队？ → 有 WHO 碎片吗？
+3. 用户是否在回应/评价Agent的行为？ → 有 FEEL 碎片吗？
+4. 每个 channel 的 summary 是否从对话中直接提取（不是臆造）？
+
+丢弃：纯闲聊、无实质确认（"好的""知道了"）、重复内容。
+如果某对话段不产生任何碎片，跳过。
 
 输入对话：
 {transcript}
@@ -93,6 +121,34 @@ function extractFirstJsonArray(raw: string): string | null {
   return null;
 }
 
+function validateChannelBalance(fragments: RawFragment[], sessionId: string): void {
+  let w = 0, f = 0, h = 0, r = 0;
+  for (const frag of fragments) {
+    switch (frag.channel) {
+      case "WHAT": w++; break;
+      case "FEEL": f++; break;
+      case "WHO": h++; break;
+      case "WHERE": r++; break;
+    }
+  }
+  const total = fragments.length;
+  if (total === 0) return;
+
+  const whatPct = w / total;
+  const wherePct = r / total;
+  const whoPct = h / total;
+
+  if (whatPct > 0.80 && total >= 3) {
+    console.error(`[AgentMemory] ⚠️ 通道偏见检测: WHAT占${(whatPct*100).toFixed(0)}% (${total}条碎片) session=${sessionId.slice(0,8)} — 可能缺少WHERE/WHO提取`);
+  }
+  if (wherePct === 0 && total >= 3) {
+    console.error(`[AgentMemory] ⚠️ WHERE通道为空 (${total}条碎片) session=${sessionId.slice(0,8)} — 检查对话中是否有文件/项目/工具信息被遗漏`);
+  }
+  if (whoPct === 0 && total >= 3) {
+    console.error(`[AgentMemory] ⚠️ WHO通道为空 (${total}条碎片) session=${sessionId.slice(0,8)} — 检查对话中是否有人物/角色信息被遗漏`);
+  }
+}
+
 export function parseFragmentationResponse(
   raw: string,
   sessionId: string,
@@ -105,6 +161,8 @@ export function parseFragmentationResponse(
   } catch {
     return { fragments: [], summary: "" };
   }
+
+  validateChannelBalance(parsed, sessionId);
 
   const validChannels = new Set(["WHAT", "FEEL", "WHO", "WHERE"]);
   const fragments = parsed

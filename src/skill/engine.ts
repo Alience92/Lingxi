@@ -155,60 +155,82 @@ export class MemoryEngine {
     return { archived, deleted };
   }
 
-  runDistillation(projectId: string): number {
+  runDistillation(projectId: string, options?: { minFeelScore?: number; minMembers?: number }): number {
+    const minFeelScore = options?.minFeelScore ?? 60;
+    const minMembers = options?.minMembers ?? 3;
     const db = getDb();
+
+    // Load fragments with their max FEEL weight for quality gating
     const fragments = db.prepare(`
-      SELECT f.id, f.summary, MIN(fa.label) AS label, MIN(fa.channel) AS channel
+      SELECT f.id, f.summary, MIN(fa.label) AS label, MIN(fa.channel) AS channel,
+             MAX(CASE WHEN fa.channel = 'FEEL' THEN fa.weight ELSE NULL END) as max_feel,
+             MAX(CASE WHEN fa.channel = 'FEEL' AND fa.weight >= 80 THEN 1 ELSE 0 END) as is_constitutional
       FROM fragments f
       JOIN fragment_anchors fa ON fa.fragment_id = f.id
       WHERE f.project_id = ? AND f.status = 'active'
       GROUP BY f.id, f.summary
-    `).all(projectId) as Array<{ id: string; summary: string; label: string; channel: string }>;
+    `).all(projectId) as Array<{ id: string; summary: string; label: string; channel: string; max_feel: number | null; is_constitutional: number }>;
 
-    const groups = new Map<string, Array<{ id: string; summary: string; label: string; channel: string }>>();
+    const groups = new Map<string, Array<{ id: string; summary: string; label: string; channel: string; maxFeel: number | null; isConstitutional: boolean }>>();
     for (const f of fragments) {
       const key = `${f.channel}:${(f.label || f.summary).slice(0, 15)}`;
       if (!groups.has(key)) groups.set(key, []);
-      groups.get(key)!.push({ id: f.id, summary: f.summary, label: f.label, channel: f.channel });
+      groups.get(key)!.push({
+        id: f.id, summary: f.summary, label: f.label, channel: f.channel,
+        maxFeel: f.max_feel, isConstitutional: f.is_constitutional === 1,
+      });
     }
 
     let distilled = 0;
     for (const [groupKey, members] of groups) {
-      if (members.length >= 3) {
-        const exemplar = members[0];
-        const labelBase = groupKey.split(":").slice(1).join(":");
-        const channel = exemplar?.channel ?? "WHAT";
-        const fingerprint = `${projectId}::${channel}::${labelBase.trim().toLowerCase()}`;
+      if (members.length < minMembers) continue;
 
-        const existingRule = db.prepare(`SELECT id FROM distilled_rules WHERE fingerprint = ?`).get(fingerprint) as { id: string } | undefined;
-        if (existingRule) {
-          for (const m of members) {
-            db.prepare(`INSERT OR IGNORE INTO rule_sources (rule_id, fragment_id, project_id) VALUES (?, ?, ?)`).run(
-              existingRule.id, m.id, projectId
-            );
-            db.prepare(`UPDATE fragments SET status = 'distilled', distilled_to = ? WHERE id = ?`).run(
-              existingRule.id, m.id
-            );
-          }
-          continue;
-        }
+      // Quality gate: average FEEL score across group must meet threshold
+      const feelScores = members.map(m => m.maxFeel).filter((s): s is number => s !== null);
+      const avgFeel = feelScores.length > 0 ? feelScores.reduce((a, b) => a + b, 0) / feelScores.length : 0;
+      if (avgFeel < minFeelScore) continue;
 
-        const ruleText = members.map((m) => m.summary).join("; ").slice(0, 100);
-        const ruleId = `rule-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+      const exemplar = members[0];
+      const labelBase = groupKey.split(":").slice(1).join(":");
+      const channel = exemplar?.channel ?? "WHAT";
+      const fingerprint = `${projectId}::${channel}::${labelBase.trim().toLowerCase()}`;
 
-        db.prepare(`INSERT OR IGNORE INTO distilled_rules (id, fingerprint, text, weight, created_at) VALUES (?, ?, ?, 1.0, ?)`).run(
-          ruleId, fingerprint, ruleText, Date.now()
-        );
+      const existingRule = db.prepare(`SELECT id FROM distilled_rules WHERE fingerprint = ?`).get(fingerprint) as { id: string } | undefined;
+      if (existingRule) {
         for (const m of members) {
           db.prepare(`INSERT OR IGNORE INTO rule_sources (rule_id, fragment_id, project_id) VALUES (?, ?, ?)`).run(
-            ruleId, m.id, projectId
+            existingRule.id, m.id, projectId
           );
           db.prepare(`UPDATE fragments SET status = 'distilled', distilled_to = ? WHERE id = ?`).run(
-            ruleId, m.id
+            existingRule.id, m.id
           );
         }
-        distilled++;
+        continue;
       }
+
+      // Rule text: use the most representative summary (longest with highest FEEL)
+      const best = members.reduce((a, b) =>
+        ((a.maxFeel ?? 0) + a.summary.length * 0.01) > ((b.maxFeel ?? 0) + b.summary.length * 0.01) ? a : b
+      );
+      const ruleText = best!.summary.slice(0, 100);
+
+      // Constitutional gate: rule weight based on source fragment FEEL scores
+      const hasConstitutional = members.some(m => m.isConstitutional);
+      const ruleWeight = hasConstitutional ? 2.0 : (avgFeel / 100);
+
+      const ruleId = `rule-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+      db.prepare(`INSERT OR IGNORE INTO distilled_rules (id, fingerprint, text, weight, created_at) VALUES (?, ?, ?, ?, ?)`).run(
+        ruleId, fingerprint, ruleText, ruleWeight, Date.now()
+      );
+      for (const m of members) {
+        db.prepare(`INSERT OR IGNORE INTO rule_sources (rule_id, fragment_id, project_id) VALUES (?, ?, ?)`).run(
+          ruleId, m.id, projectId
+        );
+        db.prepare(`UPDATE fragments SET status = 'distilled', distilled_to = ? WHERE id = ?`).run(
+          ruleId, m.id
+        );
+      }
+      distilled++;
     }
     return distilled;
   }
