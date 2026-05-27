@@ -69,10 +69,22 @@ async function main() {
   }
 
   // Step 1: Decay with constitutional protection
-  const stats = engine.runDecay({ protectConstitutional: true });
+  let stats = { archived: 0, deleted: 0 };
+  try {
+    stats = engine.runDecay({ protectConstitutional: true });
+    console.error(`[AgentMemory] dreaming: decay done — ${stats.archived} archived, ${stats.deleted} deleted`);
+  } catch (e) {
+    console.error(`[AgentMemory] dreaming: decay failed:`, (e as Error).message?.slice(0, 80));
+  }
 
   // Step 2: Distillation — cluster similar labels, merge ≥3 into L0 rules
-  const distilled = engine.runDistillation(projectId);
+  let distilled = 0;
+  try {
+    distilled = engine.runDistillation(projectId);
+    console.error(`[AgentMemory] dreaming: distillation done — ${distilled} rules`);
+  } catch (e) {
+    console.error(`[AgentMemory] dreaming: distillation failed:`, (e as Error).message?.slice(0, 80));
+  }
 
   // Step 2.5: Auto-alias detection — map abandoned terminology to current canonical terms
   const NOW = Date.now();
@@ -97,59 +109,63 @@ async function main() {
     LIMIT 50
   `).all(projectId, NOW - SEVEN_DAYS) as Array<{ id: string; summary: string; vector: Buffer }>;
 
+  let autoAliasCount = 0;
   if (abandonedFrags.length > 0 && recentFrags.length > 0) {
-    let autoAliasCount = 0;
-    for (const aFrag of abandonedFrags) {
-      if (autoAliasCount >= 5) break;
-      if (!aFrag.vector || aFrag.vector.length < 4) continue;
-      const aVec = Array.from(new Float32Array(aFrag.vector.buffer, aFrag.vector.byteOffset, aFrag.vector.length / 4));
+    try {
+      for (const aFrag of abandonedFrags) {
+        if (autoAliasCount >= 5) break;
+        if (!aFrag.vector || aFrag.vector.length < 4) continue;
+        const aVec = Array.from(new Float32Array(aFrag.vector.buffer, aFrag.vector.byteOffset, aFrag.vector.length / 4));
 
-      for (const rFrag of recentFrags) {
-        if (!rFrag.vector || rFrag.vector.length < 4) continue;
-        const rVec = Array.from(new Float32Array(rFrag.vector.buffer, rFrag.vector.byteOffset, rFrag.vector.length / 4));
-        const sim = cosineSimilarity(aVec, rVec);
+        for (const rFrag of recentFrags) {
+          if (!rFrag.vector || rFrag.vector.length < 4) continue;
+          const rVec = Array.from(new Float32Array(rFrag.vector.buffer, rFrag.vector.byteOffset, rFrag.vector.length / 4));
+          const sim = cosineSimilarity(aVec, rVec);
 
-        if (sim > ALIAS_SIM_THRESHOLD) {
-          const getBigrams = (s: string) => {
-            const set = new Set<string>();
-            for (let i = 0; i < s.length - 1; i++) {
-              const bg = s.slice(i, i + 2);
-              if (/[一-鿿]/.test(bg[0]!) && /[一-鿿]/.test(bg[1]!)) set.add(bg);
+          if (sim > ALIAS_SIM_THRESHOLD) {
+            const getBigrams = (s: string) => {
+              const set = new Set<string>();
+              for (let i = 0; i < s.length - 1; i++) {
+                const bg = s.slice(i, i + 2);
+                if (/[一-鿿]/.test(bg[0]!) && /[一-鿿]/.test(bg[1]!)) set.add(bg);
+              }
+              const toks = s.match(/[a-zA-Z0-9_]{2,}/g) || [];
+              for (const t of toks) set.add(t.toLowerCase());
+              return set;
+            };
+
+            const aBigrams = getBigrams(aFrag.summary);
+            const rBigrams = getBigrams(rFrag.summary);
+
+            const aOnly = [...aBigrams].filter(b => !rBigrams.has(b));
+            const rOnly = [...rBigrams].filter(b => !aBigrams.has(b));
+
+            if (aOnly.length > 0 && rOnly.length > 0) {
+              const aliasTerm = aOnly[0]!;
+              const canonicalTerm = rOnly[0]!;
+              const exists = db.prepare(
+                "SELECT id FROM aliases WHERE project_id = ? AND canonical = ? AND alias = ?"
+              ).get(projectId, canonicalTerm, aliasTerm);
+              if (!exists) {
+                db.prepare(`
+                  INSERT OR IGNORE INTO aliases (id, project_id, canonical, alias, source, confidence, created_at)
+                  VALUES (?, ?, ?, ?, 'auto', 0.7, ?)
+                `).run(
+                  `alias-auto-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+                  projectId, canonicalTerm, aliasTerm, NOW
+                );
+                autoAliasCount++;
+              }
             }
-            const toks = s.match(/[a-zA-Z0-9_]{2,}/g) || [];
-            for (const t of toks) set.add(t.toLowerCase());
-            return set;
-          };
-
-          const aBigrams = getBigrams(aFrag.summary);
-          const rBigrams = getBigrams(rFrag.summary);
-
-          const aOnly = [...aBigrams].filter(b => !rBigrams.has(b));
-          const rOnly = [...rBigrams].filter(b => !aBigrams.has(b));
-
-          if (aOnly.length > 0 && rOnly.length > 0) {
-            const aliasTerm = aOnly[0]!;
-            const canonicalTerm = rOnly[0]!;
-            const exists = db.prepare(
-              "SELECT id FROM aliases WHERE project_id = ? AND canonical = ? AND alias = ?"
-            ).get(projectId, canonicalTerm, aliasTerm);
-            if (!exists) {
-              db.prepare(`
-                INSERT OR IGNORE INTO aliases (id, project_id, canonical, alias, source, confidence, created_at)
-                VALUES (?, ?, ?, ?, 'auto', 0.7, ?)
-              `).run(
-                `alias-auto-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
-                projectId, canonicalTerm, aliasTerm, NOW
-              );
-              autoAliasCount++;
-            }
+            break;
           }
-          break;
         }
       }
-    }
-    if (autoAliasCount > 0) {
-      console.error(`[AgentMemory] 自动发现 ${autoAliasCount} 个术语别名`);
+      if (autoAliasCount > 0) {
+        console.error(`[AgentMemory] 自动发现 ${autoAliasCount} 个术语别名`);
+      }
+    } catch (e) {
+      console.error(`[AgentMemory] dreaming: auto-alias failed:`, (e as Error).message?.slice(0, 80));
     }
   }
 

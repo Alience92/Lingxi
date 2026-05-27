@@ -27,6 +27,25 @@ export interface MemoryHealth {
 
   // Top-level health flags
   alerts: string[];
+
+  // SLM shadow comparison stats (cumulative, across all batches)
+  shadowComparisons?: {
+    total: number;
+    matchRate: number;
+    avgLatencyMs: number;
+    slmModel: string;
+    perChannel: Record<string, { correct: number; total: number }>;
+  };
+}
+
+function toLocalISO(ts: number): string {
+  const d = new Date(ts);
+  const pad = (n: number) => String(n).padStart(2, "0");
+  const tzOff = -d.getTimezoneOffset();
+  const tzSign = tzOff >= 0 ? "+" : "-";
+  const tzH = pad(Math.floor(Math.abs(tzOff) / 60));
+  const tzM = pad(Math.abs(tzOff) % 60);
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}.${String(d.getMilliseconds()).padStart(3, "0")}${tzSign}${tzH}:${tzM}`;
 }
 
 export function getMemoryHealth(projectId: string): MemoryHealth {
@@ -110,13 +129,49 @@ export function getMemoryHealth(projectId: string): MemoryHealth {
     alerts.push("Dreaming超过48小时未运行 — 记忆可能未衰减/蒸馏");
   }
 
-  return {
+  // SLM shadow comparison cumulative stats
+  let shadowComparisons: MemoryHealth["shadowComparisons"] = undefined;
+  const hasShadowTable = db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='shadow_comparisons'").get();
+  if (hasShadowTable) {
+    const shadowStats = db.prepare(`
+      SELECT COUNT(*) as total,
+             SUM(CASE WHEN match_result = 1 THEN 1 ELSE 0 END) as matches,
+             AVG(latency_ms) as avgLatency,
+             slm_model
+      FROM shadow_comparisons WHERE project_id = ?
+    `).get(projectId) as { total: number; matches: number; avgLatency: number; slm_model: string | null } | undefined;
+
+    if (shadowStats && shadowStats.total > 0) {
+      const perChannel = db.prepare(`
+        SELECT llm_channel as channel,
+               COUNT(*) as total,
+               SUM(CASE WHEN match_result = 1 THEN 1 ELSE 0 END) as correct
+        FROM shadow_comparisons WHERE project_id = ?
+        GROUP BY llm_channel
+      `).all(projectId) as Array<{ channel: string; total: number; correct: number }>;
+
+      const channelMap: Record<string, { correct: number; total: number }> = {};
+      for (const row of perChannel) {
+        channelMap[row.channel] = { correct: row.correct, total: row.total };
+      }
+
+      shadowComparisons = {
+        total: shadowStats.total,
+        matchRate: shadowStats.total > 0 ? shadowStats.matches / shadowStats.total : 0,
+        avgLatencyMs: shadowStats.avgLatency ?? 0,
+        slmModel: shadowStats.slm_model || "unknown",
+        perChannel: channelMap,
+      };
+    }
+  }
+
+  const result: MemoryHealth = {
     fragmentTotal: counts.total,
     fragmentActive: counts.active,
     fragmentArchived: counts.archived,
     pendingFragmentationSessions: pending.cnt,
-    lastDreamingAt: lastDreamingTs ? new Date(lastDreamingTs).toISOString() : null,
-    lastFragmentationAt: lastFrag.ts ? new Date(lastFrag.ts).toISOString() : null,
+    lastDreamingAt: lastDreamingTs ? toLocalISO(lastDreamingTs) : null,
+    lastFragmentationAt: lastFrag.ts ? toLocalISO(lastFrag.ts) : null,
 
     last24h: {
       totalQueries: queryStats.totalQueries,
@@ -134,4 +189,6 @@ export function getMemoryHealth(projectId: string): MemoryHealth {
 
     alerts,
   };
+  if (shadowComparisons) result.shadowComparisons = shadowComparisons;
+  return result;
 }

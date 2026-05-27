@@ -229,6 +229,21 @@ CREATE INDEX IF NOT EXISTS idx_rule_app_logs_rule ON rule_application_logs(rule_
 CREATE INDEX IF NOT EXISTS idx_agent_msg_queue_type ON agent_message_queue(event_type, consumed);
 CREATE INDEX IF NOT EXISTS idx_interaction_stream_project ON interaction_stream(project_id, created_at);
 CREATE INDEX IF NOT EXISTS idx_interaction_stream_topic ON interaction_stream(topic_id);
+
+CREATE TABLE IF NOT EXISTS shadow_comparisons (
+  id TEXT PRIMARY KEY,
+  project_id TEXT NOT NULL REFERENCES projects(id),
+  fragment_id TEXT NOT NULL,
+  summary_preview TEXT NOT NULL,
+  slm_channel TEXT NOT NULL,
+  llm_channel TEXT NOT NULL,
+  slm_model TEXT NOT NULL,
+  match_result INTEGER NOT NULL,
+  latency_ms INTEGER NOT NULL,
+  created_at INTEGER NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_shadow_comparisons_project ON shadow_comparisons(project_id, created_at);
 `;
 
 export const VECTOR_DIMENSIONS = 1536;

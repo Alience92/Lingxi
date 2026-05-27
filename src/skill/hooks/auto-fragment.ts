@@ -193,19 +193,22 @@ async function main() {
   let processed = 0;
 
   for (const sessionId of sessionIds) {
-    const jsonlPath = path.join(workspaceDir, `${sessionId}.jsonl`);
-    if (!fs.existsSync(jsonlPath)) {
+    try {
+      const jsonlPath = path.join(workspaceDir, `${sessionId}.jsonl`);
+      if (!fs.existsSync(jsonlPath)) {
+        continue;
+      }
+
+      const count = await fragmentOneSession(engine, sessionId, projectId, jsonlPath);
+      if (count > 0) {
+        totalFragments += count;
+        processed++;
+      }
+    } catch (e) {
+      console.error(`[AgentMemory] auto-fragment: session ${sessionId.slice(0, 8)} failed:`, (e as Error).message?.slice(0, 80));
+    } finally {
       db.prepare(`UPDATE sessions SET pending_fragmentation = 0, fragmented_at = ? WHERE id = ?`).run(Date.now(), sessionId);
-      continue;
     }
-
-    const count = await fragmentOneSession(engine, sessionId, projectId, jsonlPath);
-    if (count > 0) {
-      totalFragments += count;
-      processed++;
-    }
-
-    db.prepare(`UPDATE sessions SET pending_fragmentation = 0, fragmented_at = ? WHERE id = ?`).run(Date.now(), sessionId);
   }
 
   if (processed > 0) {
@@ -221,6 +224,80 @@ async function main() {
     }
   }
 
+  // Shadow mode: SLM vs LLM channel classification comparison
+  if (totalFragments > 0) {
+    try {
+      const { classifyChannel, recordComparison } = await import("../../smallmodel/classifier.js");
+      const { isOllamaRunning, getDefaultModel } = await import("../../smallmodel/index.js");
+      const ollamaUp = await isOllamaRunning();
+
+      if (ollamaUp) {
+        const slmModel = await getDefaultModel();
+        const placeholders = sessionIds.map(() => "?").join(",");
+        const recentFrags = db.prepare(`
+          SELECT f.id, f.summary, fa.channel as llm_channel
+          FROM fragments f
+          JOIN fragment_anchors fa ON fa.fragment_id = f.id
+          WHERE f.project_id = ? AND f.session_id IN (${placeholders})
+          GROUP BY f.id
+          LIMIT 50
+        `).all(projectId, ...sessionIds) as Array<{ id: string; summary: string; llm_channel: string }>;
+
+        let compared = 0;
+        let batchMatches = 0;
+        let batchLatency = 0;
+        const now = Date.now();
+
+        for (const frag of recentFrags) {
+          try {
+            const slm = await classifyChannel(frag.summary);
+            recordComparison(frag.summary, slm, { channel: frag.llm_channel });
+            const match = slm.channel === frag.llm_channel ? 1 : 0;
+            if (match) batchMatches++;
+            batchLatency += slm.latencyMs;
+
+            // Persist to DB for cross-batch accumulation
+            db.prepare(`
+              INSERT OR REPLACE INTO shadow_comparisons
+              (id, project_id, fragment_id, summary_preview, slm_channel, llm_channel, slm_model, match_result, latency_ms, created_at)
+              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            `).run(
+              `sc-${now}-${compared}`,
+              projectId,
+              frag.id,
+              frag.summary.slice(0, 200),
+              slm.channel,
+              frag.llm_channel,
+              slmModel,
+              match,
+              slm.latencyMs,
+              now,
+            );
+            compared++;
+          } catch {}
+        }
+
+        if (compared > 0) {
+          const batchMatchRate = compared > 0 ? (batchMatches / compared * 100) : 0;
+          const batchAvgLatency = compared > 0 ? (batchLatency / compared) : 0;
+
+          // Cumulative stats from DB (all batches)
+          const cumStats = db.prepare(`
+            SELECT COUNT(*) as total,
+                   SUM(CASE WHEN match_result = 1 THEN 1 ELSE 0 END) as matches,
+                   AVG(latency_ms) as avgLatency
+            FROM shadow_comparisons WHERE project_id = ?
+          `).get(projectId) as { total: number; matches: number; avgLatency: number };
+
+          const cumMatchRate = cumStats.total > 0 ? (cumStats.matches / cumStats.total * 100) : 0;
+          console.error(`[AgentMemory] SLM影子对比: 本批 ${compared} 条 匹配率 ${batchMatchRate.toFixed(0)}% 延时 ${batchAvgLatency.toFixed(0)}ms | 累计 ${cumStats.total} 条 匹配率 ${cumMatchRate.toFixed(0)}%`);
+        }
+      }
+    } catch (e) {
+      console.error(`[AgentMemory] SLM影子对比失败:`, (e as Error).message?.slice(0, 80));
+    }
+  }
+
   // Chain dreaming if threshold met
   const newFragments = db.prepare(
     "SELECT COUNT(*) as cnt FROM fragments WHERE project_id = ? AND created_at > ? AND status = 'active'"
@@ -232,6 +309,7 @@ async function main() {
       detached: true,
       stdio: "ignore",
       windowsHide: true,
+      env: { ...process.env, ...settingsEnv },
     }).unref();
     console.error(`[AgentMemory] 后台 Dreaming 已启动: ${newFragments.cnt} 条新碎片 (阈值 ${DREAMING_THRESHOLD})`);
   }
