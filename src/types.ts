@@ -84,3 +84,83 @@ export interface InstallEstimate {
   estimatedTimeMinutes: number;
   files: string[];
 }
+
+// ── Phase 2+ types (v4 architecture) ──────────────────────────────────
+
+export interface ChallengeEvent {
+  id: string;
+  projectId: string;
+  sessionId: string;
+  level: 'L1' | 'L2' | 'L3';
+  action: 'advise' | 'revise_required' | 'deliver_blocked';
+  reasonType: 'preference_conflict' | 'decision_conflict' | 'constitutional_conflict';
+  evidenceIds: string;
+  evidenceSummary: string;
+  llmResponseId?: string;
+  confidence: number;
+  resolved: number;
+  userAccepted?: number | null;
+  createdAt: number;
+}
+
+export interface RuleApplicationLog {
+  id: string;
+  ruleId: string;
+  sessionId: string;
+  appliedAt: number;
+  userAccepted?: number | null;
+  causedConflict: number;
+  contextSummary?: string;
+}
+
+export interface RelationshipProfile {
+  userId: string;
+  projectId: string;
+  trustLevel: 'L1' | 'L2' | 'L3';
+  frictionScore: number;
+  repairNeeded: number;
+  autonomyBudget: number;
+  updatedAt: number;
+}
+
+export interface MemoryRepairJob {
+  id: string;
+  projectId: string;
+  jobType: 'auto_alias' | 're_embed' | 're_group' | 'weight_adjust' | 'deprecate_rule';
+  trigger: string;
+  fragmentsAffected: string;
+  actionTaken: string;
+  beforeState?: string;
+  afterState?: string;
+  createdAt: number;
+}
+
+export interface AgentMessage {
+  id: string;
+  eventType: string;
+  publisher: 'skill' | 'smallmodel' | 'agent';
+  payload: string;
+  consumed: number;
+  consumedAt?: number;
+  createdAt: number;
+}
+
+export interface FeatureFlag {
+  id: string;
+  flagName: string;
+  enabled: number;
+  rolloutPercentage: number;
+  description?: string;
+  updatedAt: number;
+}
+
+export interface InteractionStreamEntry {
+  id: string;
+  projectId: string;
+  sessionId?: string;
+  role: 'user' | 'assistant' | 'system';
+  contentPreview: string;
+  topicId?: string;
+  continuityWindowMs?: number;
+  createdAt: number;
+}

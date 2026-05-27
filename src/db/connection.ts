@@ -187,6 +187,139 @@ function ensureSchemaMigrations(database: Database.Database): void {
     database.exec(`CREATE INDEX IF NOT EXISTS idx_aliases_project ON aliases(project_id)`);
     database.exec(`CREATE UNIQUE INDEX IF NOT EXISTS idx_aliases_canonical_alias ON aliases(project_id, canonical, alias)`);
   }
+
+  // Migration 14: challenge_events table
+  const hasChallengeEvents = database.prepare(`SELECT name FROM sqlite_master WHERE type='table' AND name='challenge_events'`).get();
+  if (!hasChallengeEvents) {
+    database.exec(`
+      CREATE TABLE challenge_events (
+        id TEXT PRIMARY KEY,
+        project_id TEXT NOT NULL REFERENCES projects(id),
+        session_id TEXT NOT NULL,
+        level TEXT NOT NULL CHECK(level IN ('L1','L2','L3')),
+        action TEXT NOT NULL CHECK(action IN ('advise','revise_required','deliver_blocked')),
+        reason_type TEXT NOT NULL CHECK(reason_type IN ('preference_conflict','decision_conflict','constitutional_conflict')),
+        evidence_ids TEXT NOT NULL,
+        evidence_summary TEXT NOT NULL,
+        llm_response_id TEXT,
+        confidence REAL NOT NULL,
+        resolved INTEGER NOT NULL DEFAULT 0,
+        user_accepted INTEGER,
+        created_at INTEGER NOT NULL
+      )
+    `);
+    database.exec(`CREATE INDEX IF NOT EXISTS idx_challenge_events_project ON challenge_events(project_id, created_at)`);
+  }
+
+  // Migration 15: rule_application_logs table
+  const hasRuleAppLogs = database.prepare(`SELECT name FROM sqlite_master WHERE type='table' AND name='rule_application_logs'`).get();
+  if (!hasRuleAppLogs) {
+    database.exec(`
+      CREATE TABLE rule_application_logs (
+        id TEXT PRIMARY KEY,
+        rule_id TEXT NOT NULL REFERENCES distilled_rules(id),
+        session_id TEXT NOT NULL,
+        applied_at INTEGER NOT NULL,
+        user_accepted INTEGER,
+        caused_conflict INTEGER NOT NULL DEFAULT 0,
+        context_summary TEXT
+      )
+    `);
+    database.exec(`CREATE INDEX IF NOT EXISTS idx_rule_app_logs_rule ON rule_application_logs(rule_id)`);
+  }
+
+  // Migration 16: relationship_profiles table
+  const hasRelationshipProfiles = database.prepare(`SELECT name FROM sqlite_master WHERE type='table' AND name='relationship_profiles'`).get();
+  if (!hasRelationshipProfiles) {
+    database.exec(`
+      CREATE TABLE relationship_profiles (
+        user_id TEXT NOT NULL,
+        project_id TEXT NOT NULL REFERENCES projects(id),
+        trust_level TEXT NOT NULL DEFAULT 'L1' CHECK(trust_level IN ('L1','L2','L3')),
+        friction_score REAL NOT NULL DEFAULT 0.0,
+        repair_needed INTEGER NOT NULL DEFAULT 0,
+        autonomy_budget REAL NOT NULL DEFAULT 0.0,
+        updated_at INTEGER NOT NULL,
+        PRIMARY KEY (user_id, project_id)
+      )
+    `);
+  }
+
+  // Migration 17: memory_repair_jobs table
+  const hasMemoryRepairJobs = database.prepare(`SELECT name FROM sqlite_master WHERE type='table' AND name='memory_repair_jobs'`).get();
+  if (!hasMemoryRepairJobs) {
+    database.exec(`
+      CREATE TABLE memory_repair_jobs (
+        id TEXT PRIMARY KEY,
+        project_id TEXT NOT NULL,
+        job_type TEXT NOT NULL CHECK(job_type IN ('auto_alias','re_embed','re_group','weight_adjust','deprecate_rule')),
+        trigger TEXT NOT NULL,
+        fragments_affected TEXT NOT NULL,
+        action_taken TEXT NOT NULL,
+        before_state TEXT,
+        after_state TEXT,
+        created_at INTEGER NOT NULL
+      )
+    `);
+  }
+
+  // Migration 18: agent_message_queue table
+  const hasAgentMsgQueue = database.prepare(`SELECT name FROM sqlite_master WHERE type='table' AND name='agent_message_queue'`).get();
+  if (!hasAgentMsgQueue) {
+    database.exec(`
+      CREATE TABLE agent_message_queue (
+        id TEXT PRIMARY KEY,
+        event_type TEXT NOT NULL,
+        publisher TEXT NOT NULL CHECK(publisher IN ('skill','smallmodel','agent')),
+        payload TEXT NOT NULL,
+        consumed INTEGER NOT NULL DEFAULT 0,
+        consumed_at INTEGER,
+        created_at INTEGER NOT NULL
+      )
+    `);
+    database.exec(`CREATE INDEX IF NOT EXISTS idx_agent_msg_queue_type ON agent_message_queue(event_type, consumed)`);
+  }
+
+  // Migration 19: data_state column on sessions
+  const sessCols5 = database.prepare(`PRAGMA table_info(sessions)`).all() as Array<{ name: string }>;
+  const hasDataState = sessCols5.some((column) => column.name === "data_state");
+  if (!hasDataState) {
+    database.exec(`ALTER TABLE sessions ADD COLUMN data_state TEXT CHECK(data_state IN ('raw_saved','fragmenting','fragmented','indexed','agent_observed','announced',NULL))`);
+  }
+
+  // Migration 20: feature_flags table
+  const hasFeatureFlags = database.prepare(`SELECT name FROM sqlite_master WHERE type='table' AND name='feature_flags'`).get();
+  if (!hasFeatureFlags) {
+    database.exec(`
+      CREATE TABLE feature_flags (
+        id TEXT PRIMARY KEY,
+        flag_name TEXT NOT NULL UNIQUE,
+        enabled INTEGER NOT NULL DEFAULT 0,
+        rollout_percentage REAL NOT NULL DEFAULT 0.0,
+        description TEXT,
+        updated_at INTEGER NOT NULL
+      )
+    `);
+  }
+
+  // Migration 21: interaction_stream table
+  const hasInteractionStream = database.prepare(`SELECT name FROM sqlite_master WHERE type='table' AND name='interaction_stream'`).get();
+  if (!hasInteractionStream) {
+    database.exec(`
+      CREATE TABLE interaction_stream (
+        id TEXT PRIMARY KEY,
+        project_id TEXT NOT NULL,
+        session_id TEXT,
+        role TEXT NOT NULL CHECK(role IN ('user','assistant','system')),
+        content_preview TEXT NOT NULL,
+        topic_id TEXT,
+        continuity_window_ms INTEGER,
+        created_at INTEGER NOT NULL
+      )
+    `);
+    database.exec(`CREATE INDEX IF NOT EXISTS idx_interaction_stream_project ON interaction_stream(project_id, created_at)`);
+    database.exec(`CREATE INDEX IF NOT EXISTS idx_interaction_stream_topic ON interaction_stream(topic_id)`);
+  }
 }
 
 export function closeDb(): void {

@@ -142,6 +142,93 @@ CREATE TABLE IF NOT EXISTS aliases (
 
 CREATE INDEX IF NOT EXISTS idx_aliases_project ON aliases(project_id);
 CREATE UNIQUE INDEX IF NOT EXISTS idx_aliases_canonical_alias ON aliases(project_id, canonical, alias);
+
+-- Phase 2+ tables (v4 migration #14-21)
+
+CREATE TABLE IF NOT EXISTS challenge_events (
+  id TEXT PRIMARY KEY,
+  project_id TEXT NOT NULL REFERENCES projects(id),
+  session_id TEXT NOT NULL,
+  level TEXT NOT NULL CHECK(level IN ('L1','L2','L3')),
+  action TEXT NOT NULL CHECK(action IN ('advise','revise_required','deliver_blocked')),
+  reason_type TEXT NOT NULL CHECK(reason_type IN ('preference_conflict','decision_conflict','constitutional_conflict')),
+  evidence_ids TEXT NOT NULL,
+  evidence_summary TEXT NOT NULL,
+  llm_response_id TEXT,
+  confidence REAL NOT NULL,
+  resolved INTEGER NOT NULL DEFAULT 0,
+  user_accepted INTEGER,
+  created_at INTEGER NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS rule_application_logs (
+  id TEXT PRIMARY KEY,
+  rule_id TEXT NOT NULL REFERENCES distilled_rules(id),
+  session_id TEXT NOT NULL,
+  applied_at INTEGER NOT NULL,
+  user_accepted INTEGER,
+  caused_conflict INTEGER NOT NULL DEFAULT 0,
+  context_summary TEXT
+);
+
+CREATE TABLE IF NOT EXISTS relationship_profiles (
+  user_id TEXT NOT NULL,
+  project_id TEXT NOT NULL REFERENCES projects(id),
+  trust_level TEXT NOT NULL DEFAULT 'L1' CHECK(trust_level IN ('L1','L2','L3')),
+  friction_score REAL NOT NULL DEFAULT 0.0,
+  repair_needed INTEGER NOT NULL DEFAULT 0,
+  autonomy_budget REAL NOT NULL DEFAULT 0.0,
+  updated_at INTEGER NOT NULL,
+  PRIMARY KEY (user_id, project_id)
+);
+
+CREATE TABLE IF NOT EXISTS memory_repair_jobs (
+  id TEXT PRIMARY KEY,
+  project_id TEXT NOT NULL,
+  job_type TEXT NOT NULL CHECK(job_type IN ('auto_alias','re_embed','re_group','weight_adjust','deprecate_rule')),
+  trigger TEXT NOT NULL,
+  fragments_affected TEXT NOT NULL,
+  action_taken TEXT NOT NULL,
+  before_state TEXT,
+  after_state TEXT,
+  created_at INTEGER NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS agent_message_queue (
+  id TEXT PRIMARY KEY,
+  event_type TEXT NOT NULL,
+  publisher TEXT NOT NULL CHECK(publisher IN ('skill','smallmodel','agent')),
+  payload TEXT NOT NULL,
+  consumed INTEGER NOT NULL DEFAULT 0,
+  consumed_at INTEGER,
+  created_at INTEGER NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS feature_flags (
+  id TEXT PRIMARY KEY,
+  flag_name TEXT NOT NULL UNIQUE,
+  enabled INTEGER NOT NULL DEFAULT 0,
+  rollout_percentage REAL NOT NULL DEFAULT 0.0,
+  description TEXT,
+  updated_at INTEGER NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS interaction_stream (
+  id TEXT PRIMARY KEY,
+  project_id TEXT NOT NULL,
+  session_id TEXT,
+  role TEXT NOT NULL CHECK(role IN ('user','assistant','system')),
+  content_preview TEXT NOT NULL,
+  topic_id TEXT,
+  continuity_window_ms INTEGER,
+  created_at INTEGER NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_challenge_events_project ON challenge_events(project_id, created_at);
+CREATE INDEX IF NOT EXISTS idx_rule_app_logs_rule ON rule_application_logs(rule_id);
+CREATE INDEX IF NOT EXISTS idx_agent_msg_queue_type ON agent_message_queue(event_type, consumed);
+CREATE INDEX IF NOT EXISTS idx_interaction_stream_project ON interaction_stream(project_id, created_at);
+CREATE INDEX IF NOT EXISTS idx_interaction_stream_topic ON interaction_stream(topic_id);
 `;
 
 export const VECTOR_DIMENSIONS = 1536;
