@@ -1,52 +1,40 @@
-// Small model service entry: model loading + inference
-import { getLlama, LlamaChatSession, type LlamaModel, type LlamaContext } from "node-llama-cpp";
-import * as path from "node:path";
-import * as fs from "node:fs";
+// Small model service: Ollama REST API wrapper
+// Default model: qwen2.5:0.5b (will fall back to qwen2.5:7b if available)
 
-let _model: LlamaModel | null = null;
-let _context: LlamaContext | null = null;
+const OLLAMA_URL = process.env.OLLAMA_URL || "http://localhost:11434";
 
-const DEFAULT_MODEL_DIR = path.join(
-  process.env.HOME || process.env.USERPROFILE || ".",
-  ".cache", "node-llama-cpp", "models"
-);
+let _defaultModel = process.env.SMALLMODEL_NAME || "";
 
-export async function loadModel(modelPath?: string): Promise<{ model: LlamaModel; context: LlamaContext }> {
-  if (_model && _context) return { model: _model, context: _context };
+export async function getDefaultModel(): Promise<string> {
+  if (_defaultModel) return _defaultModel;
 
-  const llama = await getLlama();
-  const resolved = modelPath ?? findModel(DEFAULT_MODEL_DIR);
-  if (!resolved) {
-    throw new Error(`No GGUF model found. Download one with: npx node-llama-cpp pull <model-url>\nModels directory: ${DEFAULT_MODEL_DIR}`);
+  // Prefer 0.5b for speed, fall back to any available qwen model
+  try {
+    const res = await fetch(`${OLLAMA_URL}/api/tags`);
+    const data = await res.json() as { models?: Array<{ name: string }> };
+    const models = (data.models ?? []).map(m => m.name);
+    _defaultModel = models.find(m => m.includes("0.5b"))
+      ?? models.find(m => m.includes("qwen"))
+      ?? models[0]
+      ?? "qwen2.5:0.5b";
+    return _defaultModel;
+  } catch {
+    _defaultModel = "qwen2.5:0.5b";
+    return _defaultModel;
   }
-
-  console.error(`[SmallModel] Loading: ${resolved}`);
-  _model = await llama.loadModel({ modelPath: resolved });
-  _context = await _model.createContext({ contextSize: 2048 });
-  console.error(`[SmallModel] Model loaded (${_model.trainContextSize ?? "unknown"} ctx)`);
-  return { model: _model, context: _context };
 }
 
-function findModel(dir: string): string | null {
-  try {
-    const files = fs.readdirSync(dir, { recursive: true }) as string[];
-    const ggufs = files.filter(f => f.endsWith(".gguf"));
-    // Prefer smaller models for CPU inference
-    ggufs.sort((a, b) => a.length - b.length);
-    if (ggufs.length > 0) return path.join(dir, ggufs[0]!);
-  } catch {}
-  return null;
+export interface ClassifyOptions {
+  model?: string;
+  temperature?: number;
+  maxTokens?: number;
 }
 
 export async function classify(
   text: string,
-  context: LlamaContext,
-  options?: { temperature?: number; maxTokens?: number }
+  options?: ClassifyOptions
 ): Promise<string> {
-  const session = new LlamaChatSession({
-    contextSequence: context.getSequence(),
-    systemPrompt: "你是一个精确的文本分类器。只输出分类标签，不要解释。",
-  });
+  const model = options?.model ?? await getDefaultModel();
 
   const prompt = `分类通道(只输出WHAT/FEEL/WHO/WHERE中的一个):
 WHAT=实质决策/方案/需求 FEEL=用户对AI的情绪反馈 WHO=涉及人物/角色 WHERE=文件/项目/工具
@@ -54,15 +42,44 @@ WHAT=实质决策/方案/需求 FEEL=用户对AI的情绪反馈 WHO=涉及人物
 "${text.slice(0, 300)}"
 通道:`;
 
-  const response = await session.prompt(prompt, {
-    temperature: options?.temperature ?? 0.1,
-    maxTokens: options?.maxTokens ?? 8,
+  const res = await fetch(`${OLLAMA_URL}/api/generate`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      model,
+      prompt,
+      stream: false,
+      options: {
+        temperature: options?.temperature ?? 0.1,
+        num_predict: options?.maxTokens ?? 8,
+      },
+    }),
   });
 
-  return response.trim().toUpperCase();
+  const data = await res.json() as { response?: string; error?: string };
+  if (data.error) throw new Error(`Ollama: ${data.error}`);
+  return (data.response ?? "").trim().toUpperCase();
 }
 
-export async function unloadModel(): Promise<void> {
-  if (_context) { await _context.dispose(); _context = null; }
-  if (_model) { await _model.dispose(); _model = null; }
+export async function pullModel(name: string): Promise<boolean> {
+  console.error(`[SmallModel] Pulling ${name}...`);
+  try {
+    const res = await fetch(`${OLLAMA_URL}/api/pull`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name, stream: false }),
+    });
+    return res.ok;
+  } catch {
+    return false;
+  }
+}
+
+export async function isOllamaRunning(): Promise<boolean> {
+  try {
+    const res = await fetch(`${OLLAMA_URL}/api/tags`);
+    return res.ok;
+  } catch {
+    return false;
+  }
 }

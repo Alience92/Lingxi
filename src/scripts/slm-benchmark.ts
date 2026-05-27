@@ -1,5 +1,5 @@
 // SLM classification benchmark: compare small model vs LLM channel classifications
-import { loadModel, unloadModel } from "../smallmodel/index.js";
+import { getDefaultModel, isOllamaRunning, pullModel } from "../smallmodel/index.js";
 import { classifyChannel, recordComparison, getShadowStats } from "../smallmodel/classifier.js";
 import { openDb, getDb } from "../db/connection.js";
 
@@ -8,9 +8,21 @@ const BENCHMARK_LIMIT = 200;
 async function main() {
   const projectId = process.argv[2] || process.env.AGENTMEMORY_PROJECT || "claude-auto-memory";
 
-  console.error("[SLM Benchmark] Loading model...");
-  const { context } = await loadModel();
-  console.error("[SLM Benchmark] Model ready.\n");
+  console.error("[SLM Benchmark] Checking Ollama...");
+  const running = await isOllamaRunning();
+  if (!running) {
+    console.error("Ollama is not running. Start it with: ollama serve");
+    process.exit(1);
+  }
+
+  const targetModel = process.env.SMALLMODEL_NAME || "qwen2.5:0.5b";
+  const model = await getDefaultModel();
+  console.error(`[SLM Benchmark] Model: ${model}`);
+
+  // If 0.5b not available, try to pull it; otherwise use whatever is available
+  if (!model.includes("0.5b") && model.includes("7b")) {
+    console.error(`[SLM Benchmark] Using ${model} (0.5b not found, pull with: ollama pull qwen2.5:0.5b)`);
+  }
 
   openDb();
   const db = getDb();
@@ -26,20 +38,24 @@ async function main() {
   `).all(projectId, BENCHMARK_LIMIT) as Array<{ id: string; summary: string; llm_channel: string }>;
 
   if (fragments.length === 0) {
-    console.error("No fragments found. Run memory_remember first to populate fragments.");
+    console.error("No fragments found. Run memory_remember first.");
     process.exit(1);
   }
 
   console.error(`Running classification on ${fragments.length} fragments...\n`);
 
+  let done = 0;
   for (const frag of fragments) {
-    const slm = await classifyChannel(frag.summary, context);
+    const slm = await classifyChannel(frag.summary);
     recordComparison(frag.summary, slm, { channel: frag.llm_channel });
+    done++;
+    if (done % 20 === 0) console.error(`  ${done}/${fragments.length}...`);
   }
 
   const stats = getShadowStats();
 
   console.log(JSON.stringify({
+    model,
     total: stats.total,
     matchRate: stats.matchRate,
     matchRatePct: (stats.matchRate * 100).toFixed(1) + "%",
@@ -55,8 +71,6 @@ async function main() {
       ])
     ),
   }, null, 2));
-
-  await unloadModel();
 }
 
 main().catch((e) => { console.error(e); process.exit(1); });

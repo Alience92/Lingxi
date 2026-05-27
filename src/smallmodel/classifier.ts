@@ -1,5 +1,4 @@
 // Fragment channel classifier (shadow mode): SLM classifies, compares with LLM
-import type { LlamaContext } from "node-llama-cpp";
 import { classify } from "./index.js";
 
 const VALID_CHANNELS = new Set(["WHAT", "FEEL", "WHO", "WHERE"]);
@@ -24,19 +23,17 @@ const MAX_COMPARISONS = 500;
 
 export async function classifyChannel(
   text: string,
-  context: LlamaContext
 ): Promise<ClassificationResult> {
   const t0 = Date.now();
   let modelRaw: string;
   try {
-    modelRaw = await classify(text, context, { temperature: 0.1, maxTokens: 8 });
+    modelRaw = await classify(text, { temperature: 0.1, maxTokens: 8 });
   } catch {
-    modelRaw = "WHAT"; // fallback on inference failure
+    modelRaw = "WHAT";
   }
   const latencyMs = Date.now() - t0;
 
   const channel = VALID_CHANNELS.has(modelRaw) ? modelRaw : "WHAT";
-  // Confidence: low since small model classification is approximate
   const confidence = modelRaw.length <= 6 && VALID_CHANNELS.has(modelRaw) ? 0.7 : 0.4;
 
   return { channel, confidence, modelRaw, latencyMs };
@@ -48,9 +45,7 @@ export function recordComparison(
   llm: { channel: string } | null
 ): void {
   _comparisons.push({
-    text,
-    slm,
-    llm,
+    text, slm, llm,
     match: llm ? slm.channel === llm.channel : false,
     timestamp: Date.now(),
   });
