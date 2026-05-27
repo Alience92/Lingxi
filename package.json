@@ -1,0 +1,35 @@
+{
+  "name": "agentmemory",
+  "version": "1.0.0",
+  "description": "AgentMemory - cross-platform Agent memory plugin",
+  "type": "module",
+  "exports": "./dist/mcp/server.js",
+  "bin": "./dist/mcp/server.js",
+  "files": ["dist", "scripts"],
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest run",
+    "test:integration": "vitest run tests/integration.test.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.29.0",
+    "better-sqlite3": "^12.10.0",
+    "openai": "^6.39.0",
+    "uuid": "^14.0.0",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^7.6.13",
+    "@types/node": "^25.9.1",
+    "@types/uuid": "^10.0.0",
+    "typescript": "^6.0.3",
+    "vitest": "^4.1.7"
+  }
+}
