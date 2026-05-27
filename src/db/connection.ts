@@ -340,6 +340,22 @@ function ensureSchemaMigrations(database: Database.Database): void {
     `);
     database.exec(`CREATE INDEX IF NOT EXISTS idx_shadow_comparisons_project ON shadow_comparisons(project_id, created_at)`);
   }
+
+  // Migration 23: query_events table for accurate zero-hit rate tracking
+  const hasQueryEvents = database.prepare(`SELECT name FROM sqlite_master WHERE type='table' AND name='query_events'`).get();
+  if (!hasQueryEvents) {
+    database.exec(`
+      CREATE TABLE query_events (
+        id TEXT PRIMARY KEY,
+        project_id TEXT NOT NULL,
+        query TEXT NOT NULL,
+        result_count INTEGER NOT NULL,
+        source TEXT NOT NULL CHECK(source IN ('prefetch','explicit')),
+        searched_at INTEGER NOT NULL
+      )
+    `);
+    database.exec(`CREATE INDEX IF NOT EXISTS idx_query_events_project ON query_events(project_id, searched_at)`);
+  }
 }
 
 export function closeDb(): void {

@@ -8,18 +8,18 @@ let _defaultModel = process.env.SMALLMODEL_NAME || "";
 export async function getDefaultModel(): Promise<string> {
   if (_defaultModel) return _defaultModel;
 
-  // Prefer 0.5b for speed, fall back to any available qwen model
+  // Prefer 7b for accuracy (0.5b fails FEEL entirely — 0% accuracy), fall back to any qwen
   try {
     const res = await fetch(`${OLLAMA_URL}/api/tags`);
     const data = await res.json() as { models?: Array<{ name: string }> };
     const models = (data.models ?? []).map(m => m.name);
-    _defaultModel = models.find(m => m.includes("0.5b"))
+    _defaultModel = models.find(m => m.includes("7b"))
       ?? models.find(m => m.includes("qwen"))
       ?? models[0]
-      ?? "qwen2.5:0.5b";
+      ?? "qwen2.5:7b";
     return _defaultModel;
   } catch {
-    _defaultModel = "qwen2.5:0.5b";
+    _defaultModel = "qwen2.5:7b";
     return _defaultModel;
   }
 }

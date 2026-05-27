@@ -3,8 +3,8 @@
   "version": "1.0.0",
   "description": "AgentMemory - cross-platform Agent memory plugin",
   "type": "module",
-  "exports": "./dist/mcp/server.js",
-  "bin": "./dist/mcp/server.js",
+  "exports": "./dist/skill/mcp/server.js",
+  "bin": "./dist/skill/mcp/server.js",
   "files": [
     "dist",
     "scripts"

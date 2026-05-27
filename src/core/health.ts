@@ -33,7 +33,12 @@ export interface MemoryHealth {
     total: number;
     matchRate: number;
     avgLatencyMs: number;
-    slmModel: string;
+    byModel: Array<{
+      model: string;
+      total: number;
+      matchRate: number;
+      avgLatencyMs: number;
+    }>;
     perChannel: Record<string, { correct: number; total: number }>;
   };
 }
@@ -96,24 +101,17 @@ export function getMemoryHealth(projectId: string): MemoryHealth {
   // Last 24h query stats
   const since = Date.now() - 24 * 60 * 60 * 1000;
   const queryStats = db.prepare(`
-    SELECT COUNT(DISTINCT query) as totalQueries,
-           AVG(results_per_query) as avgResults
-    FROM (
-      SELECT query, COUNT(*) as results_per_query
-      FROM recall_log WHERE recalled_at > ?
-      GROUP BY query
-    )
-  `).get(since) as { totalQueries: number; avgResults: number | null };
+    SELECT COUNT(*) as totalQueries,
+           AVG(result_count) as avgResults
+    FROM query_events
+    WHERE project_id = ? AND searched_at > ?
+  `).get(projectId, since) as { totalQueries: number; avgResults: number | null };
 
-  // Zero-hit queries: look for queries in recall_log with very few results
-  // A query is "zero-hit" if it returned 0-1 results (effectively useless)
+  // Zero-hit queries: count queries with 0-1 results from query_events
   const zeroHit = db.prepare(`
-    SELECT COUNT(*) as cnt FROM (
-      SELECT query, COUNT(*) as n
-      FROM recall_log WHERE recalled_at > ?
-      GROUP BY query HAVING n <= 1
-    )
-  `).get(since) as { cnt: number };
+    SELECT COUNT(*) as cnt FROM query_events
+    WHERE project_id = ? AND searched_at > ? AND result_count <= 1
+  `).get(projectId, since) as { cnt: number };
 
   // Alerts
   const alerts: string[] = [];
@@ -136,10 +134,9 @@ export function getMemoryHealth(projectId: string): MemoryHealth {
     const shadowStats = db.prepare(`
       SELECT COUNT(*) as total,
              SUM(CASE WHEN match_result = 1 THEN 1 ELSE 0 END) as matches,
-             AVG(latency_ms) as avgLatency,
-             slm_model
+             AVG(latency_ms) as avgLatency
       FROM shadow_comparisons WHERE project_id = ?
-    `).get(projectId) as { total: number; matches: number; avgLatency: number; slm_model: string | null } | undefined;
+    `).get(projectId) as { total: number; matches: number; avgLatency: number } | undefined;
 
     if (shadowStats && shadowStats.total > 0) {
       const perChannel = db.prepare(`
@@ -155,11 +152,25 @@ export function getMemoryHealth(projectId: string): MemoryHealth {
         channelMap[row.channel] = { correct: row.correct, total: row.total };
       }
 
+      const byModel = db.prepare(`
+        SELECT slm_model as model,
+               COUNT(*) as total,
+               SUM(CASE WHEN match_result = 1 THEN 1 ELSE 0 END) as matches,
+               AVG(latency_ms) as avgLatency
+        FROM shadow_comparisons WHERE project_id = ?
+        GROUP BY slm_model ORDER BY total DESC
+      `).all(projectId) as Array<{ model: string; total: number; matches: number; avgLatency: number }>;
+
       shadowComparisons = {
         total: shadowStats.total,
         matchRate: shadowStats.total > 0 ? shadowStats.matches / shadowStats.total : 0,
         avgLatencyMs: shadowStats.avgLatency ?? 0,
-        slmModel: shadowStats.slm_model || "unknown",
+        byModel: byModel.map(m => ({
+          model: m.model,
+          total: m.total,
+          matchRate: m.total > 0 ? m.matches / m.total : 0,
+          avgLatencyMs: m.avgLatency ?? 0,
+        })),
         perChannel: channelMap,
       };
     }

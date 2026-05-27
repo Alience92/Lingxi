@@ -468,6 +468,18 @@ async function vectorSearch(
     result.matchedAnchors = linkedIds.filter((lid) => hitIds.has(lid));
   }
 
+  // Record query event for accurate zero-hit stats (before limit truncation)
+  if (originalQuery) {
+    db.prepare(`INSERT INTO query_events (id, project_id, query, result_count, source, searched_at) VALUES (?, ?, ?, ?, ?, ?)`).run(
+      `qe-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+      projectId,
+      originalQuery,
+      results.length,
+      recallMode,
+      Date.now(),
+    );
+  }
+
   return {
     results: results.sort((a, b) => b.score - a.score).slice(0, limit),
     cache,

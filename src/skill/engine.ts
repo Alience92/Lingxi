@@ -59,14 +59,14 @@ export class MemoryEngine {
       return [];
     }
 
-    return await persistFragments({
+    const persisted = await persistFragments({
       output,
       sessionId: input.sessionId,
       projectId: input.projectId,
-    }).then((persisted) => {
-      if (persisted.length > 0) this.updateActiveContext(input.projectId);
-      return persisted;
     });
+    db.prepare(`UPDATE sessions SET pending_fragmentation = 0 WHERE id = ?`).run(input.sessionId);
+    if (persisted.length > 0) this.updateActiveContext(input.projectId);
+    return persisted;
   }
 
   private buildFallbackFragment(input: FragmentationInput) {

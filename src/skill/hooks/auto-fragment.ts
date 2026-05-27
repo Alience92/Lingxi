@@ -233,15 +233,18 @@ async function main() {
 
       if (ollamaUp) {
         const slmModel = await getDefaultModel();
-        const placeholders = sessionIds.map(() => "?").join(",");
+        // Build LIKE clauses to catch chunked sessions (sessionId__chunkN)
+        const chunkClauses = sessionIds.map(() => "(f.session_id = ? OR f.session_id LIKE ? || '__chunk%')").join(" OR ");
+        const chunkParams: string[] = [];
+        for (const sid of sessionIds) { chunkParams.push(sid, sid); }
+
         const recentFrags = db.prepare(`
-          SELECT f.id, f.summary, fa.channel as llm_channel
+          SELECT f.id, f.summary,
+            (SELECT fa2.channel FROM fragment_anchors fa2 WHERE fa2.fragment_id = f.id ORDER BY fa2.weight DESC LIMIT 1) as llm_channel
           FROM fragments f
-          JOIN fragment_anchors fa ON fa.fragment_id = f.id
-          WHERE f.project_id = ? AND f.session_id IN (${placeholders})
-          GROUP BY f.id
+          WHERE f.project_id = ? AND (${chunkClauses})
           LIMIT 50
-        `).all(projectId, ...sessionIds) as Array<{ id: string; summary: string; llm_channel: string }>;
+        `).all(projectId, ...chunkParams) as Array<{ id: string; summary: string; llm_channel: string }>;
 
         let compared = 0;
         let batchMatches = 0;

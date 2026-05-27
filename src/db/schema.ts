@@ -244,6 +244,17 @@ CREATE TABLE IF NOT EXISTS shadow_comparisons (
 );
 
 CREATE INDEX IF NOT EXISTS idx_shadow_comparisons_project ON shadow_comparisons(project_id, created_at);
+
+CREATE TABLE IF NOT EXISTS query_events (
+  id TEXT PRIMARY KEY,
+  project_id TEXT NOT NULL,
+  query TEXT NOT NULL,
+  result_count INTEGER NOT NULL,
+  source TEXT NOT NULL CHECK(source IN ('prefetch','explicit')),
+  searched_at INTEGER NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_query_events_project ON query_events(project_id, searched_at);
 `;
 
 export const VECTOR_DIMENSIONS = 1536;
