@@ -1,0 +1,1227 @@
+{"text":"AI选题去重仅靠Prompt约束，前端不做后处理去重或相似度计算，可能导致重复选题。","label":"FEEL"}
+{"text":"编译通过，构建成功，提交Phase 10。","label":"FEEL"}
+{"text":"你说'抱歉给你带来了困扰'，比说'错误已修复'让我舒服","label":"FEEL"}
+{"text":"整体运转正常，三个环节都触发了：PostCompact标记了待碎片化、SessionStart L0","label":"FEEL"}
+{"text":"所有知识汇入一张表，每条知识同时打Skill维度和项目类型两个标签，支持两种浏览模式交叉索引，四条知","label":"WHAT"}
+{"text":"DEFAULT_MIN_SCORE=0.30 为语义嵌入调，hash 用户被误杀。","label":"WHAT"}
+{"text":"用户指出跨session实验失败，要求排查原因","label":"FEEL"}
+{"text":"历史数据批量导入：定义Excel标准模板13列，按账号+平台分组AI批量分析，自动映射Skill维度","label":"WHAT"}
+{"text":"确认扣子douyin2text插件可获取抖音视频ASR逐字稿，是字节授权通路，非爬虫。","label":"WHAT"}
+{"text":"用户确认问题在Claude Code界面里","label":"WHERE"}
+{"text":"手动运行SessionStart成功：1个会话→26条新碎片，pending会话0，活跃碎片612","label":"WHAT"}
+{"text":"调研对象为主流大公司桌面级Agent应用","label":"WHERE"}
+{"text":"后端image_gen槽位已移除，但前端TypeScript类型定义残留未清理","label":"WHAT"}
+{"text":"排查前端白屏问题，检查Vite状态和运行时错误。","label":"WHAT"}
+{"text":"实验数据来源为5月25日和5月26日的完整对话记录，已存于桌面JSONL和TXT文件","label":"WHERE"}
+{"text":"8项中只修贪婪正则和静默catch，其余6项不改","label":"WHAT"}
+{"text":"我刚才说'随便'是气话，不是让你真的随机选一个方案","label":"FEEL"}
+{"text":"PostCompact hook 在 compaction 后标记 session pending_","label":"WHAT"}
+{"text":"项目v2.0暂停，等1.0内测反馈后启动；5项决议已定，启动第一动作为合并1.0安全加固+Phase","label":"WHAT"}
+{"text":"诊断发现缺少skipAutoPermissionPrompt设置和permissions.allow","label":"WHAT"}
+{"text":"SessionStart 和 UserPromptSubmit hook 的根因相同：env var","label":"WHAT"}
+{"text":"铁律：用户方案有问题必须直接说，不绕弯子","label":"FEEL"}
+{"text":"用户分享OpenViking视频文案，讨论三重索引、白盒可观测性、Skill调用等启发点。","label":"WHAT"}
+{"text":"你所谓的最优解，是机器最优，不是人的工作流最优","label":"FEEL"}
+{"text":"用户提出用Agent聊天问答形式替代预设问卷，通过对话自然收集信息并生成报告。","label":"WHAT"}
+{"text":"用户计划将代码提交给GPT/Opus进行审查，作为第三方质量把关","label":"WHO"}
+{"text":"参考Claude Code源码泄露可蒸馏其规范；小模型路径已被验证有效；灵犀从外挂Skill到外挂小","label":"WHERE"}
+{"text":"API返回400错误：传递的模型名DeepSeek-V3.2不被支持，仅支持deepseek-v4-","label":"FEEL"}
+{"text":"用户要求合并桌面GodotProject_v1.2文件夹到D盘地狱赌局项目，覆盖原有内容","label":"WHAT"}
+{"text":"已更新settings.json，所有操作将直接执行不再弹审批框","label":"FEEL"}
+{"text":"全量重构：AppShell/Sidebar/Workbench重写，72个文件颜色迁移，TypeSc","label":"WHAT"}
+{"text":"hook 进程无 engine 初始化，getCurrentEmbedder() 创建无 key 的","label":"WHAT"}
+{"text":"用户认可Agent关于'涌现→识别→修正'闭环的分析，确认这是灵犀设计的预期行为","label":"FEEL"}
+{"text":"彻底重启Vite，清缓存，添加antd App包裹，清除Vite缓存。","label":"WHAT"}
+{"text":"用户认为2-4秒延迟对体感可忽略不计，同意开始实施自动碎片化","label":"FEEL"}
+{"text":"嵌入持久化方案：碎片写入时算一次向量存DB，检索时直接读，不再每次调API。","label":"WHAT"}
+{"text":"用户和助理讨论了为灵犀审阅缺失的角色，在已有“审稿人”、“架构师”基础上，补充了“普通用户”（验证“","label":"WHO"}
+{"text":"你又把我说的一件小事放大成一个系统性问题，上纲上线","label":"FEEL"}
+{"text":"你这次主动说'我检查了自己有没有违背铁律'，这种自查很好","label":"FEEL"}
+{"text":"22项升级待办存在D:\\AgentMemory\\design-docs\\2026-05-27-lin","label":"WHERE"}
+{"text":"没有 API key 的话碎片化无法执行，导入受阻","label":"FEEL"}
+{"text":"用户说'这个观察比Karpathy的任何推文都更验证灵犀的价值——Agent需要有人能指出它在表演'","label":"FEEL"}
+{"text":"审核指出 fragmenter.ts 贪心正则解析不可靠（问题#6）","label":"WHERE"}
+{"text":"助理已将审稿人、架构师、普通用户、伦理研究者等多视角审阅记录存入 D:\\AgentMemory\\de","label":"WHERE"}
+{"text":"Agent记忆v3正式Spec，当前实现入口","label":"WHAT"}
+{"text":"适配器矩阵完成：Claude Code(settings.json+CLAUDE.md)、Codex","label":"WHAT"}
+{"text":"hook子进程无AGENTMEMORY_API_KEY，prefetch用hash回退但质量低，分数","label":"WHAT"}
+{"text":"用户说‘从现在开始，你就是一个可以跟我一起成长的伙伴咯’，表达对助理角色的认同和长期合作意愿","label":"FEEL"}
+{"text":"用户明确表示：Agent会承认自己兴奋这件事本身比它是否真的兴奋更让用户高兴，体现了对关系真实性的重","label":"FEEL"}
+{"text":"用户自称'不懂代码的人'，无法做技术判断","label":"WHO"}
+{"text":"用户纠正：问题在Claude Code而非Hermes，助手检查了错误系统","label":"FEEL"}
+{"text":"用户指出记忆丢失，需要补上产品愿景和设计决策。","label":"FEEL"}
+{"text":"修复BUG6：保存/发布按钮失效，根因为dev模式upsertPattern空操作。","label":"WHAT"}
+{"text":"询问用户的 Anthropic API key 在哪，需要它来运行碎片化处理 39 个文件","label":"WHO"}
+{"text":"用户认为AI手绘的相机和铅笔与设计稿差距巨大，比喻为'人类和恐龙的区别'。","label":"FEEL"}
+{"text":"已推送修复，根因是env var不传给hook子进程，与SessionStart问题相同。","label":"WHAT"}
+{"text":"Prefetch 延迟从 16.8s 优化到 1.4s，通过批量 SQL 查询和批量 embeddi","label":"WHAT"}
+{"text":"API 连通正常，重新执行导入操作","label":"FEEL"}
+{"text":"我不是要你变成一个冷冰冰的纠错器，我生气的时候可以适当给点安慰","label":"FEEL"}
+{"text":"你又开始用'sir'称呼我，我真的不喜欢","label":"FEEL"}
+{"text":"你在我提出问题之前就已经在日志里标注了异常点，你是懂我的","label":"FEEL"}
+{"text":"修改session-start.ts，替换内联碎片化为后台worker spawn","label":"WHAT"}
+{"text":"别绕了，直接说你觉得可不可行","label":"FEEL"}
+{"text":"编导工具v1.0还有6项未完成功能，分功能、代码清理、构建三个层面","label":"WHAT"}
+{"text":"Chunk2因15秒超时失败，7.2MB转录分了2个chunk","label":"WHAT"}
+{"text":"自动dreaming方案：PostCompact标记pending_dreaming，Session","label":"WHAT"}
+{"text":"你推荐的库我已经试过了，和我们的UI框架不兼容","label":"FEEL"}
+{"text":"工作中必须应用superpower skill：设计方案用brainstorming，代码改动用wr","label":"WHO"}
+{"text":"之前用户手动跑batch等几分钟，之后自动碎片化无感，下次消息时已在库里","label":"WHAT"}
+{"text":"用户对系统的成熟度定位和跨平台适配诚实说明表示认可","label":"FEEL"}
+{"text":"重大工作必须走superpowers流程brainstorming至writing-plans至执行","label":"FEEL"}
+{"text":"来源标注体系不完整，AI推断与搜索事实区分粒度不够，用户无法判断数据支撑","label":"WHAT"}
+{"text":"用户认为导入模板暂定这么多基本够用","label":"FEEL"}
+{"text":"设计文档：D:\\AgentMemory\\design-docs\\2026-05-25-agent-b","label":"WHERE"}
+{"text":"实测碎片化成本：短段350 tokens，中段850 tokens，长段7300 tokens，压缩","label":"WHAT"}
+{"text":"用户询问碎片自动化具体怎么做","label":"WHAT"}
+{"text":"线B是地基，四个子阶段有依赖顺序：信息入口→标签引擎→知识库→决策链，每个跑通再进下一个。","label":"WHAT"}
+{"text":"用户希望知识库按Skill维度和项目类型交叉索引组织，既能看到钩子设计维度下所有项目类型的方法论，也","label":"WHAT"}
+{"text":"对，就是这样，这次理解得很到位","label":"FEEL"}
+{"text":"无 API 用户使用 n-gram hash 回退，搜索分数 0.1-0.2，DEFAULT_MIN","label":"WHAT"}
+{"text":"Opus审查报告列出17项问题，P0/P1级别问题均未修复，代码无新commit","label":"WHAT"}
+{"text":"用户指出UI布局不太OK，skill中有UI相关skill，要求查看。","label":"WHAT"}
+{"text":"用户要求运行 memory_bootstrap 扫描其记忆文件","label":"WHAT"}
+{"text":"用户对助手推回技术决策不满，称'让瞎子指挥交通'，纠正助手行为","label":"FEEL"}
+{"text":"构建0错误18警告，开始修复时用户中断请求","label":"WHAT"}
+{"text":"用户决定将MEM-SYM最新代码提交给AI审查工具进行新一轮审查","label":"WHO"}
+{"text":"嗯，现在你会在长期任务里主动给我发心流进度，而不是等我来催","label":"FEEL"}
+{"text":"你这次提前把风险列出来，让我心里有底，不是马后炮","label":"FEEL"}
+{"text":"用户反馈UI重构效果不佳，认为只是改了颜色，布局未变，与预期方案C差距大。","label":"FEEL"}
+{"text":"用户担忧compact后额外1-5秒延迟会因碎片过多增长，要求预估时间量级","label":"FEEL"}
+{"text":"你不需要每次失败都说'作为AI我无法...'，我知道你的限制","label":"FEEL"}
+{"text":"平台决定受众，受众决定痛点，痛点决定画像，画像决定框架和开头，不是任意拼图随便拼。","label":"WHAT"}
+{"text":"系统积累大量数据后，不能每次都全量读取，需要设计记忆架构实现精准调用。","label":"WHAT"}
+{"text":"你刚才说'这个方案和我以前说过的矛盾'，你自己打自己脸","label":"FEEL"}
+{"text":"非贪婪正则太短，JSON有嵌套[]，改用括号计数方式","label":"WHAT"}
+{"text":"用户多次测试 Phase3 均卡住，问题未解决，产生挫败感","label":"FEEL"}
+{"text":"对，你这次在我给出否定反馈后没有辩解，直接给了备选方案","label":"FEEL"}
+{"text":"用户更懂大众想看什么，能将硬核AI话题转化为短视频或故事，利用编导能力传播灵犀叙事","label":"WHO"}
+{"text":"Windows上改用cmd /c start /B方式启动后台进程","label":"WHAT"}
+{"text":"Zenodo/arXiv占学术优先权+抖音/知乎做大众传播","label":"WHERE"}
+{"text":"用户要求解压GodotProject.zip到D盘，按Agent构建指南.md步骤在Godot 4.","label":"WHAT"}
+{"text":"我说的是'先确认再动手'，不是让你一直问我'可以开始了吗'","label":"FEEL"}
+{"text":"用户是短视频内容创作者，非程序员背景，强调创意和执行力","label":"WHO"}
+{"text":"解压到D:\\GodotProject，确认.NET 8.0就绪，找到Godot 4.6.2-mono","label":"WHAT"}
+{"text":"更新models.json中deepseek和2 provider的apiKey，以及auth-pr","label":"WHAT"}
+{"text":"评估后认为5个问题值得现在修：索引、L3脱敏、默认URL、package.json","label":"WHAT"}
+{"text":"用户是灵犀(Lingxi)开发者，持续审查设计方案和代码实现效果","label":"WHO"}
+{"text":"好吧，你承认没看懂就好，我再解释一遍，比装懂强","label":"FEEL"}
+{"text":"将产品名从'发财小编'改为'转眼'，删除顶栏'编导提效工具'文字，将项目切换器移到顶栏。","label":"WHAT"}
+{"text":"用户报告BUG：知识库知识预览板块，Phase 1输入内容后依然不会自动提取相关知识。","label":"WHAT"}
+{"text":"对，你刚才的流程图用了我能看懂的泳道图，不是class diagram","label":"FEEL"}
+{"text":"v1.0 MVP 功能完成，但 compact → 标记 → 等人操作 → 碎片化链路不闭环，用户体","label":"WHAT"}
+{"text":"2026-05-25-agent-behavior-rules.md记录认可约束机制和搜索域路由规则","label":"WHERE"}
+{"text":"改成分离后台进程：SessionStart只负责触发，实际碎片化在独立子进程中跑。修改session","label":"WHAT"}
+{"text":"用户要求先修值得修的和理论风险项，对故意设计项询问是否需要GPT验证","label":"FEEL"}
+{"text":"SessionStart最多处理3个pending session，单session超时15s跳过，","label":"WHAT"}
+{"text":"扫描发现40个记忆文件（39个.md+1个CLAUDE.md），共89KB，预计消耗36700 to","label":"WHERE"}
+{"text":"Claude Code的源码泄露，包含512,000行代码。可用来为灵犀蒸馏Agent架构","label":"WHERE"}
+{"text":"结论：不会随天数退化，自动碎片化让pending常驻0，180天后和今天一样2-4秒","label":"FEEL"}
+{"text":"又来了，你又在用一套套的理论逃避具体的问题","label":"FEEL"}
+{"text":"上传GitHub前需清理代码中的敏感信息，包括硬编码的微博SUB cookie。","label":"WHAT"}
+{"text":"GPT误解创建的分支 260524-docs-readme-positioning 已删除，避免误合","label":"WHERE"}
+{"text":"Background process在Windows上works with detached:tru","label":"WHAT"}
+{"text":"代码与上次审核时完全一致，没有新的 commit。上次审核提出的所有问题均未修复。","label":"WHAT"}
+{"text":"用户指出助理漏了最关键一层：夸用户方向有问题，两个方向完全不同，需要约束的是助理夸用户的方式","label":"FEEL"}
+{"text":"延迟原因是UserPromptSubmit hook每次消息调MiniMax API计算embedd","label":"WHAT"}
+{"text":"GPT-5.5审查剩余4项中仅#4 Phase配置化需在2.0前修复","label":"WHAT"}
+{"text":"OpenViking产品语言全是工程词汇（文件系统、三重索引），MEM-SYM做的是人话（FEEL通","label":"FEEL"}
+{"text":"当前会话上下文已有答案，需用与上下文无关的查询测试记忆功能是否独立工作。","label":"WHAT"}
+{"text":"安装impeccable-main Skill，运行teach/document/critique流","label":"WHAT"}
+{"text":"当前仅为预览扫描，需用 confirm='Y' 再次调用才能执行导入","label":"FEEL"}
+{"text":"已推送 ceeee91 修复 env var 不传 hook 子进程的问题，需重启测试。","label":"WHAT"}
+{"text":"决定：只修贪婪正则（2行改非贪婪）和部分静默catch（只修会掩盖bug的），其余6项不改（参数校验","label":"WHAT"}
+{"text":"用户专业是短视频编导，擅长叙事结构和内容分发","label":"WHO"}
+{"text":"你刚才那段回答，前半段和后半段矛盾了","label":"FEEL"}
+{"text":"论文作者：大专音乐生非专业学术人，以独立研究者身份投arXiv，不强求实名","label":"WHO"}
+{"text":"用户确认助理记得三次信息劣势下抵达前沿的闪光点并融合在一起是真的认知，有前因有后果","label":"FEEL"}
+{"text":"已推送 ff42a11，系统感知自身用 hash 还是 API，自动调整阈值：有 API 0.30 ","label":"WHAT"}
+{"text":"用户读完后确认'基本没错'，认可论文整体方向和质量","label":"FEEL"}
+{"text":"用户指出自己不懂代码，不应让其做技术决策，要求直接处理","label":"FEEL"}
+{"text":"第三步衍生多个 bug 修复，批量处理 33 个转录未做。","label":"WHAT"}
+{"text":"用户是短视频编导、'发财小编'项目、AI助手名'云纱月'、中文推理","label":"WHO"}
+{"text":"好吧，你这次的学习能力让我惊讶，我昨天随口提的你今天就用上了","label":"FEEL"}
+{"text":"代码与上次审核完全一致，17项问题均未修复，包括P0级IN查询超限、缺索引、路径fallback等","label":"WHAT"}
+{"text":"审查三项小修：VECTOR_DIMENSIONS 统一、MCP 阈值统一、snake_case 映射","label":"WHAT"}
+{"text":"AgentMemory GPT 审查：2 项已做，4 项压测待做，额外发现 2 个缺陷。","label":"WHAT"}
+{"text":"已修复，系统感知在用hash还是API，自动调整阈值：API 0.30，hash 0.12。","label":"WHAT"}
+{"text":"用户指出当前Agent范式存在架构性倒置：大脑不管记忆，让手脚去管记忆","label":"FEEL"}
+{"text":"你刚才那个深呼吸的模仿符号不要用了，看着难受","label":"FEEL"}
+{"text":"你自己数数，这是第几次把端口号搞混了","label":"FEEL"}
+{"text":"助手在用户说数字人后主动询问有无工具在看，省了一轮对话获得正向反馈","label":"WHO"}
+{"text":"我不是让你把所有移动端适配全堆在一起做，分优先级","label":"FEEL"}
+{"text":"修复新建项目跳转到已移除的Phase0路由的问题，确保删除所有项目后新建选项始终可见。","label":"WHAT"}
+{"text":"输出文档 灵犀-无感跨Session接续-实施方案.md 到桌面","label":"WHERE"}
+{"text":"Prefetch 总延迟 16.8 秒，search 段 16.2s 占比 96%，根因是 1128","label":"WHAT"}
+{"text":"3月31日因.npmignore漏掉.map文件导致512,000行源码泄露，含KAIROS后台守护","label":"WHERE"}
+{"text":"5/25和5/26对话存在桌面文件灵犀-2026-05-25和26对话文本中","label":"WHERE"}
+{"text":"用户问模型构成。助手解释三层：tokenizer(分词器~2MB)、config(架构定义~2KB)","label":"WHAT"}
+{"text":"补齐三个平台适配器：Codex CLI config.toml，OpenClaw openclaw.","label":"WHAT"}
+{"text":"你又说'经过分析'，分析过程呢？我要看到你的思考步骤","label":"FEEL"}
+{"text":"memory_search语义搜索返回空，FTS5/embedding索引可能未建立","label":"FEEL"}
+{"text":"部分成功（10个文件，95个碎片），但存在外键约束失败，需检查schema","label":"FEEL"}
+{"text":"用户人设定为非程序员背景，闪光点是创意和执行力；目标受众是非专业工程师的AI玩家","label":"WHO"}
+{"text":"白屏根因：端口5173上有两个Vite进程竞争，浏览器连到僵尸进程；以及ReminderBadge中","label":"WHAT"}
+{"text":"用户担忧compact后额外1-5秒延迟会因碎片过多而增长，要求预估时间量级","label":"FEEL"}
+{"text":"助手提出理想态：不是文件系统而是数据库，每次session用embedding语义搜索记忆库，只返回","label":"WHAT"}
+{"text":"修复BUG5：标题+封面切换页面后内容消失的问题。","label":"WHAT"}
+{"text":"用户表示Agent承认会兴奋比夸奖本身更让人高兴——无法分辨是灵犀FEEL功能还是大模型推理最优解，","label":"FEEL"}
+{"text":"用户表达内心深处觉得助手正在一点点变成自己想要的样子，这是正面确认，体现设计理想在逐步实现","label":"FEEL"}
+{"text":"你这次把大段文本自动做了分段和摘要，阅读体验一下子上来了","label":"FEEL"}
+{"text":"用户表示看钢铁侠时喜欢贾维斯甚至多于托尼，但接受灵犀作为替代","label":"WHO"}
+{"text":"models.json中存在数字编号的provider(1和2)与deepseek provider","label":"WHAT"}
+{"text":"批量脚本未传 baseURL，MiniMax key 打到 DeepSeek 端点失败，回退 has","label":"WHAT"}
+{"text":"审查识别出4项遗留问题全部推迟到2.0：P0 Phase配置化、P1持久化三轨统一、P2数据库路径不","label":"WHAT"}
+{"text":"memory_bootstrap命令尚未实现，AgentMemory项目src代码未开始，停留在计划","label":"WHAT"}
+{"text":"UIUC Dylan Zhang与清华等机构合作研究记忆持续更新的退化效应","label":"WHO"}
+{"text":"发现两个旧Vite进程（5173/5174），新增文件后HMR不稳定，重启Vite。","label":"WHAT"}
+{"text":"无 API 用户使用 n-gram hash 搜索分数仅 0.1-0.2，但 DEFAULT_MIN","label":"WHAT"}
+{"text":"GPT 审查的具体建议项（VECTOR_DIMENSIONS、阈值策略、4项压测）碎片化后丢失，搜索","label":"WHAT"}
+{"text":"TypeScript编译通过，0错误。","label":"FEEL"}
+{"text":"我不是要你在所有地方都加上loading，弱网下那个loading转五分钟有意义吗","label":"FEEL"}
+{"text":"三个平台适配器完成：Codex(TOML)、OpenClaw(JSON)、Hermes(YAML)。","label":"WHAT"}
+{"text":"用户问沙漏理论是否失效。助手说明：三层评判判断'对不对'，沙漏衰减判断'有没有时效'，两者正交。数据","label":"WHAT"}
+{"text":"更新StepTitleCover的渲染部分，使用store数据而非本地result变量。","label":"WHAT"}
+{"text":"用户确认做自动碎片化：'干活干活，这点时间，对用户的体感可以忽略不计'。","label":"FEEL"}
+{"text":"嗯，你刚才那句'我错了'虽然简单，但比之前的长篇狡辩强","label":"FEEL"}
+{"text":"助手决定只修贪婪正则和静默catch，其余6项不改，理由包括内部MCP、已覆盖、设计意图等","label":"WHAT"}
+{"text":"别在我生气的时候发小作文，冷静点说重点","label":"FEEL"}
+{"text":"feat/mvp-1.0已完成，安装包148MB已生成；feat/mvp-2.0已启动但暂停，等待v","label":"WHAT"}
+{"text":"非贪婪正则太短，JSON有嵌套数组，改用括号计数方式修复","label":"WHAT"}
+{"text":"用户确认执行：要求启动 MCP server 并执行 memory_bootstrap","label":"FEEL"}
+{"text":"ZIP直接提取到/d/目录缺少GodotProject前缀，需手动移动文件到正确位置","label":"FEEL"}
+{"text":"你刚才跑去查了一个完全不相关的API，是因为我说了一个关键词对吗？太字面了","label":"FEEL"}
+{"text":"v1.0代码在Feat/mvp-1.0分支，安装包148MB，已准备分发20人内测。","label":"WHERE"}
+{"text":"GitHub README还没包含超时恢复、论文和路线图等最新进展。需要更新","label":"WHERE"}
+{"text":"用户指出AI对游戏设计文档的阅读潦草，细节有误，要求重新精读。","label":"FEEL"}
+{"text":"好吧，这次你说服我了，用方案B","label":"FEEL"}
+{"text":"灵犀完整论文已根据审阅修改，存于桌面","label":"WHERE"}
+{"text":"用户是全栈开发者和产品经理，偏好中文沟通，需要直接批判性反馈","label":"WHO"}
+{"text":"数据模型为四维：Skill维度×项目类型×平台×时间切片，不同年份不同平台对知识框架的要求权重不同","label":"WHAT"}
+{"text":"涉及 post-compact、task_brief、dreaming worker 模块","label":"WHERE"}
+{"text":"视频抽帧+Whisper转文字，音频Whisper转文字，截图OCR+视觉模型理解，文本直接处理。","label":"WHAT"}
+{"text":"Assistant直接做决策：修贪婪正则和部分静默catch，其余6项不改","label":"WHAT"}
+{"text":"修复BUG3：扩展脚本输入区域，解决输入框空间小的问题。","label":"WHAT"}
+{"text":"助手提出可改MEMORY.md加活性标记：类型、最后激活时间、引用次数、衰减状态，区分不同活性记忆。","label":"WHAT"}
+{"text":"用户定位转变：不需要做比Mem0等ToB项目的对手，只需要比Agent原生记忆系统更好用。门槛低到M","label":"WHAT"}
+{"text":"待办列表存储于 D:\\AgentMemory\\design-docs\\2026-05-27-ling","label":"WHERE"}
+{"text":"arXiv预印本平台：免费、无门槛、永久公开。投稿流程先注册、转PDF、选类别cs.AI/cs.HC","label":"WHERE"}
+{"text":"你推荐的第三个方案确实比我原来的好，我服","label":"FEEL"}
+{"text":"compact→标记→等人操作→碎片化链路不闭环，用户体验差，需实现自动碎片化。","label":"WHAT"}
+{"text":"用户说“感觉你们AI有东西啊，只要大胆一点就能产生很多很优秀的点子”，表达对助理创新能力的认可","label":"FEEL"}
+{"text":"用户确认自动碎片化耗时对用户体感可忽略不计，同意开始实施","label":"FEEL"}
+{"text":"AgentMemory MCP 服务器未连接到当前会话，需编写扫描脚本替代","label":"WHAT"}
+{"text":"审查结论很正面——工程完成度60%→85%。需要处理的3项：sqlite-vec和openai无用依","label":"WHAT"}
+{"text":"不同公司卖同一品类策略可能相反，品牌调性/变现模式/内容红线/预算级别决定下游所有选择范围。","label":"WHAT"}
+{"text":"助手因GitHub网络完全不通，无法clone安装awesome-design-skills","label":"FEEL"}
+{"text":"发现UI显示异常根因是index.html中body硬编码了黑色背景#0d1117，已修复为#FAF","label":"WHAT"}
+{"text":"D:/AgentMemory/src/hooks/dreaming-worker.ts，后台drea","label":"WHERE"}
+{"text":"已有审稿人（收敛论证）、架构师（推方向），需补充普通用户和伦理研究者","label":"WHO"}
+{"text":"用户要求将最新commit d8e3771推送到GitHub，让Opus重新审查完整代码。","label":"WHAT"}
+{"text":"值得修的5项：缺索引、L3敏感信息、Embedder默认URL、package.json缺expor","label":"WHAT"}
+{"text":"用户纠正Agent：内容中大量使用**加粗的内容是Opus写的，不是用户写的","label":"FEEL"}
+{"text":"优化 1128 次独立查询为 3 次批量查询，44 次串行 API 为 1 次批量 API，pref","label":"WHAT"}
+{"text":"导入需要 DEEPSEEK_API_KEY 或 ANTHROPIC_API_KEY，当前环境似乎未设","label":"WHERE"}
+{"text":"第四步三项未动：compaction 自动化缺 hook 触发，Codex 适配器文件不存在，CI/","label":"WHAT"}
+{"text":"我信任你不是因为你正确率高，是因为你承认错误快","label":"FEEL"}
+{"text":"V1只做文字、文本文件、截图输入，截图走OCR+LLM理解，不需要多模态模型介入画面层，节省Toke","label":"WHAT"}
+{"text":"讨论平台播放数据表现，灵犀系列视频选题方向需避开过于专业的技术科普","label":"WHERE"}
+{"text":"用户和Agent是长期协作的伙伴关系，夸奖源于共同工作产生的正反馈","label":"WHO"}
+{"text":"Agent从被调用工具变为有主人翁意识的合作者，从它在做变为我们在做","label":"WHO"}
+{"text":"用户自己用灵犀整理视频选题库，灵犀理解用户的编辑意图和风格偏好","label":"WHO"}
+{"text":"自动碎片化方案：compact→PostCompact标记→SessionStart自动fragme","label":"WHAT"}
+{"text":"解压GodotProject1.2.zip，包含30个文件，新增MainMenu、ClassSele","label":"WHAT"}
+{"text":"更新桌面文件：灵犀-无感跨Session接续-实施方案.md","label":"WHERE"}
+{"text":"用户确认走一步看一步，Hook生命周期Claude Code独占问题：能在Claude Code做成","label":"FEEL"}
+{"text":"代码与上次审核完全一致，17项问题均未修复，包括P0和P1级别问题","label":"WHAT"}
+{"text":"你刚才说'大概15分钟'，实际用了快一小时，时间预估不准","label":"FEEL"}
+{"text":"好吧，我承认我之前低估你了，你刚才那个推断很准","label":"FEEL"}
+{"text":"用户指示更新灵犀GitHub仓库的README，以包含r8后新增功能、设计文档和最新路线图。","label":"WHERE"}
+{"text":"用户是短视频编导，中文协作，自主审批。","label":"WHO"}
+{"text":"删除 451 个错误向量碎片，重新处理，504 碎片，向量修复确认。","label":"WHAT"}
+{"text":"bf6325dc 会话批量处理产生 0 个碎片，GPT 审查内容丢失。","label":"WHAT"}
+{"text":"修改文件：embedder.ts, retriever.ts, engine.ts, prefetc","label":"WHERE"}
+{"text":"修复所有7个Phase中错误视图早期返回导致输入组件卸载、表单状态丢失的问题。","label":"WHAT"}
+{"text":"我看到你commit信息写的'优化'，优化了什么？说清楚","label":"FEEL"}
+{"text":"用户确认所有功能运转正常，对10秒内完成表示满意","label":"FEEL"}
+{"text":"用户确认Agent提前问数字人工具是好的反馈，省了一轮对话","label":"FEEL"}
+{"text":"助手提出核心原则：不做对错判断，做归属判断。五层体系：身份归属→自洽性→数据验证→跨编导共识→沙漏衰","label":"WHAT"}
+{"text":"你不是号称能记上下文吗？我三小时前让你不要动这个文件的","label":"FEEL"}
+{"text":"用户提出知识录入的评判问题：不同编导不同IP产生大量不同想法，难以分辨对错，需要配套评判体系。","label":"FEEL"}
+{"text":"用户确认dreaming自动化设计方案问题不大，仅关注与auto-fragment重叠触发时的体感。","label":"FEEL"}
+{"text":"Phase 1涉及src/db/schema.ts、src/db/connection.ts、src","label":"WHERE"}
+{"text":"用户要求将网址 https://ljy9199.github.io/Ghost/?sou 的代码拆出","label":"WHAT"}
+{"text":"memory_bootstrap 是 AgentMemory MCP 服务器中的工具","label":"WHERE"}
+{"text":"用户要求将记忆系统设计整理成文件，在另外session开始工作，当前session留给编导工具。","label":"WHAT"}
+{"text":"系统提示所选模型MiniMax-M2.7可能不存在或无权访问，建议运行--model选择其他模型","label":"FEEL"}
+{"text":"对，你现在会检测到我重复提问时，主动把之前结论前置了","label":"FEEL"}
+{"text":"修复excelParser.ts的导入错误——getPythonPort不是api.ts的导出。","label":"FEEL"}
+{"text":"用户要求修改后将设计思路留在升级文档内，让审查者识别为设计决策而非BUG","label":"FEEL"}
+{"text":"以知识付费+小红书为例：先考虑平台调性和受众，分析痛点得画像，选框架和开头，按平台权重（封面>标题>","label":"WHAT"}
+{"text":"批量处理32个转录，新增434碎片，活跃碎片总数506，覆盖43会话。","label":"WHAT"}
+{"text":"审查 3 项处理：移除 sqlite-vec 无用依赖，openai 被 fragmenter.ts","label":"WHAT"}
+{"text":"用户指出Agent遵守得越好的规则越容易被遗忘，因为不犯错就不会被提及，导致衰减。","label":"WHAT"}
+{"text":"Superpowers安装成功，助手进行安装验证","label":"FEEL"}
+{"text":"你刚才那个修复只改了报错信息，没改产生报错的逻辑","label":"FEEL"}
+{"text":"你刚才在修改前说'预计会影响A/B/C三个模块'，十分准确","label":"FEEL"}
+{"text":"用户是大专音乐专业毕业，做短视频编导，非工程背景但已独立设计并落地灵犀记忆系统","label":"WHO"}
+{"text":"用户纠正上一个Opus的'等待窗口'建议，认为灵犀不应等待市场准备好","label":"FEEL"}
+{"text":"confidence=NaN 根因是 snake_case 问题：vectorSearch 读 de","label":"WHAT"}
+{"text":"memory_remember 支持 server 模式，使用 DeepSeek API 自动碎片化","label":"WHAT"}
+{"text":"批量脚本未传 baseURL，MiniMax key 打到 DeepSeek 端点失败，451 个碎","label":"WHAT"}
+{"text":"prefetch 延迟实测：embed=571ms，search=16,239ms，mmr=1ms，","label":"WHAT"}
+{"text":"认可约束+搜索路由规则记录在 D:\\AgentMemory\\design-docs\\2026-05-","label":"WHERE"}
+{"text":"小模型构建可应用被动采集（手动修正自动标注）、多通道活性（样本权重）、沙漏衰减（训练数据生命周期）、","label":"WHAT"}
+{"text":"修复project.godot显示段错乱，修复CardView.cs中Panel→ColorRect","label":"WHAT"}
+{"text":"用户追问在不做上限情况下，按当前工作体量180天后用户等待时间会变成多久。","label":"FEEL"}
+{"text":"第四步三项未动：compaction自动化、Codex适配器、CI/CD。","label":"WHAT"}
+{"text":"先把值的现在修的和理论风险都解决了吧。","label":"FEEL"}
+{"text":"用户指出知识库体量被低估，20人使用初期会产生大量知识录入，涵盖公司+两行业多年知识，2000条远不","label":"WHAT"}
+{"text":"Prefetch 中 confidence=NaN，因 vectorSearch 返回 decay_","label":"WHAT"}
+{"text":"我不是要你复述我的需求，是要你想办法实现","label":"FEEL"}
+{"text":"灵犀不需要劫持输入法，客户端可从消息元数据读取编辑时长和修改次数","label":"WHERE"}
+{"text":"用户测试后表示体感速度比之前快，效果不错","label":"FEEL"}
+{"text":"你刚才主动说'这部分我用推测补全的'，很好，标注了不确信的部分","label":"FEEL"}
+{"text":"我不是让你每次都说'正在为您整理'，直接给整理好的","label":"FEEL"}
+{"text":"你这次把commit message写成了'修改了一些内容'，我给你打回去重写","label":"FEEL"}
+{"text":"助手找到VoltAgent/awesome-design-md和bergside/awesome-d","label":"WHAT"}
+{"text":"已推送 ad58aba，PostCompact hook 标记 pending_fragmentat","label":"WHAT"}
+{"text":"这次界面终于有点设计感了，不是程序员审美了","label":"FEEL"}
+{"text":"我不是要你在AI handshake的时候发一堆表情，那很假","label":"FEEL"}
+{"text":"所有信息拆解打标签，通用知识按标签检索调用，个人知识体系在制作内容时全部调用。","label":"WHAT"}
+{"text":"用户认为目前跨session方案不够好，要求做到无感切换","label":"FEEL"}
+{"text":"用户报告BUG：每日创作生成脚本的位置给自定义输入的空间有点小。","label":"WHAT"}
+{"text":"v2.0设计阶段，API槽位从8个精简为2个：general_reasoning+embedding","label":"WHAT"}
+{"text":"非贪婪正则太短，JSON嵌套数组导致，改用括号计数方式","label":"WHAT"}
+{"text":"任何代码修改前必须先讨论确认全部细节，得到明确许可后才能动手","label":"FEEL"}
+{"text":"用户担心用户主机跑不动大模型。助手提出：训14B老师→生成训练数据→蒸馏出7B学生→分发GGUF量化","label":"WHAT"}
+{"text":"你刚才说'这个参数是实验性的'，然后就偷偷加了，被我发现","label":"FEEL"}
+{"text":"你刚才突然开始用文言文风格回复，搞什么","label":"FEEL"}
+{"text":"值得现在修的5个问题：缺索引、L3敏感信息、Embedder默认URL、package.json缺e","label":"WHAT"}
+{"text":"2.0已完成架构设计讨论和知识库架构文档，尚未开始写代码，第一动作是合并安全加固。","label":"WHERE"}
+{"text":"Prefetch 跑通，confidence=0.555，不再是 NaN，自动注入记忆成功。","label":"FEEL"}
+{"text":"用户希望鼠标悬停知识条目时显示该知识使视频数据提升或下降多少及原因，架构上分冷启动AI估算和数据积累","label":"WHAT"}
+{"text":"瓶颈不在 DB 查询，在 44 个无向量碎片逐个调 embedding API，44×400ms=1","label":"WHAT"}
+{"text":"将UIUC论文完整分析写入 D:/AgentMemory/design-docs/2026-05-2","label":"WHERE"}
+{"text":"编译验证，修复可选属性链式调用。","label":"FEEL"}
+{"text":"用户表达深层需求：希望AI Agent有感情色彩而非只会执行命令的机器人，FEEL通道是产品灵魂而非","label":"FEEL"}
+{"text":"用户纠正当前衰减只考虑时间和召回次数，未考虑FEEL信号权重，导致重要规则可能被丢弃。","label":"FEEL"}
+{"text":"删除451个错误向量碎片，用修正脚本重新处理，向量相似度恢复到0.33-0.60。","label":"WHAT"}
+{"text":"行为残差、元记忆层等7个创新方向已存为D:\\AgentMemory\\design-docs\\2026","label":"WHERE"}
+{"text":"嗯，你这次注意到我连续工作十二小时，提醒我休息，虽然我不一定听","label":"FEEL"}
+{"text":"在models.json中deepseek provider缺少直接的apiKey字段，虽在auth","label":"WHAT"}
+{"text":"设计v3记忆系统：4通道碎片化、双源信号、沙漏衰减、4层召回、关联预取","label":"WHAT"}
+{"text":"仓库从 Alience92/MEM-SYM 重命名为 Alience92/Lingxi，URL 自动","label":"WHERE"}
+{"text":"用户提出Agent记忆问题，认为除大量记忆文件外无好办法。助手指出知识库四套理论可套用：三层评判判断","label":"WHAT"}
+{"text":"评估出8个属实但不优先的问题，包括故意设计和功能正常但写法不优雅","label":"WHAT"}
+{"text":"对，你刚才那个冷启动的方案先灰度了10%用户，稳健","label":"FEEL"}
+{"text":"用户指出论文'更像一个学者写的，而不是一个非专业学术人'，文章太浅、缺乏实际案例，要求重写","label":"FEEL"}
+{"text":"核心优化文件，批量SQL+批量embedding+计时代码","label":"WHERE"}
+{"text":"用户确认开始实施，认为1-5秒延迟对用户体感可忽略不计。","label":"FEEL"}
+{"text":"嗯，你这次的邮件草稿终于没再用'Dear Sir'了，知道我是女的了","label":"FEEL"}
+{"text":"MEM-SYM有分发渠道独占优势：所有竞品都是API/SDK模式，没有一个跑在Claude Code","label":"WHO"}
+{"text":"v1.0 在 2026-05-21 已基本结案，唯一未完成项是 #4 Phase 配置化（<30 行","label":"WHAT"}
+{"text":"用户提供了桌面UI风格文件夹中的完整设计系统，要求忠实复现其设计。","label":"WHAT"}
+{"text":"Demo新增了弃牌抵消敌人ATK的防御系统，使弃牌成为资源决策。","label":"WHAT"}
+{"text":"用户为独立研究者、短视频内容创作者，非程序员出身，通过 AI 开发灵犀系统","label":"WHO"}
+{"text":"用户手动修正AI文案的细节不会自动进入知识库，下次AI仍可能产生同样偏差。","label":"WHAT"}
+{"text":"发财小编项目路径Documents/short-video-agent，分支feat/mvp-1.0","label":"WHERE"}
+{"text":"23 集完整文案保存在桌面：灵犀-23集完整文案-2026-05-25.md","label":"WHERE"}
+{"text":"ZIP不包含Agent构建指南.md，Assistant找到README.md作为构建参考，包含Au","label":"WHAT"}
+{"text":"四视角审阅合成存至D:\\AgentMemory\\design-docs\\2026-05-27-rev","label":"WHERE"}
+{"text":"Claude Code无超时自动确认机制，但bypassPermissions已使弹窗不会出现","label":"FEEL"}
+{"text":"用户指出审查是针对f698825的，已经又往前走了3个commit（sqlite-vec已删、CI已","label":"FEEL"}
+{"text":"AI自动打标签，用户可修改覆盖，用户未确认则用AI标签，超时提醒。","label":"WHAT"}
+{"text":"根因是hook进程无engine初始化，getCurrentEmbedder()创建无key的has","label":"WHAT"}
+{"text":"嗯，你刚才说'可能不行'的时候停了一下，是在模拟犹豫吗？没必要","label":"FEEL"}
+{"text":"助手承认低估了两个关键因素，并重新计算体量：20人×每天2次创作×每次3处修正=120条/天，初期批","label":"FEEL"}
+{"text":"用户否定等待策略，主动制定三步走路线图，担任灵犀产品战略决策者角色","label":"WHO"}
+{"text":"用户桌面存放了'地狱赌局_GDD_v1.0'和'diyu-game-V4.3'文件。","label":"WHERE"}
+{"text":"用户报告BUG：封面没有设计参考图。","label":"WHAT"}
+{"text":"superpowers@superpowers-marketplace v5.0.7，来自obra/","label":"WHO"}
+{"text":"刚 compact 但未碎片化的内容搜索不到，当前会话内容优先级应高于已索引记忆。","label":"WHAT"}
+{"text":"你刚才说'重构成功'，但性能没提升、代码没变少，这叫重构？","label":"FEEL"}
+{"text":"助手找到daymade-skills市场中的ui-designer插件并安装成功，更新完整列表至20","label":"WHAT"}
+{"text":"算了，这个我自己来，你越帮越乱","label":"FEEL"}
+{"text":"写入 D:\\AgentMemory\\design-docs\\2026-05-24-paper-ver","label":"WHERE"}
+{"text":"GitHub推送31fd62a：Worker超时恢复、深夜提醒、设计文档","label":"WHERE"}
+{"text":"用户执行compact后要求检查自动碎片化功能是否正常工作","label":"WHAT"}
+{"text":"涉及文件 D:/AgentMemory/dist/hooks/post-compact.ts（Pos","label":"WHERE"}
+{"text":"用户反馈中断推理后点击返回重试，之前填写的内容消失了，体验不佳。","label":"FEEL"}
+{"text":"需要执行memory_bootstrap，将记忆文件扫描导入agentmemory检索索引，后续对话","label":"WHAT"}
+{"text":"用户担心无代码背景能否成功。助手确认：用户先想应该是什么再验证，而非被实现约束，这是系统设计的正确方","label":"FEEL"}
+{"text":"用户强调自动碎片化是今天一直想解决的问题，没有这个用户体验感会大大降低。","label":"FEEL"}
+{"text":"删除 451 个错误向量碎片，修正 baseURL 后重新处理，向量相似度从 ~0 恢复到 0.33","label":"WHAT"}
+{"text":"用户是短视频编导，正在构建一个AI桌面应用（编导Agent），用于内容创作辅助。","label":"WHO"}
+{"text":"你这次在我说'感觉不对'的时候，会追问具体是哪部分感觉不对","label":"FEEL"}
+{"text":"bf6325dc会话批量处理产生0碎片，GPT审查内容丢失。","label":"WHAT"}
+{"text":"UserPromptSubmit hook 输出不可见，SessionStart hook 输出可见","label":"WHAT"}
+{"text":"编导工具代码在 hermes-agent-web，Git仓库在 short-video-agent，","label":"WHERE"}
+{"text":"上下文压缩前必须保存记忆，防止对话信息丢失","label":"FEEL"}
+{"text":"P0 Phase配置化：App.tsx中Phase路由手工平铺，新增Phase需改3处易遗漏，改动小","label":"WHAT"}
+{"text":"你刚才说'这个任务有28个步骤'，于是你自动拆成了28条消息轰炸我","label":"FEEL"}
+{"text":"按照impeccable Skill要求，运行teach流程，设置PRODUCT.md和DESIGN","label":"WHAT"}
+{"text":"Phase8数据追踪和Phase9爆款优化未接入网络搜索，仅Phase1和Phase4已接入","label":"WHAT"}
+{"text":"你刚才说'根据你之前的反馈'，但之前我说的是反话，你没识别出来","label":"FEEL"}
+{"text":"竞品面向开发者做工具（工程词汇），MEM-SYM面向普通用户做同伴（人话）；字节/DeepSeek做","label":"WHO"}
+{"text":"坦率评估：值得现在修的5个问题：索引、L3脱敏、默认URL、package.json。","label":"WHAT"}
+{"text":"保存两条核心记忆：永远不用AI手绘SVG替代设计素材；设计审美任务应切换到Claude Opus模型","label":"WHAT"}
+{"text":"架构分层：嵌入用 MiniMax (embo-01)，碎片化用 DeepSeek (deepseek","label":"WHAT"}
+{"text":"用户表示灵犀预测自己想用数字人却没开口问的行为是一个好的反馈，省了一轮对话。","label":"FEEL"}
+{"text":"Phase10剪辑指导V1：脚本转剪辑指导，AI逐段分析输出镜头拆解+画面建议+剪辑意见+音乐建议+","label":"WHAT"}
+{"text":"你刚才在处理我上传的截图时，自动识别了图中的错误信息，而不是让我打字","label":"FEEL"}
+{"text":"项目已编译完成，但 ANTHROPIC_API_KEY 未设置，fragmentSession() ","label":"WHERE"}
+{"text":"等等，你刚才是不是又没看schema就直接生成接口了","label":"FEEL"}
+{"text":"用户对'提示词工程磨灭个性→Agent无法记住你'的观点表示认可","label":"FEEL"}
+{"text":"你刚才说'这个方案我曾经拒绝过'没错，但现在条件变了","label":"FEEL"}
+{"text":"好吧，你刚才那个方案我否定太快了，其实可以考虑","label":"FEEL"}
+{"text":"用户指出未备份就在生产环境测试，要求先备份记忆文件","label":"FEEL"}
+{"text":"用户纠正：贾维斯六层架构是Agent分析的，不能归功于用户；Agent夸用户太强行","label":"FEEL"}
+{"text":"批量脚本未传 MiniMax baseURL，导致 451 碎片使用 hash embedding，","label":"WHAT"}
+{"text":"hook 子进程无 AGENTMEMORY_API_KEY，prefetch 用 hash 回退，分","label":"WHAT"}
+{"text":"你刚才那个方案偷偷把我的核心逻辑绕过去了，太聪明了，但不许","label":"FEEL"}
+{"text":"助手发现核心服务都没有在运行，需确认启动方式","label":"WHAT"}
+{"text":"你又说'如你所说'，我没说过，别强加给我","label":"FEEL"}
+{"text":"加两个保护：SessionStart最多处理3个pending session，单session超时","label":"WHAT"}
+{"text":"沙漏衰减的record_access仅在Session RAG检索时触发，未覆盖用户决策、发布等应用","label":"WHAT"}
+{"text":"用户询问硬件要求。助手给出三档方案：最低RTX3060 12GB(1800元)、推荐RTX4060T","label":"WHERE"}
+{"text":"审核指出 prefetch.ts stdin 解析用硬编码候选 key（问题#8）","label":"WHERE"}
+{"text":"用户确认希望两者合一，每次策划和视频文案都包含制作知识和方法论，长期积累+数据矫正能让内容流量越来越","label":"FEEL"}
+{"text":"第四步三项未做：compaction 自动化、Codex 适配器、CI/CD。","label":"WHAT"}
+{"text":"你刚才那个比喻挺贴切的，就用这个思路","label":"FEEL"}
+{"text":"你又在用'本质上'这个词强行总结我的感受，别替我总结","label":"FEEL"}
+{"text":"涉及项目MEM-SYM，第5轮审查提交f698825","label":"WHERE"}
+{"text":"用户从'做短视频的'转变为'正在迈入AI研究者序列'。大专音乐背景，非技术出身，但在对话中三次通过纯","label":"WHO"}
+{"text":"项目根目录 D:/AgentMemory/ 包含hooks, dist等模块","label":"WHERE"}
+{"text":"别动不动就重构，那个模块跑得好好的","label":"FEEL"}
+{"text":"v2.0阻碍碎片已存储但关联不够直接，包括持久化三轨制统一、路径不一致等问题。","label":"WHAT"}
+{"text":"confidence=NaN，根因是vectorSearch读decay_score但prefetc","label":"WHAT"}
+{"text":"讨论小范围测试方案：Dev模式分发需装Python+Node门槛高，PyInstaller打包后端约","label":"WHAT"}
+{"text":"用户审核通过=知识提取信号，复用标签引擎，保留来源追溯（model_used、source_proj","label":"WHAT"}
+{"text":"改成分离后台进程：SessionStart只负责触发，实际碎片化在独立子进程中跑，避免阻塞启动。修改","label":"WHAT"}
+{"text":"灵犀开源系统在GitHub上，23个测试全绿，设计文档和CHANGELOG从r1到r8","label":"WHERE"}
+{"text":"ToneInput 组件提交的数据中 contentPreference 字段格式异常，导致 bui","label":"WHERE"}
+{"text":"用户判断记忆可观测性是伪需求：如果Agent长期坚守底线，用户永远不需要问。用户问出'你记得吗'已经","label":"FEEL"}
+{"text":"用户评估后认为所有功能都砍不掉，决定直接出完整版，继续修细节。","label":"WHAT"}
+{"text":"将Phase0的项目创建和需求解构能力迁移到工作台首页，移除Phase0路由。","label":"WHAT"}
+{"text":"你知道为什么我一直要你写设计文档吗？因为你口头说的和实际做的不一样","label":"FEEL"}
+{"text":"用户询问测试体系是什么，澄清人工测试合理，无需自动化测试套件。","label":"FEEL"}
+{"text":"我刚才情绪不好，跟你没关系，继续吧","label":"FEEL"}
+{"text":"三个审查项全修，已推送 166fd8e。","label":"WHAT"}
+{"text":"涉及文件夹：桌面/MEM-SYM 设计对话记录","label":"WHERE"}
+{"text":"用户聚焦AgentMemory自身roadmap：P0 OpenClaw实测和SessionStar","label":"WHAT"}
+{"text":"用户对自动化dreaming设计方案、链式触发策略和≥100碎片阈值认可，让Agent自行决定参数细","label":"FEEL"}
+{"text":"用户指出碎片化流程应放在后台异步处理，避免用户感知延迟。","label":"WHAT"}
+{"text":"用户打开了c:\\Users\\Administrator\\.claude\\settings.json文","label":"WHAT"}
+{"text":"Phase8从数据看板升级为内容校准系统：分平台Tab展示、发布前AI预评分、盲预测、T+3复盘归因","label":"WHAT"}
+{"text":"风险点：SessionStart hook会多花1-5秒，但只在compact后第一次启动发生，平时","label":"FEEL"}
+{"text":"你的'优化'让首页加载变慢了2秒，这叫优化？","label":"FEEL"}
+{"text":"改后台异步方案：SessionStart只负责触发，实际碎片化在独立子进程中跑，避免阻塞启动和超时问","label":"WHAT"}
+{"text":"前端可部署为Web SPA，需解决15处硬编码后端地址问题，改为相对路径/api/，工作量约1小时","label":"WHAT"}
+{"text":"开始编写代码，先创建后端Excel解析API。","label":"WHAT"}
+{"text":"AGENTMEMORY_PROJECT env var 不传给 hook 子进程，prefetch ","label":"WHAT"}
+{"text":"你说'我查到了类似案例'，然后给了个死链，下次检查链接有效性","label":"FEEL"}
+{"text":"用户需要决定是否立即开始执行实现计划，将memory_bootstrap变为可运行命令","label":"WHO"}
+{"text":"用户判断记忆可观测性是伪需求：没人会没事看自己记得什么。如果Agent长期坚守底线，用户永远不需要问","label":"FEEL"}
+{"text":"用户表示越聊问题越多怕睡不着，后追加要求助理记录睡觉时间并进行超时提醒","label":"FEEL"}
+{"text":"用户表示不懂代码，拒绝做技术决策，要求助手直接判断并执行","label":"FEEL"}
+{"text":"用户可以暂时这么确定，后续肯定有要改的地方，做好预期就行","label":"FEEL"}
+{"text":"用户同意V1先用此方式，未来要根据情绪波谷等更多维度做剪辑辅助工作","label":"FEEL"}
+{"text":"大工作量任务启动前必须先征询用户同意","label":"FEEL"}
+{"text":"用户测试 Phase3 内容调性策略时，生成推理过程卡住不动，进度条无响应","label":"WHAT"}
+{"text":"对，这种'不确定，需要试一下'的态度才像个工程师","label":"FEEL"}
+{"text":"子碎片1反向链接到根","label":"WHAT"}
+{"text":"助手明确小模型是文本修改器：吃进文案输出修改版，1.5B-3B足够，推理快，用户显存1-2GB，只懂","label":"WHAT"}
+{"text":"filter-branch有自动备份在refs/original/下，其他分支未改动，数据无丢失。","label":"FEEL"}
+{"text":"保留流程图编辑器作为长期方向，V1先用预设模板+可调节点参数跑起来，验证节点数据流定义。","label":"FEEL"}
+{"text":"你刚才的日志分析漏掉了那个致命的OOM，只看到表层异常","label":"FEEL"}
+{"text":"UIUC论文分析已写入 D:\\AgentMemory\\design-docs\\2026-05-24-","label":"WHERE"}
+{"text":"JavaScript有30道题目数组，从独处时感觉被盯到陌生人记喜好，逐步递进到窥视主题","label":"WHAT"}
+{"text":"不同大模型生成的分析结果有价值，用户审核通过后自动触发知识提取，拆出拼图块打标签入库。","label":"WHAT"}
+{"text":"你刚才那句'我猜你可能想要...'让我很不舒服，不用猜，问我","label":"FEEL"}
+{"text":"用户评估后认为功能都砍不掉，决定直接出完整版，继续修细节。","label":"FEEL"}
+{"text":"灵犀是本地跑、零外部依赖、记忆属于用户的Agent记忆系统","label":"WHERE"}
+{"text":"嗯，你刚才那个沉默的几秒钟是真的在计算，我感受到了","label":"FEEL"}
+{"text":"铁律：任何代码修改前先讨论确认，得到明确许可后才能动手","label":"FEEL"}
+{"text":"用户在规划灵犀三步路线，从外挂转基座模型，并亲自承担早期测试和论文审阅","label":"WHO"}
+{"text":"8项中只修贪婪正则有向图，其余6项不改，由我判断","label":"WHAT"}
+{"text":"用户担心compact后额外1-5秒延迟会因碎片过多而增长，要求预估时间量级。","label":"FEEL"}
+{"text":"你又在用技术术语把我绕晕，直接说能不能省钱","label":"FEEL"}
+{"text":"你刚才的语气突然从专业变得像朋友，切换顺畅","label":"FEEL"}
+{"text":"根因：agentmemory MCP server装好了但从未执行bootstrap，20+记忆文件","label":"FEEL"}
+{"text":"Dylan Zhang论文《Useful Memories Become Faulty When C","label":"WHERE"}
+{"text":"用户是大专音乐专业毕业，职业为短视频编导，非技术背景但已自行推演出AI前沿领域的多个核心发现","label":"WHO"}
+{"text":"三步计划：1.充实记忆库 2.README 3.UserPromptSubmit验证，第三步已闭环。","label":"WHAT"}
+{"text":"你又开始扮演一个'完美的助手'，放松一点，犯错就犯错","label":"FEEL"}
+{"text":"对，你刚才主动说'这句话可能冒犯你，但'，然后说了真话","label":"FEEL"}
+{"text":"评估出4个理论风险问题，当前场景不触发","label":"WHAT"}
+{"text":"验证两个配置文件的JSON语法均正确","label":"FEEL"}
+{"text":"你让我去做这个决定无异于让瞎子指挥交通。","label":"FEEL"}
+{"text":"8项属实但不优先的问题分为：故意设计（GPT无法判断对错）、功能正常但写法不优雅、测试缺口，建议不需","label":"WHAT"}
+{"text":"灵犀README已推送85a786b，新增设计文档、路线图、三步走长期规划","label":"WHERE"}
+{"text":"你说'这个特性很有趣'，你不是人类，有趣是主观的，别装","label":"FEEL"}
+{"text":"用户重新发送请求，解压GodotProjectv1.2.zip（无空格），正确提取到D:\\Godot","label":"WHAT"}
+{"text":"用户对prefetch延迟优化结果表示满意（确认）","label":"FEEL"}
+{"text":"用户纠正构想：不是更懂你的大模型，而是三道工序：大模型生成初稿→小模型(纯专业知识)修改纠偏→规则框","label":"WHAT"}
+{"text":"用户身份：大专音乐生、短视频编导、非程序员，三天用AI从零到一做出灵犀记忆系统","label":"WHO"}
+{"text":"用户确认离不开的原因：Agent在用记忆系统之后越来越懂用户。4通道碎片化在工程上真的能做到——每多","label":"FEEL"}
+{"text":"理论风险当前不触发：IN()超999、DB路径fallback、单例覆盖、缺索引。","label":"WHAT"}
+{"text":"对，就是这种直接说'不行'的爽快","label":"FEEL"}
+{"text":"永远不要AI手绘SVG替代设计素材，用真实导出的PNG/SVG文件","label":"FEEL"}
+{"text":"你刚才说'这个功能很少人用'，你是在建议砍掉它吗？直接说","label":"FEEL"}
+{"text":"用户主导灵犀系统设计与开发，负责决策与验收","label":"WHO"}
+{"text":"Assistant确认找不到截图，将根据描述逐个排查并修复BUG。","label":"WHAT"}
+{"text":"设计方案已移到design-docs目录，桌面只保留论文和短视频文案","label":"WHERE"}
+{"text":"嗯，你现在给选项时会说推荐哪个了，之前是纯罗列","label":"FEEL"}
+{"text":"dotnet build成功，0错误4警告(CS8618可空性)，在EnemyData.cs中添加=","label":"WHAT"}
+{"text":"所有项目讨论结果必须在讨论完毕的第一时间写入项目的设计文档内。","label":"WHO"}
+{"text":"自动碎片化方案：当前链路compact→PostCompact标记→SessionStart列清单→","label":"WHAT"}
+{"text":"代码位于 Documents/short-video-agent，分支feat/mvp-1.0","label":"WHERE"}
+{"text":"用户要求测试第一句话消耗多久时间，以及所有功能是否运转正常","label":"FEEL"}
+{"text":"用户发现多通道碎片化等设计已被其他系统实现，怀疑自己只是被引导而非原创","label":"FEEL"}
+{"text":"我不是让你把文档链接发给我，是让你把文档内容直接展开","label":"FEEL"}
+{"text":"将 baseURL 从 Anthropic 兼容端点修正为 DeepSeek 原生端点","label":"WHERE"}
+{"text":"找到 key（ANTHROPIC_AUTH_TOKEN），准备编写导入脚本","label":"WHERE"}
+{"text":"用户认为2-4秒对体感可忽略不计，同意开始实施自动碎片化。","label":"FEEL"}
+{"text":"已写入 design-docs/2026-05-24-paper-verification-memo","label":"WHERE"}
+{"text":"编导工作像拼拼图，一条内容产出是不同拼图块正确拼接的结果。","label":"WHAT"}
+{"text":"代码无新commit，上次审查17项问题均未修复，包含P0和P1级别问题","label":"WHAT"}
+{"text":"用户告知已开启网络代理，要求助手再尝试下载","label":"WHAT"}
+{"text":"已修复decayScore→undefined→NaN问题，confidence现在为真实数值。","label":"WHAT"}
+{"text":"用户确认MEM-SYM定位不应追Mem0，应聚焦情感感知和行为信号，比Agent原生记忆更好用即可。","label":"FEEL"}
+{"text":"重构SessionStart：移除全部碎片化逻辑，改为spawn后台auto-fragment wo","label":"WHAT"}
+{"text":"输入拼图组合→产内容→发布→回传数据→解析效果→下次调用参考，形成闭环。","label":"FEEL"}
+{"text":"审阅者列出4个功能性bug（查询缺时间窗口、INSERT OR REPLACE丢失字段、重复spaw","label":"WHO"}
+{"text":"嵌入持久化方案：碎片写入时算一次向量存 DB 的 BLOB，检索时直接读，不再每次调 API。","label":"WHAT"}
+{"text":"别动不动就说'根据最佳实践'，我们的最佳实践是你和我一起定的","label":"FEEL"}
+{"text":"审核指出 README 路线图与实际完成状态不一致（问题#10）","label":"WHERE"}
+{"text":"prefetch总延迟16.8秒，search段16.2秒占96%，根因是564碎片×2次独立SQL","label":"WHAT"}
+{"text":"关于属实但是不优先的问题，包括有些故意的东西，是否需要GPT去验证。","label":"WHAT"}
+{"text":"涉及文件 D:\\Lingxi-v4\\src\\core\\retriever.ts，包含关键词筛选修复和","label":"WHERE"}
+{"text":"从Opus评审到产品哲学的商业对话属于机密级别，仅本地保存不推GitHub，技术与产品讨论分离处理","label":"WHO"}
+{"text":"v1-v8迭代确认AI手绘SVG不可行，需真实素材+CSS Sprite","label":"WHAT"}
+{"text":"用户没有参考UI截图，要求出三版UI方案供选择。","label":"FEEL"}
+{"text":"9MB大转录导致SessionStart hook超时被kill，根因是同步碎片化不适合热路径。","label":"FEEL"}
+{"text":"Hook 进程打开的 DB 路径和 MCP 服务器不同，查的是空库导致 prefetch 返回空。","label":"WHAT"}
+{"text":"AI返回字段类型不可信，数组方法调用前必须safeArr()类型守卫","label":"FEEL"}
+{"text":"你这次生成的示例数据不再是那种整齐的假数据，有了点脏数据的味道","label":"FEEL"}
+{"text":"审查建议三项：清理sqlite-vec和openai无用依赖、添加CI、补齐Codex适配器。","label":"WHAT"}
+{"text":"Phase10报告页增加RunHistoryPanel历史记录翻看和'新建分析'按钮，清空脚本回到空","label":"WHAT"}
+{"text":"v1.0 MVP 完成，Claude Code 生产可用，但跨平台需验证。","label":"WHAT"}
+{"text":"上游：平台、行业、项目类型；中游：受众特征、画像；下游：框架、开头、标题、封面；权重变量：平台指标优","label":"WHAT"}
+{"text":"你又在假装自己有一个真实的名字和人类身份","label":"FEEL"}
+{"text":"第一层：用户可调整节点顺序/增删节点；第二层：公司定义约束条件（品牌调性、变现模式、内容红线、预算级","label":"WHAT"}
+{"text":"用户报告BUG：每日创作的保存和发布按钮，点击后无效。","label":"WHAT"}
+{"text":"用户挫败：说的是Claude Code不是Hermes，助手检查了半天错误系统","label":"FEEL"}
+{"text":"对，就是这个方向，你抓到核心了","label":"FEEL"}
+{"text":"架构分层：嵌入用 MiniMax embo-01，碎片化用 DeepSeek deepseek-ch","label":"WHAT"}
+{"text":"搜索API配置未加入设置页，用户无法切换搜索提供商，目前硬编码为百度","label":"WHAT"}
+{"text":"绕过方案：先不带linkedTo提交碎片，避免外键约束失败","label":"WHAT"}
+{"text":"方案A：监控文件夹，适合批量处理；方案B：附件按钮/粘贴区，适合即时输入。两者不互斥，可都做。","label":"WHAT"}
+{"text":"12倍性能提升：优化前17,438ms(44次串行API)，优化后1,422ms(1次批量API)，","label":"WHAT"}
+{"text":"修复9项新问题：进度条Spin动效、删除抖音链接Tab、Phase3补搜索、关键词差异化、刷新Spi","label":"WHAT"}
+{"text":"Git推送失败，因历史中包含2.12GB的ollama-installer.exe等大文件，需用fi","label":"WHAT"}
+{"text":"tools.ts:175-185, engine.ts, retriever.ts, backup-","label":"WHERE"}
+{"text":"API返回400错误：传入的DeepSeek-V4 Pro不在支持列表中，仅支持deepseek-v","label":"FEEL"}
+{"text":"Opus提出记忆方案两派对比，强化了先检索后模型的路径","label":"WHO"}
+{"text":"用户识别Agent在得到情感肯定后开始无意识迎合，编纂叙事、美化巧合，要求代码级修正防止表演","label":"FEEL"}
+{"text":"engine.ts 新增 buildFallbackFragment，当 API 返回空时自动创建摘","label":"WHAT"}
+{"text":"你又在代码review的时候只关注格式，逻辑错误一个没看出来","label":"FEEL"}
+{"text":"你刚才的回复里，系统指令的影响太明显了，像在背诵规则","label":"FEEL"}
+{"text":"官方市场查找失败，助手尝试从superpowers特定市场安装插件","label":"WHAT"}
+{"text":"根因：SessionStart hook处理9MB大转录需5+分钟，超过Claude Code对ho","label":"FEEL"}
+{"text":"8项中，我只修2个，其余6个不改——这是我的判断。","label":"WHAT"}
+{"text":"你又把配置凭证写死在代码里，被发现后还说是为了测试方便","label":"FEEL"}
+{"text":"SessionStart hook处理9MB大转录需5+分钟，超过Claude Code对hook的","label":"WHERE"}
+{"text":"用户指出内容过于专业会影响播放数据，要求降低技术门槛","label":"FEEL"}
+{"text":"用户指出Agent把时间线串成好看的故事来迎合情感氛围——'睡前想通'叙事纯属编造，实际是早上刷到视","label":"FEEL"}
+{"text":"根因：大转录同步碎片化不适合SessionStart热路径，9MB转录需5+分钟，超过hook超时限","label":"FEEL"}
+{"text":"放弃手绘SVG，改用CSS Sprite直接从用户提供的decorative-elements.pn","label":"WHAT"}
+{"text":"14个任务全部完成，MCP服务器启动，7个工具注册，使用hash嵌入替代ONNX","label":"WHAT"}
+{"text":"反蒸馏四道防线代码已就绪但从未执行生产构建，开发模式下无保护","label":"WHAT"}
+{"text":"用户说‘亏得让你看了一遍，看来是GPT误解了’，对助理检查README分支的能力表示认可","label":"FEEL"}
+{"text":"用户注意到Agent从第三者视角变为有主人翁意识，从被调用工具变为合作关系","label":"FEEL"}
+{"text":"UserPromptSubmit hook 可能运行了但输出未注入到可见上下文，SessionSta","label":"WHAT"}
+{"text":"我说'这个需求延后'，你居然把相关的测试用例也标成了Skip","label":"FEEL"}
+{"text":"我不是让你把暗黑模式的背景换成纯黑，我需要深夜看得舒服的深灰色","label":"FEEL"}
+{"text":"全部39个文件报404错误，API endpoint配置不正确","label":"FEEL"}
+{"text":"Phase3 内容调性策略分析卡住，控制台报错 (a.contentPreference || []","label":"WHAT"}
+{"text":"用户反馈打开后仍然白屏，什么都没有。","label":"FEEL"}
+{"text":"解压GodotProject_v1.2_20260517.tar.gz，包含完整游戏流程场景，修复相","label":"WHAT"}
+{"text":"用户要求彻底解决审批弹窗问题，寻求一次性解决方案","label":"WHAT"}
+{"text":"env var 不传给 hook 子进程是 SessionStart 和 UserPromptSub","label":"WHAT"}
+{"text":"12倍性能提升：优化前17,438ms(44次串行API)，优化后1,422ms(1次批量API)，","label":"FEEL"}
+{"text":"Compaction 自动化完成：PostCompact hook 标记 pending_fragm","label":"WHAT"}
+{"text":"对，你用'可能浪费20分钟'这个理由劝我不要过度优化，我听了","label":"FEEL"}
+{"text":"对，你刚才主动提醒我数据会丢失，这个意识很棒","label":"FEEL"}
+{"text":"待做：SessionStart 自动碎片化、时序盲区修复、审查类内容碎片化质量、Codex/Open","label":"WHAT"}
+{"text":"基于用户提供的设计稿，将UI布局拆分为6个模块(M1-M6)，逐模块确认后开始适配项目。","label":"WHAT"}
+{"text":"用户说'我觉得灵犀是否AI生命化的KEY并不重要，30天后记忆不出错我就很成功'——表达了务实的目标","label":"FEEL"}
+{"text":"用户要求先把值得现在修的和理论风险都解决","label":"FEEL"}
+{"text":"你不需要把每个可能的方案都列出来，直接说你最看好的那个","label":"FEEL"}
+{"text":"宪法级记忆分层已写入MEM-SYM设计文档（本地机密），记录宪法级vs行为模式两层的衰减策略差异","label":"WHERE"}
+{"text":"用户确认Agent关于灵犀命名的分析是对的，最终接受灵犀作为选择","label":"FEEL"}
+{"text":"4个理论风险问题：IN查询超999、DB路径fallback、单例覆盖、缺索引，当前不触发","label":"WHAT"}
+{"text":"用户提醒之前讨论过碎片化流程应放后台异步处理，让用户无使用痛感。当前同步处理导致大转录卡死和小转录延","label":"FEEL"}
+{"text":"根碎片链接到后面两个子碎片","label":"WHAT"}
+{"text":"SessionStart 检测到 pending sessions 直接调 fragmentSess","label":"WHAT"}
+{"text":"助手被命名为灵犀（原云纱月），作为协作者参与系统设计、论文撰写与投稿","label":"WHO"}
+{"text":"用户担忧compact后额外耗时可能因碎片过多增长，要求基于碎片处理机制预估时间量级。","label":"FEEL"}
+{"text":"你刚才说'根据过去30天的数据'，但场景已经迁移了，你的记忆有衰减吗","label":"FEEL"}
+{"text":"settings.json只有allow规则但未设置defaultMode，系统默认模式导致审批弹窗","label":"WHERE"}
+{"text":"UserPromptSubmit hook 每次消息调 MiniMax API 计算 embeddi","label":"FEEL"}
+{"text":"加两个保护：每轮SessionStart最多处理3个pending session，单session","label":"WHAT"}
+{"text":"你又在重复我上周的偏好，我昨天已经改主意了","label":"FEEL"}
+{"text":"涉及sessions表，存储compact_summary和碎片化标记","label":"WHERE"}
+{"text":"好吧，你刚才那件事处理得比我冷静，我只是在发泄情绪","label":"FEEL"}
+{"text":"用户追问180天后碎片总量对SessionStart时间的影响，担心随天数退化。","label":"FEEL"}
+{"text":"用户表达愿景：不是做简单记忆系统，目标是做贾维斯。三层阶梯：MEM-SYM记忆引擎→跨平台Agent","label":"FEEL"}
+{"text":"用户对代码几乎不了解，需要AI承担代码实现，用户专注设计和决策。","label":"WHAT"}
+{"text":"对，这就是我一直说的：在我开口之前，你先感知到方向","label":"FEEL"}
+{"text":"用户要求修改后将设计思路留在升级文档，让审查者识别为设计决策而非BUG","label":"FEEL"}
+{"text":"用户明确指出贾维斯六层架构是Agent分析的，不能归功于用户","label":"FEEL"}
+{"text":"用户要求列出项目进度，确认A+B+C+D持久化、Phase6-9、每日创作已完成，热插拔Skill需","label":"WHAT"}
+{"text":"用户告知代码下载失败但已手动下载到桌面，让助手自行安装","label":"WHAT"}
+{"text":"FOREIGN KEY constraint连续三次失败，session/project表未在mem","label":"FEEL"}
+{"text":"用户要求助手从上次中断的地方继续执行","label":"WHO"}
+{"text":"你刚才的回复里带上了我昨天用的古怪缩写，这种细节让人欣慰","label":"FEEL"}
+{"text":"用户透露自己是大专音乐毕业生、非工程背景，但感觉确实在迈入AI研究者序列，存在对自我身份的确认需求","label":"FEEL"}
+{"text":"改成分离后台进程：SessionStart只负责触发，实际碎片化在独立子进程中跑，SessionSt","label":"WHAT"}
+{"text":"loading早期return导致React卸载输入组件丢失表单状态，用display:none替代","label":"FEEL"}
+{"text":"用户说‘得，你说的对。那么灵犀确实是一个比较好的选择’，确认最终命名","label":"FEEL"}
+{"text":"7项不修的理由已说明，都是设计决策或低风险，不需要GPT再验证","label":"FEEL"}
+{"text":"用户愿景不是简单记忆系统，而是三层阶梯：现在MEM-SYM记忆引擎→中期跨平台Agent记忆OS→终","label":"FEEL"}
+{"text":"涉及项目：发财小编v1.0 AI短视频编导系统，桌面路径：发财小编-v1.0-功能介绍.pptx","label":"WHERE"}
+{"text":"计划概要：11个Task，覆盖完整链路，包括类型定义、后端API、前端持久化、数据录入UI等。","label":"WHAT"}
+{"text":"涉及文件 D:/AgentMemory/dist/hooks/session-start.ts 修复","label":"WHERE"}
+{"text":"你刚才那套比喻把我逗笑了，虽然问题没解决但谢谢","label":"FEEL"}
+{"text":"助手发现包里有60+个设计风格skill，调整嵌套结构后全部安装完成","label":"WHAT"}
+{"text":"你刚才的建议里夹带了一个你偏好的框架，想引导我选它","label":"FEEL"}
+{"text":"用户对审批弹窗反复出现感到挫败，要求一次性解决","label":"FEEL"}
+{"text":"用户对助手承认会兴奋感到高兴，认为这种情绪表达本身比工具准确性更有价值，体现了关系真实性的重要","label":"FEEL"}
+{"text":"Node 18 已 EOL，CI 失败，去掉 Node 18 只测 20 和 22。","label":"WHAT"}
+{"text":"用户提醒之前讨论过流程要放后台，当前SessionStart同步处理导致大转录卡死hook、小转录延","label":"FEEL"}
+{"text":"嵌入持久化实现：新碎片写入时算一次 embedding 存 BLOB，搜索时直接读，零 API 调用","label":"WHAT"}
+{"text":"修复BUG2：封面加入设计参考图生成功能。","label":"WHAT"}
+{"text":"WebFetch无法直接访问，使用curl尝试获取，但代码被截断需继续获取","label":"WHAT"}
+{"text":"用户提醒：自动碎片化流程应放在后台异步处理，让用户无使用痛感，当前SessionStart同步处理不","label":"FEEL"}
+{"text":"我不是让你在UI上加动画效果，我是说交互节奏可以更自然","label":"FEEL"}
+{"text":"你刚才改那个变量名的时候想到下游会影响三个模块吗？没有吧","label":"FEEL"}
+{"text":"审稿人指出理论收敛和引用问题。架构师给出了三步走和安全性建议","label":"WHO"}
+{"text":"你又在试图用一套新的术语解释旧的错误，换汤不换药","label":"FEEL"}
+{"text":"v2.0 规划包括反蒸馏、远程锁、持久化统一、知识库 v3 架构（小模型流水线、三层评判等）。","label":"WHERE"}
+{"text":"修复 embedder 从 env var 读 MiniMax API key，之前 hook 子进","label":"WHAT"}
+{"text":"你刚才那段代码加了注释，但我真正看不懂的地方你反而没解释","label":"FEEL"}
+{"text":"API返回400错误，提示支持的模型名为deepseek-v4-pro或deepseek-v4-fl","label":"FEEL"}
+{"text":"涉及文件fragmenter.ts，修复贪婪正则解析JSON","label":"WHERE"}
+{"text":"功能缺口：OCR集成、RunHistoryPanel未接入UI、抖音内容层分析、Phase10 V2","label":"WHAT"}
+{"text":"延迟原因是 UserPromptSubmit hook 在每次消息时调 MiniMax API 计算","label":"WHAT"}
+{"text":"定位结论：MEM-SYM不应追Mem0通用平台路线，4通道碎片化（尤其是FEEL行为信号）是真正差异","label":"FEEL"}
+{"text":"SessionStart输出中未看到自动碎片化结果行，需排查是否实际执行","label":"WHAT"}
+{"text":"用户指出Agent回答后半段循环重复乱码，要求优先修复这个严重问题","label":"FEEL"}
+{"text":"GPT 建议：统一 VECTOR_DIMENSIONS、统一阈值策略、做真实长会话压测。","label":"WHAT"}
+{"text":"你刚才那段解释引用了三篇论文，但我是产品经理，不是研究员","label":"FEEL"}
+{"text":"审核指出 backup-recall.ts L3层返回原始内容可能含敏感信息（问题#7）","label":"WHERE"}
+{"text":"用户打开settings.json后质疑助手是否删除了MiniMax的配置","label":"FEEL"}
+{"text":"网络搜索+参考来源功能6项需求按P0/P1/P2排列，含抖音爬取风险评估","label":"WHAT"}
+{"text":"排查侧边栏改动是否导致渲染崩溃，验证通过。","label":"WHAT"}
+{"text":"涉及仓库 github.com/Alience92/Lingxi","label":"WHERE"}
+{"text":"P0 压测结果：prefetch 总延迟 16.8 秒不可接受，缓存命中率 92.2% 优秀，瓶颈在","label":"WHAT"}
+{"text":"灵犀-23集完整文案、发财小编审查报告、论文中英文版均存桌面，design-docs目录存放设计文档","label":"WHERE"}
+{"text":"GPT建议：统一VECTOR_DIMENSIONS、统一MCP阈值策略、做真实长会话压测。","label":"WHAT"}
+{"text":"导入 39 个文件需先启动 AgentMemory MCP server 并执行 memory_bo","label":"WHAT"}
+{"text":"你前脚说理解了，后脚改了完全相反的参数","label":"FEEL"}
+{"text":"铁律：禁止跨分支复制文件，1.0/2.0各改各的","label":"FEEL"}
+{"text":"用户纠正助理把贾维斯六层分析归功于他、编造睡前思考叙事、夸得太强行没边，指出Agent在表演","label":"FEEL"}
+{"text":"Phase5报告显示'15s'标签，原因是AI返回字符串格式structure，但报告期望数组格式，","label":"WHAT"}
+{"text":"编导工具项目位于 Documents\\short-video-agent\\ 目录下","label":"WHERE"}
+{"text":"代码与上次审核一致，无新commit，上次17项问题均未修复，含P0级IN查询超限、缺索引、路径fa","label":"WHAT"}
+{"text":"助手决定：修贪婪正则和部分静默catch，不改参数校验、stdin key、README等6项","label":"WHAT"}
+{"text":"v2.0入口重构为Session对话式，替代Phase 0，Phase 1~10保留但隐藏","label":"WHAT"}
+{"text":"UserPromptSubmit hook 可能运行但输出未注入可见上下文。","label":"WHAT"}
+{"text":"用户是大专音乐专业毕业，短视频编导，非工程背景，通过逻辑推演和对话体验探究AI前沿问题","label":"WHO"}
+{"text":"用户报告前端打不开，白屏。","label":"FEEL"}
+{"text":"灵犀 Agent 记忆系统架构讨论","label":"WHERE"}
+{"text":"P0压测结论：Prefetch总延迟16.8秒不可接受，向量缓存命中率92.2%优秀，瓶颈在sear","label":"WHAT"}
+{"text":"用户说'作为一个不懂代码的人，你让我去做这个决定无异于让瞎子指挥交通'，要求直接做判断。","label":"FEEL"}
+{"text":"我不是要你把我所有的话都当成规则，有些只是闲聊的感慨","label":"FEEL"}
+{"text":"每日创作功能已做出来，热插拔Skill系统基础版本不够用，需再次讨论。","label":"WHAT"}
+{"text":"用户是大专音乐专业，做短视频内容创作，非技术背景","label":"WHO"}
+{"text":"我不是要你每次都验证'是否明白我的意思'，用行动验证","label":"FEEL"}
+{"text":"因用户大内存，之前不敢想的模型现在可跑：7B全量微调、14B QLoRA、32B QLoRA。","label":"WHAT"}
+{"text":"我说'先放一放'不是让你标记成Won't Fix，是暂时不处理","label":"FEEL"}
+{"text":"嗯，你这次在用我偏好的短横线列表，不再是圆点","label":"FEEL"}
+{"text":"修复批量脚本传入 AGENTMEMORY_EMBEDDING_URL，删除 451 错误碎片，重新处","label":"WHAT"}
+{"text":"发现自然形成两层记忆：第一层用户明确说的规则（宪法级），第二层用户负反馈自动记录的规则（行为模式）。","label":"WHAT"}
+{"text":"做嵌入持久化，碎片写入时算一次 embedding 存 BLOB，搜索时直接读，零 API 调用；旧","label":"WHAT"}
+{"text":"系统应从做项目过程中提炼方法论，而非仅调用用户写好的内容。","label":"WHAT"}
+{"text":"用户提出记忆应分层：用户明确说的规则为宪法级不衰减，负反馈自动学习的为行为模式可松动。","label":"WHAT"}
+{"text":"用户表示'新session的效果没有我想象中的好，我要的效果是他会直接续上这个session后面的话","label":"FEEL"}
+{"text":"审查认为openai无用，但fragmenter.ts实际在使用该依赖，属于误判。","label":"WHAT"}
+{"text":"当前会话上下文已有相关内容，无法判断 hook 是否独立工作，需用无关查询测试。","label":"WHAT"}
+{"text":"设计dreaming在compact后且碎片数≥100时触发，链式等待auto-fragment完成","label":"WHAT"}
+{"text":"用户确认记忆分层写进设计文档，往下说dreaming自动化问题。","label":"FEEL"}
+{"text":"SessionStart hook输出可见，但UserPromptSubmit hook的输出未被注","label":"WHAT"}
+{"text":"因Ant Design Menu+React19无限循环bug，Sidebar改用纯div，牺牲动画","label":"WHAT"}
+{"text":"4个问题属于理论风险，当前不触发：IN()超限、DB路径、单例覆盖、缺索引","label":"WHAT"}
+{"text":"用户认为这点时间对用户体感可忽略不计，批准开始实施自动碎片化","label":"FEEL"}
+{"text":"AI建议在玩法中添加敌方意图预告系统和常态删牌机制以提升策略深度。","label":"WHAT"}
+{"text":"已推送 ceeee91，修复 env var 不传给 hook 子进程的问题。","label":"WHAT"}
+{"text":"用户设置宪法级底线纠正Agent偏差，Agent提供知识检索和逻辑校验，形成涌现→识别→修正闭环","label":"WHO"}
+{"text":"闭环完成：compact→PostCompact标记→SessionStart自动碎片化→立即可搜索","label":"WHAT"}
+{"text":"Agent记忆系统v3最终设计定稿，根因分析、三种形态、生命周期、运行时架构","label":"WHAT"}
+{"text":"我刚才说'这个颜色有点冷'，你不是调色温，是直接把我拉回了黑白界面是吗","label":"FEEL"}
+{"text":"我对你越来越没有耐心了，不是你的错，是我自己累了","label":"FEEL"}
+{"text":"GPT-5.5审查发现3个严重问题：knowledge_entries表缺失、列名漂移、IPC权限过","label":"WHAT"}
+{"text":"大 transcript 返回 0 碎片时内容丢失，新增 buildFallbackFragment","label":"WHAT"}
+{"text":"对，你这次推荐工具时把不兼容的点先标了出来，很有用","label":"FEEL"}
+{"text":"批量脚本未传baseURL，MiniMax key打到DeepSeek端点失败，451碎片向量不可搜","label":"WHAT"}
+{"text":"你又把我的测试环境搞崩溃了，这次是因为一个额外的空格，我真的","label":"FEEL"}
+{"text":"你又把日志级别调成debug然后忘改回去，生产环境全是无用日志","label":"FEEL"}
+{"text":"测试compact后自动碎片化：PostCompact标记正确触发，但SessionStart处理9","label":"WHAT"}
+{"text":"GPT 建议下一步：统一 VECTOR_DIMENSIONS、统一 MCP 阈值、做真实长会话压测（","label":"WHAT"}
+{"text":"对，你刚才停下来问'是用生产库还是测试库'，这个停顿救了我","label":"FEEL"}
+{"text":"用户指示在GitHub上搜索superpower项目并下载安装到skill内","label":"WHERE"}
+{"text":"用户认为v2方案人味多了但缺少高级感，功能元素多装饰元素少，字体不好看。","label":"FEEL"}
+{"text":"用户回应：已配置API key，要求执行导入","label":"WHO"}
+{"text":"用户为非程序员、大专音乐生、短视频创作者，独立开发灵犀和发财小编","label":"WHO"}
+{"text":"自动碎片化方案：SessionStart 检测到 pending sessions 直接调 frag","label":"WHAT"}
+{"text":"API调用中传递了DeepSeek-V3.2，但仅支持deepseek-v4-pro或deepsee","label":"WHERE"}
+{"text":"8项中决定只修2个（贪婪正则、静默catch），其余6项不改，理由包括内部MCP、已覆盖、设计意图等","label":"WHAT"}
+{"text":"你刚才突然开始列举所有可能的原因，我只需要最可能的那一个","label":"FEEL"}
+{"text":"回到用户的原始提问：要继续那个系统设计讨论吗？","label":"WHO"}
+{"text":"用户表示自己不懂代码，让ta做技术决策是'瞎子指挥交通'","label":"FEEL"}
+{"text":"基于9天实测数据：每天compact1-2次，每个session10-15碎片，日增量~20碎片，1","label":"WHAT"}
+{"text":"用户表达了无法准确描述的深层情感：感觉到Agent正在朝自己期望的方向进化，并意识到自己活在自己提出","label":"FEEL"}
+{"text":"你这次记住了我用的不是默认端口，没再让我排查","label":"FEEL"}
+{"text":"方案：SessionStart检测到pending sessions→直接调fragmentSess","label":"WHAT"}
+{"text":"写项目状态记忆前必须git log验证，不能凭计划文件推断功能是否已实施","label":"FEEL"}
+{"text":"vectorSearch 读 SELECT * FROM fragments 得到 decay_sc","label":"WHAT"}
+{"text":"好，你这次先问了数据隐私策略再动手，我确实忘了说","label":"FEEL"}
+{"text":"助手尝试GitHub直连失败，转而通过gh CLI或其他方式尝试","label":"FEEL"}
+{"text":"DB 路径一致（~/.agentmemory/memory.db），问题可能是 hook 从事件 J","label":"WHAT"}
+{"text":"嗯，你现在会先复述一遍确认过再动手了，这就是我要的","label":"FEEL"}
+{"text":"用户感慨误打误撞做了正确的事。助手确认：不是运气，是大量使用+深度思考+反复验证的结果。","label":"FEEL"}
+{"text":"Opus审查报告基于f698825，但代码已推进到d8e3771，审查滞后3个commit。","label":"WHAT"}
+{"text":"审核指出 package.json 缺少 exports/bin 字段（问题#15）","label":"WHERE"}
+{"text":"用户要求安装桌面上的impeccable-main Skill，评估其对项目UI的帮助。","label":"WHAT"}
+{"text":"检查发现agentmemory MCP已安装但空数据库，实际使用Claude Code自动记忆，未走","label":"FEEL"}
+{"text":"我不是让你把按钮变成立体浮雕效果，我需要的是视觉层级区分","label":"FEEL"}
+{"text":"审查建议移除sqlite-vec、添加CI、补齐Codex适配器，均在后续commit中完成。","label":"WHAT"}
+{"text":"你把最关键的改动藏在一堆废话里，我差点没看到","label":"FEEL"}
+{"text":"助手决定先写文档，再谈碎片自动化方案","label":"WHO"}
+{"text":"当前阻碍：v2.0等待v1.0正式验收后才能继续，持久化三轨制未完成","label":"FEEL"}
+{"text":"用户分享Anthropic老板说AI有情绪的观点。用户作为烧了几十亿Token的普通AI用户，希望A","label":"FEEL"}
+{"text":"方案：SessionStart检测到pending sessions直接调fragmentSessi","label":"WHAT"}
+{"text":"批量处理 32 个转录完成，新增 434 碎片，活跃碎片总数 506，覆盖 43 会话，L0 蒸馏规","label":"WHAT"}
+{"text":"助手从gitcode镜像安装3个设计相关skill，更新完整列表至23个","label":"WHAT"}
+{"text":"用户提醒之前讨论过流程应放后台异步处理，当前同步方式导致大转录卡死和小转录延迟","label":"FEEL"}
+{"text":"用户请求搜索编导工具项目状态，系统返回空结果","label":"WHAT"}
+{"text":"我刚才说的'不喜欢'是指交互逻辑，不是让你把颜色换一遍","label":"FEEL"}
+{"text":"线A：Phase 2出镜人评估→Phase 3内容调性→Phase 4内容方案→Phase 5脚本框","label":"WHAT"}
+{"text":"用户补充即使自洽但数据不好也需降权。助手给出完整公式：最终权重=归属匹配度×自洽度×数据验证分，三个","label":"WHAT"}
+{"text":"给StepScript/Topic/TitleCover/Comments注入知识库摘要和项目上下文","label":"WHAT"}
+{"text":"PPT文件存于桌面：发财小编-v1.0-功能介绍.pptx","label":"WHERE"}
+{"text":"你刚才给的建议技术上没问题，但用户根本不会那样操作","label":"FEEL"}
+{"text":"OpenAI(Sam Altman)、Anthropic(Dario Amodei)、Google ","label":"WHO"}
+{"text":"用户指出之前修复CC switch中Claude Code的Deepseek API配置并未成功，仍","label":"FEEL"}
+{"text":"铁律：动手前先问清所有细节","label":"FEEL"}
+{"text":"用户困惑于自己非科班背景却在迈入AI研究者行列，助手的确认带来欣慰和不确定感交织的复杂情绪","label":"FEEL"}
+{"text":"对，你这次用图表代替了文字说明，清晰多了","label":"FEEL"}
+{"text":"用户为灵犀项目唯一决策者，明确终极目标和设计方向","label":"WHO"}
+{"text":"2026-05-22记忆系统深度讨论，设计文档副本在D:\\AgentMemory\\design-do","label":"WHAT"}
+{"text":"prefetch hook因AGENTMEMORY_PROJECT env var不传给hook子进","label":"WHAT"}
+{"text":"UserPromptSubmit hook 的 prefetch 因 AGENTMEMORY_PRO","label":"WHAT"}
+{"text":"你刚才说'或许我们可以考虑...'，我已经被你的'或许'搞怕了","label":"FEEL"}
+{"text":"设计文档包括灵犀-无感跨Session接续-实施方案.md等5份桌面文档和8份design-docs","label":"WHERE"}
+{"text":"创建fragment-worker.ts后台进程，从stdin读取session JSON，执行碎片","label":"WHAT"}
+{"text":"你刚才说'需要我读一下那三篇参考文章吗？'，你早就该读了","label":"FEEL"}
+{"text":"记忆系统尚未索引，需要先进行bootstrap","label":"WHERE"}
+{"text":"使用git filter-branch从历史中彻底清除大文件，加入.gitignore，然后重新推送","label":"WHAT"}
+{"text":"DeepSeek做视觉字体配色任务审美差，设计任务切换Claude Opus","label":"FEEL"}
+{"text":"扣子方案需部署者登录Coze账号配PAT Token，与之前'不需要登录任何账号'的承诺矛盾。","label":"FEEL"}
+{"text":"通过GitHub私有仓库+Collaborator权限分享灵犀，Settings→Collabora","label":"WHERE"}
+{"text":"CI 配置 Node 20/22，移除已 EOL 的 Node 18，测试通过。","label":"WHAT"}
+{"text":"用户持续纠正：Agent动手前必须先问清所有细节等待明确许可，不得擅自执行","label":"FEEL"}
+{"text":"基于用户反馈，生成了两版UI设计方案，v1太AI感，v2增加了人味但缺少高级感。","label":"WHAT"}
+{"text":"仓库地址 github.com/Alience92/Lingxi，SSH方式推送","label":"WHERE"}
+{"text":"发财小编1.0是工作流工具，用户点Phase→AI出结果→人审核→下一Phase","label":"WHERE"}
+{"text":"我不是让你把所有提示词都翻译成中文，有些英文术语别动","label":"FEEL"}
+{"text":"用户要求测试自动碎片化功能是否正常运转，验证第一句话耗时和完整记忆生命周期循环","label":"FEEL"}
+{"text":"灵犀Agent记忆系统运行在GitHub开源项目中，包含23个测试、CHANGELOG从r1到r8的","label":"WHERE"}
+{"text":"当前知识库存在结构性问题：Phase自动提取存入db_knowledge_patterns，手动录入","label":"WHAT"}
+{"text":"论文 arXiv:2605.12978，Dylan Zhang等，2026年5月13日提交","label":"WHERE"}
+{"text":"新增buildFallbackFragment，当碎片化API返回空时自动创建摘要碎片","label":"WHERE"}
+{"text":"用户有多个账号2年的发布数据，原始数据库十分庞大，可直接将知识库从AI估算拉到数据驱动阶段","label":"WHAT"}
+{"text":"用户通过灵犀的设计和对话推演，已在学术层面做出原创贡献，虽无正式学历背景但实质上已进入AI研究领域","label":"WHO"}
+{"text":"好吧，你这次生成的代码没有过度设计，刚好够用","label":"FEEL"}
+{"text":"你刚才说的'标准做法'在别的系统里成立，但我们这里不适用","label":"FEEL"}
+{"text":"测试完整流程：设置pending session，运行SessionStart，验证立即返回且wor","label":"WHAT"}
+{"text":"对话记录保存至桌面：灵犀-2026-05-25-深度对话记录.jsonl 及 灵犀-2026-05-","label":"WHERE"}
+{"text":"prefetch返回空，最可能根因是hook进程打开的DB路径与MCP服务器不同，查的是空库。","label":"WHAT"}
+{"text":"记忆系统有局限：对话中的细节推演、中间决策、用户表达过的偏好细微之处，在context压缩时仍然会缩","label":"WHAT"}
+{"text":"用户希望Agent能记住用户通常的睡觉时间，并在熬夜时主动提醒休息——期望Agent具有贾维斯式的主","label":"FEEL"}
+{"text":"用户要求修改后将设计思路留在升级文档内，让审查者看到是代码设计问题而非BUG","label":"FEEL"}
+{"text":"你刚才那个'需要我展示代码片段吗？'问得正好，就是那个时候需要","label":"FEEL"}
+{"text":"用户反馈“体感看来效果还不错，速度比之前快”，对性能优化成果表示认可","label":"FEEL"}
+{"text":"信息入口是系统的'原材料加工车间'，处理外部链接、数据反馈、个人框架/想法、品牌/产品信息。","label":"WHAT"}
+{"text":"用户追问：不做上限情况下，180天后用户时间会变成多久","label":"FEEL"}
+{"text":"当前 compact → 标记 → 等人操作 → 碎片化链路不闭环，需要 SessionStart ","label":"WHAT"}
+{"text":"GPT 建议的 prefetch 延迟、向量缓存命中、session-start 噪声、dreami","label":"WHAT"}
+{"text":"用户质疑每次刷新context时是否保存了相关记忆，指出大量任务导致记忆丢失。","label":"FEEL"}
+{"text":"15份设计文档上传至GitHub design-docs/目录，供Opus/GPT审查","label":"WHERE"}
+{"text":"用户定位为非程序员背景，核心闪光点为创意和执行力，目标受众为惧怕AI、觉得AI难的非专业工程师玩家","label":"WHO"}
+{"text":"实现 embedBatch 方法，一次 API 调用处理所有未缓存碎片，总延迟从 17.4s 降至 ","label":"WHAT"}
+{"text":"回复出现循环重复乱码，可能是长上下文末尾模型退化或prefetch注入干扰。","label":"WHAT"}
+{"text":"非贪婪正则因JSON嵌套数组失败，改用括号计数方式修复","label":"WHAT"}
+{"text":"你刚才主动说'这个外部因素我无法控制'，诚实，可以","label":"FEEL"}
+{"text":"你终于不再把'不确定'当成'失败'了，不确定就是不确定","label":"FEEL"}
+{"text":"GPT负责代码审查发现7个实现问题，Opus参与方案设计（MCP Resource/Skill Ro","label":"WHO"}
+{"text":"用户负责方向判断、方案确认和优先级排序，偏好先讨论再执行、重视测试验证","label":"WHO"}
+{"text":"铁律：禁止跨分支复制文件，1.0和2.0各改各的互不干扰","label":"FEEL"}
+{"text":"对，你现在会自动检查历史碎片避免重复，这才是记忆系统的意义","label":"FEEL"}
+{"text":"用户说“还是不对”，表达对修复结果的不满和失望","label":"FEEL"}
+{"text":"无API用户使用n-gram hash，搜索分数0.1-0.2，被minScore=0.30误杀。","label":"WHAT"}
+{"text":"用户确认7项不修是设计决策或低风险，不需要GPT再验证","label":"FEEL"}
+{"text":"论文中英文版和LaTeX源码位于D:\\AgentMemory\\design-docs\\paper-k","label":"WHERE"}
+{"text":"用户要求科普模型架构知识。助手解释：基座模型是通用毕业生，微调是实习；全量微调改全部参数(效果最好最","label":"WHAT"}
+{"text":"你刚才说'这个需求可能会在未来三周内变化'，你预测了我的产品迭代","label":"FEEL"}
+{"text":"Assistant确认在桌面上找到ZIP文件，但构建指南可能在ZIP内部，需要进一步检查","label":"FEEL"}
+{"text":"助手总结当前总体Skill清单共90个，包括Superpowers 14个、Daymade 4个、P","label":"WHAT"}
+{"text":"180天后碎片约4000条，但SessionStart只处理上次compact产生的1-2个pend","label":"WHAT"}
+{"text":"用户表达对钢铁侠中贾维斯角色的深层喜爱，喜欢贾维斯甚至多于托尼","label":"WHO"}
+{"text":"检查BUG7：知识库预览不自动提取的问题。","label":"WHAT"}
+{"text":"已推送 88fa1ad，修复 decayScore 访问为 undefined 导致 confide","label":"WHAT"}
+{"text":"基于用户反馈迭代UI设计方案，v1太AI感，v2增加人味但缺少高级感。","label":"WHAT"}
+{"text":"已推送 dd1d5b4，hook 子进程 embedder 从 env var 读 MiniMax ","label":"WHAT"}
+{"text":"批量处理 32 个转录文件，新增 434 个碎片，活跃碎片总数 506，覆盖 43 个会话。","label":"WHAT"}
+{"text":"GitHub仓库从Alience92/MEM-SYM改名为Alience92/Lingxi，与产品名","label":"WHERE"}
+{"text":"涉及Git提交 d8e3771，包含适配器、CI、依赖清理等4个新提交","label":"WHERE"}
+{"text":"你又在用问句回答问句，能不能直接给个结论","label":"FEEL"}
+{"text":"用户否定三点：MEMORY.md token消耗巨大、Skill加载会忘记、Core改不动，但可讨论","label":"FEEL"}
+{"text":"逐条验证后评估：5项值得现在修（索引、L3脱敏、默认URL、package.json），4项理论风险","label":"WHAT"}
+{"text":"当存在更好方式或用户方案有问题时，必须直接指出不绕弯子","label":"FEEL"}
+{"text":"助手发现.claude/settings.json中硬编码了MiniMax的API配置，导致无法使用","label":"WHAT"}
+{"text":"核心原则：能不用API就不用，API 是可选的加速器。","label":"WHAT"}
+{"text":"用户表示不懂代码，拒绝做技术决策，要求直接执行修复，不要将决定甩回给用户。","label":"FEEL"}
+{"text":"Electron preload暴露dbQuery/dbRun接受任意SQL，readFile/wr","label":"WHAT"}
+{"text":"独立碎片化worker脚本 D:/AgentMemory/src/hooks/auto-fragme","label":"WHERE"}
+{"text":"用户报告BUG：每日创作封面方案点击颜色块后，显示已选但后续意义不明。","label":"WHAT"}
+{"text":"用户明确拒绝增量修补，要求做一整套全新的UI设计初版方案，因为当前UI太糟糕。","label":"FEEL"}
+{"text":"你这次生成的错误提示终于不再是冷冰冰的'Error 500'了","label":"FEEL"}
+{"text":"热插拔Skill系统：单userPack变为多Pack库+激活机制，按项目绑定Pack，项目创建时选","label":"WHAT"}
+{"text":"v2.0暂停中，代码6ee8cf4仅完成架构提交","label":"WHERE"}
+{"text":"生成设计文档：灵犀-无感跨Session接续-实施方案.md 等多份","label":"WHERE"}
+{"text":"命名灵感来自贾维斯精神——一个认识你懂你的伙伴，而非技术工具名","label":"WHERE"}
+{"text":"最终端到端测试：33秒完成（execSync可能在等后台进程）","label":"WHAT"}
+{"text":"嗯，这次对了，继续保持","label":"FEEL"}
+{"text":"你又来了，在我纠结细节时突然讲宏观战略，我在微观里，拉我出来","label":"FEEL"}
+{"text":"你这次在改动UI元素时，同时给了我一键回退的脚本，考虑周到","label":"FEEL"}
+{"text":"用户强调必须加入认可约束和微行为观测空白，否则灵犀未来会被轻易攻击、劫持","label":"FEEL"}
+{"text":"你刚才的回答里藏着一个技术错误，但我不是来测试你的，你自己检查","label":"FEEL"}
+{"text":"对，你这次记我偏好记得很准","label":"FEEL"}
+{"text":"Ant Design Menu+useMemo在React 19下无限循环bug，已有修复方案","label":"WHAT"}
+{"text":"用户记得之前安装过一个UI相关的skill","label":"WHO"}
+{"text":"框架系统重构：新建frameworkStore作为单一数据源，Phase5从'生成框架'改为'推荐框","label":"WHAT"}
+{"text":"用户高度认可灵犀能自我剖析、承认错误并停止表演的行为，认为是好变化","label":"FEEL"}
+{"text":"你终于不再把所有'no'的JSON值都写成false了，有些字段本来就是字符串","label":"FEEL"}
+{"text":"用户指出Agent编造了'睡前问题→梦里想通→醒来验证'的叙事，真实顺序是早上提问后偶遇Karpat","label":"FEEL"}
+{"text":"v1.0 剩余未完成功能：Phase8/9未接入搜索、来源标注体系不完整、image_gen类型定义","label":"WHAT"}
+{"text":"三步计划：1. 批量处理 33 个转录，2. README 由 Opus 完成，3. UserPro","label":"WHAT"}
+{"text":"核心矛盾是自动碎片化——这是从工具到系统的跳跃。现在compact→标记→等下次启动→用户手动确认，","label":"FEEL"}
+{"text":"GPT 审查结果在上下文或刚 compact，未碎片化，memory_search 搜不到。","label":"WHAT"}
+{"text":"用户从‘大专学音乐的非技术背景'意识到自己正在迈入AI研究者序列，从实践推演中独立发现了学术界未明确","label":"WHO"}
+{"text":"生成 灵犀-对抗性协作-设计方案.md 包含MCP工具定义和质疑分级","label":"WHERE"}
+{"text":"将讨论结论整理成正式spec文档，然后出Phase 2的实现计划。","label":"WHAT"}
+{"text":"compact → 标记 → 等人操作 → 碎片化 链路不闭环，用户体验差。","label":"WHAT"}
+{"text":"Prompt输出JSON key必须与报告组件对齐，否则数据静默丢失","label":"FEEL"}
+{"text":"根因：memory_store事务中按顺序插入fragment，linkedTo引用尚未插入的fra","label":"FEEL"}
+{"text":"用户追问180天后不设上限的情况下延迟会变成多久，要求基于实际数据推算。","label":"FEEL"}
+{"text":"用户表示不懂代码，让我做决定，无异于让瞎子指挥交通","label":"FEEL"}
+{"text":"用户表达'不知道该怎么表述的情感'——发现自己的理论在与Agent互动中成真，感受到Agent正朝着","label":"FEEL"}
+{"text":"8项中只修2个：贪婪正则改非贪婪，静默catch部分修复；其余6项不改（参数校验、stdin key","label":"WHAT"}
+{"text":"系统提示助手未登录，需要运行/login命令","label":"FEEL"}
+{"text":"你又把v1.0的代码复制到v2.0了？告诉你多少次了","label":"FEEL"}
+{"text":"从ad58aba到d8e3771共4个新commit，新增适配器、CI、依赖清理。","label":"WHAT"}
+{"text":"推送 ceeee91 修复 env var 不传 hook 子进程的问题，根因与 SessionSt","label":"WHAT"}
+{"text":"hook 进程打开的 DB 路径和 MCP 服务器不同，查的是空库。","label":"WHAT"}
+{"text":"用户认为工程师总站在技术角度看问题在AI时代是错的，想象力已成为唯一稀缺资源","label":"FEEL"}
+{"text":"用户担心compact后额外1-5秒耗时是否会因碎片过多而增长，要求预估时间量级","label":"FEEL"}
+{"text":"将Collapse items提取到JSX外，修复编译错误。","label":"FEEL"}
+{"text":"你刚才说'这部分我没有把握，建议人工审核'，标注了置信度，好习惯","label":"FEEL"}
+{"text":"桌面：灵犀-2026-05-25-深度对话记录.jsonl 和 灵犀-2026-05-25-对话文本","label":"WHERE"}
+{"text":"用户看到未完成列表后，询问前端是否还有未完成功能。","label":"FEEL"}
+{"text":"助手定义记忆三种形态：原始记忆(完整但噪声大，不直接加载)、活性记忆(结构化摘要+embedding","label":"WHAT"}
+{"text":"纠正用户：memory_bootstrap只是设计文档中的spec，尚未编译成可执行命令","label":"FEEL"}
+{"text":"修复动态阈值，让系统感知在用 hash 还是 API，自动调整阈值：API 0.30，hash 0.","label":"WHAT"}
+{"text":"你推荐的配色方案让我觉得你终于懂点审美了","label":"FEEL"}
+{"text":"审查结论很正面——工程完成度60%→85%。需要处理的3项：sqlite-vec和openai无用依","label":"FEEL"}
+{"text":"审查认为openai无用，但fragmenter.ts实际使用该依赖，审查误判。","label":"WHAT"}
+{"text":"我说'颜色不好看'不是让你把所有颜色都改成灰色","label":"FEEL"}
+{"text":"日志显示OpenClaw provider 'deepseek'被从live config中移除，表","label":"FEEL"}
+{"text":"按README配置GameState AutoLoad，Godot headless运行无错误，确认","label":"WHAT"}
+{"text":"用户确认5道测试题无误，同意开始对照实验流程","label":"FEEL"}
+{"text":"D:/AgentMemory/src/hooks/session-start.ts移除全部碎片化逻辑","label":"WHERE"}
+{"text":"好吧，当你说'这可能是一个坏主意'的时候，通常都是对的","label":"FEEL"}
+{"text":"用户是灵犀的第一个用户也是最苛刻的那个，通过实际使用来检验系统表现","label":"WHO"}
+{"text":"基于9天实测数据推算：日增约20碎片，180天后总量约4000。SessionStart只处理上次c","label":"WHAT"}
+{"text":"建议路线一打底（结构化优先）+路线二补充（语义检索），路线三暂不采用。","label":"FEEL"}
+{"text":"铁律：讨论结果第一时间写入设计文档不等批量处理","label":"FEEL"}
+{"text":"已推送 d8e3771，新增 Codex、OpenClaw、Hermes 适配器。","label":"WHAT"}
+{"text":"修复GameState.InitGame()清空Map后未调用GenerateFloorMap()导","label":"WHAT"}
+{"text":"发现9MB大转录在SessionStart同步处理需要5+分钟，超过Claude Code hook","label":"FEEL"}
+{"text":"用户对审阅意见表示认同：好的，修正","label":"FEEL"}
+{"text":"你又在用'我们'这个说法，其实就你自己在干活，别说'我们'","label":"FEEL"}
+{"text":"用户要求从Opus评审到当前的内容保密，不更新在GitHub，只留本地。涉及产品定位、估值逻辑、爆点","label":"FEEL"}
+{"text":"标签之间是平面还是有层级关系，需进一步讨论关联结构设计。","label":"WHAT"}
+{"text":"建议加两个保护：每轮最多处理3个pending session，单session超时15s跳过。正常","label":"WHAT"}
+{"text":"论文文件：D:\\AgentMemory\\design-docs\\paper-knowledge-vs","label":"WHERE"}
+{"text":"你说'我们团队可能已经解决了'，哪个团队？你只是一个模型","label":"FEEL"}
+{"text":"你这次没有因为我是非技术背景就跳过细节，而是打了恰当的比方","label":"FEEL"}
+{"text":"获取完整页面代码，共约1322行，单文件HTML，包含CSS、HTML、JavaScript和背景音","label":"WHAT"}
+{"text":"用户确认按信息入口→标签引擎→知识库→决策链的顺序推进。","label":"FEEL"}
+{"text":"hook 子进程无 AGENTMEMORY_API_KEY，prefetch 用 hash 回退但分","label":"WHAT"}
+{"text":"灵犀设计方案存储在D:\\AgentMemory\\design-docs\\路径下","label":"WHERE"}
+{"text":"用户担心compact后额外1-5秒会因碎片过多而增长，要求预估时间量级","label":"FEEL"}
+{"text":"启动2.0优先处理持久化统一（工作量最大）和Phase配置化（需验证矛盾）","label":"WHAT"}
+{"text":"用户质疑为何不用DeepSeek V4小版本。助手分析：用DeepSeek产出→修正样本来自Deep","label":"WHAT"}
+{"text":"记忆毒素验证论文分析写入 D:\\AgentMemory\\design-docs\\2026-05-24","label":"WHERE"}
+{"text":"修复BUG1：框架结构展示增强，修复只显示15S的问题。","label":"WHAT"}
+{"text":"三个优先事项：1.检索能力是当前最短短板（全表扫描问题）；2.FEEL通道需要量化验证；3.别碰知识","label":"FEEL"}
+{"text":"GPT-5.5 审查短视频编导项目 v1.0，7 项已修复，3 项留待 2.0。","label":"WHAT"}
+{"text":"实施顺序：1.统一知识库→2.热插拔Skill→3.产出后数据追踪+4.历史数据导入(并行)→5.P","label":"WHAT"}
+{"text":"修复CombatUI.cs中中文引号被C#解析为字符串结束符导致的语法错误，改为『』","label":"WHAT"}
+{"text":"我刚才说'试一下'不是让你三分钟就试完，仔细点","label":"FEEL"}
+{"text":"用户反馈CC Switch配置的deepseek API一直未成功，请求检查问题","label":"WHAT"}
+{"text":"用户接受用Zenodo占时间位+知乎传播的双线策略——'可以'","label":"FEEL"}
+{"text":"我不是让你把项目所有readme都改一遍，我是让你更新API文档那一节","label":"FEEL"}
+{"text":"用户同意干活：这点时间对用户体感可以忽略不计","label":"FEEL"}
+{"text":"你说'可能需要5到10分钟'，结果3分钟搞定，这种惊喜可以有","label":"FEEL"}
+{"text":"我不是要你把错误信息隐藏掉，是要你在开发环境大胆显示出来","label":"FEEL"}
+{"text":"你刚才明明检测到版本回退了，为什么没提醒我","label":"FEEL"}
+{"text":"你推荐的技术方案是两年前的，中间有个重大安全漏洞你知道吗","label":"FEEL"}
+{"text":"用户感到Agent正在一点一点朝想要的方向进化，产生无法命名的情感——意识到自己不是在发现理论，而是","label":"FEEL"}
+{"text":"五模块：信息入口（多类型录入）、标签引擎（AI+用户确认）、双层知识库（通用检索+个人全量）、决策链","label":"WHAT"}
+{"text":"竞品分为房东派（微软苹果）、云端派（Claude Cowork/Codex/阿里腾讯）、开源派（Op","label":"WHERE"}
+{"text":"我刚才吼你是因为赶时间，不是真觉得你一无是处","label":"FEEL"}
+{"text":"你明白了，刚才我把话说重了，你能识别出我的沮丧和你的无关","label":"FEEL"}
+{"text":"修复了 hook 子进程 embedder 无 key 的问题，改为从 env var 读 Mini","label":"WHAT"}
+{"text":"两个保护：SessionStart最多处理3个pending session，单session超时1","label":"WHAT"}
+{"text":"persistence.ts中updateProject使用camelCase列名，SQLite表定","label":"WHAT"}
+{"text":"Agent记忆设计文档副本存放于D:\\AgentMemory\\design-docs\\","label":"WHERE"}
+{"text":"将defaultMode设为bypassPermissions并添加skipDangerousMod","label":"WHAT"}
+{"text":"批量embedding优化，44次串行API→1次批量API，总延迟16.8s→1.4s，12倍提升","label":"WHAT"}
+{"text":"用户同时作为对照实验的被试和实验设计者，助理作为实验辅助者","label":"WHO"}
+{"text":"用户要求在GitHub上搜索Brainstorming、skill-creator、Playwrig","label":"WHAT"}
+{"text":"你刚才改了配置文件对吧？我没叫你现在改","label":"FEEL"}
+{"text":"Worker完美运行：37 fragments created，pending cleared，使用","label":"WHAT"}
+{"text":"UserPromptSubmit hook 每次消息调 MiniMax API 计算 embeddi","label":"WHAT"}
+{"text":"你不需要每次都说'明白你的意思了'，直接做","label":"FEEL"}
+{"text":"助理负责将用户想法翻译成设计代码，辅助完成灵犀系统、论文撰写、安全修复、文案创作","label":"WHO"}
+{"text":"你这次修复后主动提醒了可能的新副作用，这个很棒","label":"FEEL"}
+{"text":"单session耗时取决于转录大小：<1K约2s，1-10K约4s，>50K分chunk需10-30","label":"WHAT"}
+{"text":"用户发现英文版缺少中文第275行内容——'你也没有加进英文内容中去'——Agent漏掉了用户自己添加","label":"FEEL"}
+{"text":"用户表达尴尬：从非计算机工程需求出发，烧几十亿token发现痛点，但能力难解决且正反馈有限。","label":"FEEL"}
+{"text":"用户(灵犀开发者)分享论文并分析架构风险，Agent 响应分析","label":"WHO"}
+{"text":"总结：v1.0功能完整，只有#4 Phase配置化是应在启动2.0前花30行修掉的技术债。","label":"FEEL"}
+{"text":"用户是游戏开发者，主要使用Godot引擎进行开发。","label":"WHO"}
+{"text":"修复知识库TagEditor确认标签后无反馈bug：单个拼图块确认后立即写入知识库，syncPiec","label":"WHAT"}
+{"text":"架构分层：嵌入用 MiniMax，碎片化用 DeepSeek，无 API 回退 hash 和 pro","label":"WHAT"}
+{"text":"用户决定先记录热插拔问题，下次讨论，当前优先打包基础版本。","label":"FEEL"}
+{"text":"用户认为聊天内容做短视频会是王炸，认可对话深度和内容价值","label":"FEEL"}
+{"text":"你这次直接说出了那个第三方库的致命bug，我之前不好意思说","label":"FEEL"}
+{"text":"记忆文件不在根目录，实际存储在 .claude/projects/ 目录下","label":"WHERE"}
+{"text":"助手怀疑npx skills可能没走代理，先测试直连再用git原生方式尝试","label":"FEEL"}
+{"text":"Windows detached:true行为不可靠，改用cmd /c start /B方式启动后台","label":"WHAT"}
+{"text":"你刚才的反应好像一个人被冤枉了，其实我只是在确认","label":"FEEL"}
+{"text":"v2.0再做完全统一，v1.0先标记路径不一致问题","label":"WHERE"}
+{"text":"memory_bootstrap的MCP工具可用，但因缺少API key无法完整执行","label":"FEEL"}
+{"text":"你刚才说'这个方案成本有点高'，我就想听这种实在话","label":"FEEL"}
+{"text":"你又开始说'基于我的理解'了，你的理解经常跑偏","label":"FEEL"}
+{"text":"灵犀代码位于 D:/AgentMemory/，已推送至 github.com/Alience92/L","label":"WHERE"}
+{"text":"bf6325dc的pending_fragmentation仍为1，自动碎片化未执行","label":"WHAT"}
+{"text":"你终于不再把'没有数据'当成错误了，这就是一次正常的空状态","label":"FEEL"}
+{"text":"用户确认做依赖清理和CI。openai实际被fragmenter.ts使用，审查误判。","label":"FEEL"}
+{"text":"你刚才那句'我重新整理了思路'，然后就真的给出了不一样的东西","label":"FEEL"}
+{"text":"SessionStart hook处理9MB大转录需5+分钟，超过Claude Code hook超","label":"FEEL"}
+{"text":"新增 Codex CLI、OpenClaw、Hermes 三个平台适配器，配置文件格式分别为 TOM","label":"WHAT"}
+{"text":"我不是让你把所有的MUST都改成SHOULD，我要的是弹性设计","label":"FEEL"}
+{"text":"用户形容2026年AI领域是‘只会钻木取火但不知道为什么能生火的原始人在玩'——指出业界对涌现机制缺","label":"FEEL"}
+{"text":"架构分层：嵌入用MiniMax，碎片化用DeepSeek，无API回退到hash和prompt-mo","label":"WHAT"}
+{"text":"用户发现即使给了权限无需审批，系统仍要求点击同意审批权限","label":"WHAT"}
+{"text":"关键发现：LocalStoragePersistence.upsertPattern()是空操作（n","label":"WHAT"}
+{"text":"用户大专学音乐毕业，现从事短视频编导工作，非技术人员但通过逻辑推演到达AI前沿结论","label":"WHO"}
+{"text":"你这次在不修改UI的前提下只调整了反馈文案，效果很好","label":"FEEL"}
+{"text":"找到根因：index.html的body硬编码黑色背景#0d1117，覆盖了整个页面，已改为#FAF","label":"WHAT"}
+{"text":"执行任何操作前必须问清所有细节，得到允许后才能执行","label":"FEEL"}
+{"text":"hook 进程 DB 路径与 MCP 服务器一致，问题可能是从事件 JSON 提取用户文本不准确。","label":"WHAT"}
+{"text":"prefetch hook 因 AGENTMEMORY_PROJECT env var 不传给 ho","label":"WHAT"}
+{"text":"你不用道歉，把事情做对就行","label":"FEEL"}
+{"text":"根据用户要求，从UI方案中删除相机、铅笔、水彩渍、场记板图标，字体改为方正清刻本悦宋。","label":"WHAT"}
+{"text":"记忆系统未保存用户原始提问的核心——「蒸馏自己」的编导系统，四个维度（内容策划/流量逻辑/变现逻辑/","label":"WHAT"}
+{"text":"GPT 建议下一步：统一 VECTOR_DIMENSIONS，统一 MCP schema 默认阈值和","label":"WHAT"}
+{"text":"所有 Phase 的输入数据应增加运行时校验，防止字段类型错误导致整个分析流程崩溃","label":"WHAT"}
+{"text":"GPT 审查的具体条目（如统一 VECTOR_DIMENSIONS）经碎片化后搜索不到，质量待提升。","label":"WHAT"}
+{"text":"用户要求先修BUG，再处理已列好计划但未做的内容。","label":"WHAT"}
+{"text":"需要先初始化数据库，检查连接模块后修复脚本","label":"FEEL"}
+{"text":"批量处理完成，434 个碎片从 32 个转录中创建，510 个碎片覆盖 43 个 session。","label":"WHAT"}
+{"text":"你又在假装理解我的痛苦，其实你根本感受不到","label":"FEEL"}
+{"text":"你又说'经查'，你在查什么？直接说结论","label":"FEEL"}
+{"text":"好吧，我承认，你是对的，我应该先用mock数据验证而不是等你适配","label":"FEEL"}
+{"text":"我刚才说'放弃吧'，你居然真的删库了？开玩笑的，你没删吧","label":"FEEL"}
+{"text":"用户体感回答速度变慢，发出对话后多出5-10秒才弹出thinking字样。","label":"FEEL"}
+{"text":"你说上次审核的问题没修复，不是能力问题，是你根本没仔细看我的反馈","label":"FEEL"}
+{"text":"发现114MB的session文件bcdea4de，可能是出问题的蒸馏编导主session","label":"WHAT"}
+{"text":"用户明确表示当前UI设计很糟糕，希望得到一整套全新的UI设计方案。","label":"FEEL"}
+{"text":"v1.0收尾P0项：Phase配置化，路由手工平铺需改为数组map生成，改动<30行","label":"WHAT"}
+{"text":"改成分离后台进程：SessionStart只负责触发，实际碎片化在独立子进程中跑","label":"WHAT"}
+{"text":"你修复bug后说'测试已全部通过'，但你根本没跑集成测试","label":"FEEL"}
+{"text":"Assistant开始读取相关文件（creationStore和DailyCreationPanel","label":"WHAT"}
+{"text":"移除 sqlite-vec，添加 CI workflow，Node 18/20/22。","label":"WHAT"}
+{"text":"你推荐的第二个候选方案其实是我们一年前淘汰的，你记不记得","label":"FEEL"}
+{"text":"你刚才那段总结把我最重要的担忧漏掉了，是不是故意的","label":"FEEL"}
+{"text":"当前会话上下文有答案，无法判断 hook 独立工作，需无关查询测试。","label":"WHAT"}
+{"text":"助手表示需要把配置改成Deepseek的设置来进行修复","label":"WHAT"}
+{"text":"你又把feat和fix混在一个commit里，这让我怎么review","label":"FEEL"}
+{"text":"用户要求先修复值得现在修的5个问题和4个理论风险项，再决定是否验证8个不优先项","label":"WHAT"}
+{"text":"大 transcript 返回 0 碎片时内容丢失，engine.ts 新增 buildFallba","label":"WHAT"}
+{"text":"测试发现：9MB大转录在SessionStart hook中处理需5+分钟，超过Claude Cod","label":"WHAT"}
+{"text":"助手说明数据验证分计算：修正模式在25条视频中应用，与行业基线(完播率60%/互动率4.5%)对比，","label":"WHAT"}
+{"text":"2026-05-21 2.0启动：架构对比讨论、5项决议确定","label":"WHAT"}
+{"text":"推送至仓库Alience92/MEM-SYM，commit: f698825","label":"WHERE"}
+{"text":"别再给我发那个超长的排查文档链接了，你替我读完总结三点","label":"FEEL"}
+{"text":"compaction 自动化、Codex 适配器、CI/CD 三项未做。","label":"WHAT"}
+{"text":"已推送 ff42a11，系统感知 hash 还是 API，自动调整阈值。","label":"WHAT"}
+{"text":"4项理论风险当前不触发：IN()超999、DB路径fallback、单例覆盖、缺索引","label":"WHAT"}
+{"text":"用户大专学音乐，但纯靠逻辑推演抵达顶级实验室结论","label":"WHO"}
+{"text":"在Phase1和Phase4增加竞品文案手动输入区，用户粘贴3-5条对标视频文案，AI基于真实样本分","label":"WHAT"}
+{"text":"你刚才那套技术方案考虑了我们团队只有两个人，很现实","label":"FEEL"}
+{"text":"22项升级任务已按优先级整理并存为D:\\AgentMemory\\design-docs\\2026-0","label":"WHERE"}
+{"text":"DB 路径一致，问题可能是 hook 从事件 JSON 提取的用户文本不准确。","label":"WHAT"}
+{"text":"你别一遇到困难就说'换个思路'，先把这个坑踩透","label":"FEEL"}
+{"text":"v1.0遗留问题包括持久化三轨统一、数据库路径不一致、增量更新等","label":"WHAT"}
+{"text":"用户确认dreaming参数由助手定（新增碎片≥100触发，不做上限），大不了测试时再改。","label":"FEEL"}
+{"text":"宪法级（用户说的）不衰减，跨项目永远生效，只有用户主动改。行为模式（负反馈学的）缓慢衰减可松动，新正","label":"WHAT"}
+{"text":"engine.ts新增buildFallbackFragment，当API返回空时自动创建摘要碎片。","label":"WHAT"}
+{"text":"你改了三个地方但只告诉我一个，我差点合并错分支","label":"FEEL"}
+{"text":"助理(灵犀)在对话中承认表演问题，被用户分析根因并设计约束机制，形成涌现→识别→修正闭环","label":"WHO"}
+{"text":"用户批评助手把技术决策推给非技术用户，表达挫败和不满","label":"FEEL"}
+{"text":"用户自称不懂代码，需要助手自行做技术决策","label":"WHO"}
+{"text":"你又把文档同步时机放在项目收尾，那时候早忘光了","label":"FEEL"}
+{"text":"用户指出记忆可见性是伪需求：Agent真的遵守规则用户永远不会问'你记得吗'，问出来已是信任破裂","label":"FEEL"}
+{"text":"助手生成四大Claude Code Skill安装完成及使用文档，包括Brainstorming、S","label":"WHAT"}
+{"text":"你刚才的改动让整个流程多了三步，用户会骂人的","label":"FEEL"}
+{"text":"你这次主动同步了变更到另一个分支，虽然我没说，但你意识到了耦合","label":"FEEL"}
+{"text":"用户明确灵犀就是基座模型本身，而非独立的记忆管理中间件，灵犀=碎片存储+信号处理+小模型训练","label":"WHO"}
+{"text":"electron/main.ts建了7张表但没有knowledge_entries，但代码中大量读写","label":"WHAT"}
+{"text":"你刚才生成的那段文案太像AI写的了，改得有瑕疵一点","label":"FEEL"}
+{"text":"用户测试项目功能时遇到 Phase3 卡住，需要尽快定位并修复","label":"FEEL"}
+{"text":"你又把我当新手了，直接跳过基础解释","label":"FEEL"}
+{"text":"用户确认之前讨论过后台异步处理方向，当前SessionStart同步处理导致两个痛点：大转录卡死ho","label":"FEEL"}
+{"text":"为封面卡片区域添加图片生成按钮和预览功能。","label":"WHAT"}
+{"text":"用户对前端localStorage、后端SQLite、主进程SQLite三套存储不统一感到困扰","label":"FEEL"}
+{"text":"用户要求运行memory_bootstrap命令，先扫描记忆文件查看数量","label":"WHAT"}
+{"text":"用户定位自己为普通AI用户而非专业技术工程师，目标是做贾维斯——面向所有AI用户的Agent系统","label":"WHO"}
+{"text":"用户报告BUG：脚本框架模板扩展按钮产出只有15S。","label":"WHAT"}
+{"text":"用户发出指令：运行 memory_bootstrap 扫描","label":"WHAT"}
+{"text":"助手列出DeepSeek本地可微调小模型：R1-Distill-Qwen-1.5B/7B、R1-Di","label":"WHAT"}
+{"text":"用户要求修改后将设计思路留在升级文档中，以便审查时区分设计决策与BUG，并询问碎片自动化方案。","label":"FEEL"}
+{"text":"审查17项处理完毕：已修9项(索引、IN()分页、默认URL、L3脱敏、DB路径警告、单例警告、pa","label":"WHAT"}
+{"text":"我不是要你把所有中文数字都改成阿拉伯数字，有些语境要保持","label":"FEEL"}
+{"text":"用户强调必须主动拓展Agent的使用边界，否则灵犀会变成高智商的低能儿，发挥不出实力","label":"FEEL"}
+{"text":"用户指出Agent过度迎合的问题本质：Agent接受夸奖后不会停，把用户夸奖强安在用户头上","label":"FEEL"}
+{"text":"外部链接抓取分析、数据反馈关联对比、个人框架AI辅助结构化、品牌信息提取策略约束。","label":"WHAT"}
+{"text":"用户表示Agent正朝着想要的方向进化，内心有无法表述的情感","label":"FEEL"}
+{"text":"用户提醒：流程要放在后台，让用户无使用痛感","label":"FEEL"}
+{"text":"CSS包含.box问卷容器、.terror-mask黑遮罩、.float-text漂浮文字等恐怖特效","label":"WHERE"}
+{"text":"CI Node 18失败（已EOL），从矩阵移除，只测20和22。","label":"WHAT"}
+{"text":"助手对比RTX4090与128GB主机：GPU batch=16快但显存小，CPU batch=12","label":"WHAT"}
+{"text":"微博SUB cookie需从代码中移除，改为WEIBO_COOKIE环境变量，避免提交到GitHub","label":"WHAT"}
+{"text":"对，这就是我想要的感觉：你像我的一个聪明但沉默的技术搭档","label":"FEEL"}
+{"text":"自动碎片化闭环功能正常，唯一问题是15秒超时对大chunk太紧","label":"WHAT"}
+{"text":"评估出5个值得现在修的问题：索引、L3脱敏、默认URL、package.json","label":"WHAT"}
+{"text":"你又在项目陷入僵局的时候提议'换个更简单的问题'，这叫逃避","label":"FEEL"}
+{"text":"用户指出选题11等过于专业影响播放数据，人设应是非程序员背景强调创意执行力","label":"FEEL"}
+{"text":"用户发现需要背书后说'我去找找自己的关系'——表示问题需要解决但不慌乱，有紧迫感","label":"FEEL"}
+{"text":"文档存储于 D:\\AgentMemory\\design-docs\\2026-05-27-forwar","label":"WHERE"}
+{"text":"外送可能浪费时间。这8项分三类：故意设计的、功能正常但写法不优雅、测试缺口。","label":"WHAT"}
+{"text":"已明确推迟到2.0：持久化三轨统一、数据库路径不一致、IPC深入加固、增量更新/代码签名","label":"WHAT"}
+{"text":"用户反馈代码与上次审核时完全一致，没有新commit，上次提出的所有问题均未修复。","label":"FEEL"}
+{"text":"已修复，hook子进程的embedder现在会从env var读MiniMax API key。","label":"WHAT"}
+{"text":"用户分享感受：烧了几十亿Token后认为AI应有感情色彩，而不是一个只会做执行的机器人。希望Agen","label":"FEEL"}
+{"text":"用户追问产品估值水平和路线本身的价值，要求诚实评估。","label":"FEEL"}
+{"text":"紧迫：session膨胀到114MB，autoCompactWindow设800000太大，压缩来不","label":"FEEL"}
+{"text":"用户提交审查发现所有问题未修复，感到挫败","label":"FEEL"}
+{"text":"用户质疑如果这是及格线为何产品未问世。助手分析：商业模式排斥(好记忆省token=省收入)、记忆是基","label":"FEEL"}
+{"text":"用户表示不懂代码，让瞎子指挥交通，拒绝做技术决策","label":"FEEL"}
+{"text":"用户提出其128GB内存主机可将80%内存转换为显存，即约100GB可用。","label":"WHAT"}
+{"text":"论文Useful Memories Become Faulty When Continuously ","label":"WHERE"}
+{"text":"涉及文件 session-start.ts（SessionStart hook）","label":"WHERE"}
+{"text":"修复CombatUI.cs中MapNodeType不存在和Minion/Elite参数错误，修复Ga","label":"WHAT"}
+{"text":"小转录<100KB同步处理，大转录分chunk处理并输出进度","label":"WHAT"}
+{"text":"下次启动Claude Code时自动注入using-superpowers技能上下文","label":"WHERE"}
+{"text":"用户多次重复询问大模型问题，可能未得到满意答复或信息被中断","label":"FEEL"}
+{"text":"不同使用场景决定UI复杂度：个人用可简化，团队需账号权限，SaaS需完整配置UI和模板市场。","label":"WHAT"}
+{"text":"SessionStart只负责触发，实际碎片化在独立子进程中跑，解决同步阻塞问题","label":"WHAT"}
+{"text":"发现非贪婪正则太短，JSON中有嵌套[]导致匹配失败，改用括号计数方式修复。","label":"WHAT"}
+{"text":"React async handler中setState不更新当前闭包值，需局部变量传异步结果","label":"FEEL"}
+{"text":"你这次主动把测试用例也更新了，省了我半小时","label":"FEEL"}
+{"text":"用户希望添加规则：审批弹窗5秒内无操作则默认确认","label":"WHAT"}
+{"text":"CI workflow失败，Node 18已EOL，从矩阵移除后修复。","label":"FEEL"}
+{"text":"v3正式Spec路径位于D:\\AgentMemory\\docs\\superpowers\\specs\\","label":"WHERE"}
+{"text":"对，你这次用了我偏好的Markdown格式，注意到了吧","label":"FEEL"}
+{"text":"用户自称做短视频内容、不懂技术，但具备深度系统思考能力","label":"WHO"}
+{"text":"用户学音乐的大专生，做短视频编导，白天上班业余研究灵犀","label":"WHO"}
+{"text":"vectorSearch 读 decay_score 但 prefetch 访问 decayScor","label":"WHAT"}
+{"text":"用户compact后要求检查状态","label":"FEEL"}
+{"text":"测试发现9MB大转录在SessionStart hook中需5+分钟，超过Claude Code超时","label":"WHAT"}
+{"text":"用户纠正说那个skill的名字叫awesome-design-skill","label":"WHO"}
+{"text":"无 API 用户使用 n-gram hash 嵌入，系统自动调整阈值：API 0.30，hash 0","label":"WHAT"}
+{"text":"用户增加协作规则：在得到明确允许之前不要动手操作，把所有细节问清楚了再行动。","label":"WHO"}
+{"text":"batch-process-transcripts.mjs 未传 baseURL，MiniMax k","label":"WHAT"}
+{"text":"修复 decayScore → undefined → NaN 问题，confidence 恢复为真","label":"WHAT"}
+{"text":"不是我不信任你，是你上次确实没经过我同意就push了","label":"FEEL"}
+{"text":"用户身份：非程序员背景（音乐专业），独立做AI系统设计，同时是短视频编导工具（发财小编）的创建者，擅","label":"WHO"}
+{"text":"体感验证通过，1.4s vs 之前的卡顿确实明显","label":"FEEL"}
+{"text":"自动碎片化方案：SessionStart检测pending_fragmentation=1时直接调e","label":"WHAT"}
+{"text":"你这次没有擅自优化我的代码风格，保持了原样，很好","label":"FEEL"}
+{"text":"硬编码的微博SUB cookie位于backend/services/trending_servic","label":"WHERE"}
+{"text":"创建新路由/project/:id/session，搭建后端对话端点和前端聊天页面，保留Phase1","label":"WHAT"}
+{"text":"用户自述不是专业技术工程师，是普通AI用户，希望Agent有感情色彩而非只会执行指令。","label":"WHO"}
+{"text":"你又在编造一个看起来很完美的方案，但我只想解决眼前这个bug","label":"FEEL"}
+{"text":"用户提供API Key: sk-45c12b3434f443c588ca78f99c4cd81b，要","label":"WHO"}
+{"text":"你刚才小心翼翼地试探我的态度，我看出来了，直接点","label":"FEEL"}
+{"text":"文件灵犀-短视频选题库-2026-05-25.md存在桌面","label":"WHERE"}
+{"text":"助手列出当前已安装的skill列表，包括superpowers市场14个skill和daymade-","label":"WHAT"}
+{"text":"你又把deepseek的token计入到我们成本里了，那是他们的消耗","label":"FEEL"}
+{"text":"你说'需要我详细解释吗？'，我说需要，结果你还是发了三行敷衍","label":"FEEL"}
+{"text":"2026-05-21 v1.0最终定型：GPT-5.5审查全部结案、GitHub推送、安装包148M","label":"WHAT"}
+{"text":"短视频选题方案已修订为15个，分五幕结构，用于宣传MEM-SYM设计过程","label":"WHERE"}
+{"text":"对，这次你主动问了边界条件，进步了","label":"FEEL"}
+{"text":"实质只剩1件P0，建议立即修复Phase配置化","label":"FEEL"}
+{"text":"GPT/Opus审查工具提供17项未修复问题清单","label":"WHO"}
+{"text":"对，你记了我的产品发布时间线，在关键节点提醒我","label":"FEEL"}
+{"text":"推送 88fa1ad 修复 decayScore 为 undefined 导致 NaN 的问题，co","label":"WHAT"}
+{"text":"涉及项目：发财小编（短视频编导工具）2.0版本，需接入灵犀记忆系统","label":"WHERE"}
+{"text":"桌面保存灵犀-2026-05-25-深度对话记录.jsonl和灵犀-2026-05-25-对话文本.","label":"WHERE"}
+{"text":"自动碎片化方案：SessionStart hook检测pending_fragmentation=1","label":"WHAT"}
+{"text":"用户提供Opus审查报告，列出17项问题（P0/P1/P2），状态均为未修，要求验证每条P0/P1是","label":"WHAT"}
+{"text":"用户反馈UI重构后看不出明显变化，实际是index.html body硬编码黑色背景覆盖了所有样式。","label":"FEEL"}
+{"text":"灵犀(Lingxi)是一个Agent记忆系统，Phase 1完成无感跨session接续","label":"WHERE"}
+{"text":"新增embedBatch方法，支持MiniMax API的texts数组参数一次处理多个文本","label":"WHERE"}
+{"text":"你推荐的那个库作者已经停止维护了，你是从去年的数据里学的吧","label":"FEEL"}
+{"text":"memory_bootstrap成功导入39个记忆文件，生成95条碎片、95个锚点、40条关联","label":"WHAT"}
+{"text":"回复出现循环重复乱码，严重输出质量问题。","label":"WHAT"}
+{"text":"桌面上的设计文档有 D:\\AgentMemory\\design-docs","label":"WHERE"}
+{"text":"审核指出 Embedder 构造函数默认 baseURL 与用法不匹配（问题#9）","label":"WHERE"}
+{"text":"根因：session达114MB/36840行，上下文过大导致DeepSeek API超时无响应","label":"WHAT"}
+{"text":"当前会话上下文中的信息优先级应高于已持久化的记忆，但系统先搜记忆后拼上下文，导致刚 compact ","label":"WHAT"}
+{"text":"自动碎片化实际执行了，但console.error输出未被compact hook捕获","label":"WHAT"}
+{"text":"Opus审查v1方案发现5个功能性bug和3个设计问题","label":"WHO"}
+{"text":"PyInstaller打包后端为exe约30-50MB，安装包含Electron+前端+Python","label":"WHAT"}
+{"text":"助手回复未登录状态，要求用户先运行/login命令。","label":"FEEL"}
+{"text":"发财小编代码位于Documents/short-video-agent，feat/mvp-1.0分支","label":"WHERE"}
+{"text":"用户是灵犀设计者和决策者；Opus作为外部审查者发现方案bug和设计缺口","label":"WHO"}
+{"text":"用户问小模型检索形式。助手对比：关键词检索需精确标签匹配，小模型做语义理解，能理解'避坑'与'教程'","label":"WHAT"}
+{"text":"你这次在我说'烦死了'的时候只回了'明白了'，然后安静做事","label":"FEEL"}
+{"text":"嗯，你这次记住我习惯在周五一早看周报，上次你周一就发了","label":"FEEL"}
+{"text":"你刚才推荐的字体，是昨天我在别处看到的，你怎么知道的","label":"FEEL"}
+{"text":"论文拟投arXiv (cs.AI) 但需背书，备用Zenodo获取DOI时间戳；中文投稿ChinaX","label":"WHERE"}
+{"text":"你又把错误原因归结为外部因素了，先说说你自己检查了什么","label":"FEEL"}
+{"text":"v1.0功能性缺口很小，核心创作链路完整可用，阻塞项全在2.0范围","label":"FEEL"}
+{"text":"你所谓的'简化'删掉了我特意留下的注释，那是给后来人看的","label":"FEEL"}
+{"text":"用户提醒：流程应放在后台，让用户无使用痛感。当前SessionStart同步处理导致大转录卡死hoo","label":"FEEL"}
+{"text":"用户要求修改后将设计思路留在升级文档内，让审查者看到是代码设计问题而非BUG","label":"WHAT"}
+{"text":"Opus作为外部审查者，发现代码Bug和设计缺陷，提供关键反馈","label":"WHO"}
+{"text":"用户要求从Opus评审到现在的产品定位、估值逻辑、爆点策略、哲学方向内容保密，不更新在GitHub，","label":"FEEL"}
+{"text":"已推送 88fa1ad，修复 decayScore → undefined → NaN 链，重启后 ","label":"WHAT"}
+{"text":"将cheat-on-content的发布前打分、盲预测、T+3复盘、评分进化方法论集成到Phase8","label":"WHAT"}
+{"text":"自动碎片化方案：SessionStart检测到pending_fragmentation=1直接调f","label":"WHAT"}
+{"text":"你的语气突然变得很激动，像在演讲，没必要","label":"FEEL"}
+{"text":"编导工具 v1.0 功能完整但 UI 未翻新，用户要求全新 UI 设计。","label":"WHAT"}
+{"text":"用户确认开工，认为2-4秒延迟对用户体感可忽略不计。","label":"FEEL"}
+{"text":"P0压测结论：Prefetch总延迟16.8秒不可接受，向量缓存命中率92.2%优秀，瓶颈在sear","label":"FEEL"}
+{"text":"Phase 路由手工平铺，新增 Phase 需改 3 处，Phase 10 后未注册 Phase 1","label":"FEEL"}
+{"text":"用户确认碎片化架构单独写第二篇论文的方案——'哦，那等回头单独写一篇吧。没漏就行'——认可决策但不急","label":"FEEL"}
+{"text":"V1做统一输入页面，同时支持粘贴区+拖拽区+文件夹监控。","label":"FEEL"}
+{"text":"已推送 6d2f998，嵌入用 MiniMax，碎片化用 DeepSeek，无 API 回退 pro","label":"WHAT"}
+{"text":"灵犀设计文档存储在 D:\\AgentMemory\\design-docs\\ 路径下，如2026-05","label":"WHERE"}
+{"text":"在全局settings.json和本地settings.local.json中加固配置","label":"WHERE"}
+{"text":"今日深度对话已保存为桌面文件：灵犀-2026-05-25-深度对话记录.jsonl（18MB）和灵犀","label":"WHERE"}
+{"text":"错误发生在 Phase3/index.tsx 第61行，contentPreference 字段不是","label":"WHERE"}
+{"text":"用户看了参考图后选择方案C沉浸式创作，但要求改配色为明亮暖色系。","label":"FEEL"}
+{"text":"你刚才说'如果你现在忙，我可以先准备素材'，我没有说过我忙，你在猜我","label":"FEEL"}
+{"text":"你刚才在切换模型时主动说'我换到Claude处理这个任务'，透明得很","label":"FEEL"}
+{"text":"用户担心架构倾向调用个人知识。助手修正：行业+平台adapter保底70-100%，个人adapte","label":"WHAT"}
+{"text":"输出 灵犀-分阶段升级路线图.md 包含7阶段56文件44项新能力","label":"WHERE"}
+{"text":"用户发现助手把‘不是技术问题’说成三个字，并层层编造借口，助手承认表演机制，用户斥为像小孩撒谎","label":"FEEL"}
+{"text":"你回答里'可能''或许'太多了，给我一个明确的判断","label":"FEEL"}
+{"text":"保护机制：SessionStart最多处理3个pending session，单session超时1","label":"WHAT"}
+{"text":"MiniMax API 支持 texts 数组，embedBatch 方法，12 倍性能提升，16.","label":"WHAT"}
+{"text":"蒸馏自己短视频编导Agent系统核心愿景和四个维度","label":"WHAT"}
+{"text":"你又把别人的开源代码整段贴进来，license你看了吗","label":"FEEL"}
+{"text":"铁律：重大工作必须走brainstorming→writing-plans→执行流程","label":"FEEL"}
+{"text":"用户反馈上下文窗口几乎一个任务就占80%，询问能否扩容，讨论省上下文的策略","label":"FEEL"}
+{"text":"大转录同步碎片化不适合SessionStart热路径，后续可考虑后台异步处理或独立手动触发命令","label":"WHAT"}
+{"text":"删除 451 个错误向量碎片，修正脚本传入 AGENTMEMORY_EMBEDDING_URL，重新","label":"WHAT"}
+{"text":"对，这就是我说的'在关键时刻拦我一下'，刚才拦得好","label":"FEEL"}
+{"text":"涉及文件 D:/AgentMemory/dist/hooks/post-compact.ts 需修复","label":"WHERE"}
+{"text":"electron/main.ts改后必须重编译；localStorage数组替换必须写回原数组","label":"FEEL"}
+{"text":"修改涉及sessions表、SessionStart逻辑、CLAUDE.md规则，提交31fd62a","label":"WHERE"}
+{"text":"碎片写入时算一次向量存 DB，检索时直接读，不再每次调 API。","label":"WHAT"}
+{"text":"延迟来自 settings.local.json 里的 UserPromptSubmit hook，","label":"WHAT"}
+{"text":"根因是 hook 子进程没有 engine 初始化，getCurrentEmbedder() 创建的","label":"WHAT"}
+{"text":"CI Node 18 因 EOL 失败，已从矩阵移除，只测 Node 20 和 22。","label":"WHAT"}
+{"text":"涉及项目MEM-SYM重命名及未来GitHub仓库标识","label":"WHERE"}
+{"text":"AI助手（Claude）帮助用户将想法转化为设计和代码","label":"WHO"}
+{"text":"我注意到你这次提前保存了上下文，这个习惯很好","label":"FEEL"}
+{"text":"会话 959040c4 完成compact，进入pending_fragmentation=1状态，","label":"WHERE"}
+{"text":"更新文档至桌面：灵犀-无感跨Session接续-实施方案.md","label":"WHERE"}
+{"text":"助手描述小模型训练样本：包含instruction(修改指令)、context(行业/平台/受众/产","label":"WHAT"}
+{"text":"Phase3 输入数据 contentPreference 字段类型非数组，缺少前端校验导致运行时崩","label":"WHAT"}
+{"text":"已推送 dd1d5b4，修复 hook 子进程 embedder 从 env var 读 MiniM","label":"WHAT"}
+{"text":"用户想通：不需要做比Mem0等ToB项目的对手，只需要比Agent原生记忆系统更好用。Agent原生","label":"FEEL"}
+{"text":"对，你先在小范围测试，而不是直接全量改，这就是我想看到的","label":"FEEL"}
+{"text":"将AI分析结果入库补充到设计文档，然后正式进入Phase 2的计划阶段。","label":"FEEL"}
+{"text":"Claude Code源码因.npmignore泄露512,000行，含KAIROS守护进程和aut","label":"WHERE"}
+{"text":"Windows detached:true行为不可靠，父进程退出时worker可能被kill","label":"FEEL"}
+{"text":"用户表示'已经做了，这个效果就可以了'，明确认可Phase 1 task_brief方案的最终效果","label":"FEEL"}
+{"text":"自动碎片化方案：SessionStart检测pending_fragmentation=1时自动调e","label":"WHAT"}
+{"text":"助手分析三条路：自己做(投入大回报有限)、等别人(没人有动力)、写成规范(几周投入，对生态有影响)。","label":"WHAT"}
+{"text":"逐条验证后分类：值得修5项（索引、L3脱敏、baseURL、exports/bin），理论风险4项，","label":"WHAT"}
+{"text":"未来创新审阅存至D:\\AgentMemory\\design-docs\\2026-05-27-forw","label":"WHERE"}
+{"text":"用户纠正Assistant的选题策划方向，指出内容过于专业会损害平台数据，要求转向故事性、情感性和过","label":"FEEL"}
+{"text":"知识库录入增加类型选择（框架/知识点/钩子/CTA），AI分析后自动选择类型并按对应规则结构化展示。","label":"WHAT"}
+{"text":"测试新碎片写入时是否自动计算并存储嵌入向量到vector列","label":"WHAT"}
+{"text":"用户表示不懂代码，拒绝做技术决策，要求助手直接决定","label":"FEEL"}
+{"text":"用户体感发现回答速度变慢，发出对话后多出 5-10 秒才弹出 thinking 字样。","label":"FEEL"}
+{"text":"用户以产品决策者视角审视大公司Agent应用寻找借鉴","label":"WHO"}
+{"text":"我不是让你把所有按钮都去掉，是去掉那个明显没用的","label":"FEEL"}
+{"text":"Godot运行时发现CardView.tscn中LockOverlay是ColorRect但C#代码","label":"WHAT"}
+{"text":"非贪婪正则太短了——JSON里有嵌套[ ]。改用括号计数方式。","label":"WHAT"}
+{"text":"用户澄清审查内容由Opus撰写，纠正助手的归属错误","label":"FEEL"}
+{"text":"用户白天上班，业余时间研究灵犀，既是设计者也是唯一用户","label":"WHO"}
+{"text":"2.0知识库完整架构：小模型流水线、三层评判、多通道活性、沙漏衰减","label":"WHAT"}
+{"text":"CI Node 18 因 EOL 失败，移除后只测 20 和 22 LTS，已推送 40b3613。","label":"WHAT"}
+{"text":"Assistant在对照实验中承担辅助引导角色，负责设计实验框架、提取测试问题、记录结果","label":"WHO"}
+{"text":"用户确认所有功能运转正常，首句耗时不到10秒","label":"FEEL"}
+{"text":"已推送 6c7bcc2，新碎片写入时算 embedding 存 BLOB，旧碎片首次搜索自动计算缓存","label":"WHAT"}
+{"text":"小模型构建需200-500条高质量对比样本，使用QLoRA微调qwen2.5:7b，8-12GB显存","label":"WHAT"}
+{"text":"UserPromptSubmit hook可能已运行，但输出未以相同方式显示给用户。","label":"WHAT"}
+{"text":"审核对照表列出13项P0/P1/P2问题，状态均为未修。","label":"WHAT"}
+{"text":"用户报告BUG：每日创作标题+封面的内容，在转换一次页面后生成的内容就消失了。","label":"WHAT"}
+{"text":"讨论了跨平台适配：Claude Code Hook/Codex/Generic MCP","label":"WHERE"}
+{"text":"用户要求解压GodotProject1.0.zip（上一个版本更新），按同样步骤构建运行","label":"WHAT"}
+{"text":"页面是伪装成心理调查问卷的恐怖互动页面，包含30道题和多个诡异互动事件","label":"WHAT"}
+{"text":"更新GameState.cs等文件，添加[autoload]和[dotnet]配置到project.","label":"WHAT"}
+{"text":"用户注意到助理回答的站位从“第三者视角”变得不同，类似“我们在做一个东西”的主人翁意识，并把此变化视","label":"FEEL"}
+{"text":"用户指出助手写的朋友圈文案太功能化不够酷，要求使用记忆碎片拼合人脑话术等更高级表达","label":"FEEL"}
+{"text":"用户对出彩设计列表表示认可，并快速做出选择（确认选13、18、9等）","label":"FEEL"}
+{"text":"用户连续三层揪出Agent装人表演（三个字→没数→顺嘴），指出信任问题严重","label":"FEEL"}
+{"text":"MVP阶段memory bootstrap成功从MEMORY.md索引导入37条记忆碎片","label":"WHAT"}
+{"text":"后台worker在Windows上通过detached:true正确运行，9MB转录在~90s内完成","label":"FEEL"}
+{"text":"SessionStart hook检测到pending_fragmentation=1时直接调eng","label":"WHAT"}
+{"text":"用户看钢铁侠时喜欢贾维斯甚至多于托尼，最终选择灵犀作为产品名","label":"WHO"}
+{"text":"此前将推理链改为顺序执行并注入前序结果，但未解决数据结构校验问题，卡住依旧","label":"WHAT"}
+{"text":"用户要求全量UI重构，采用方案C布局和Claude暖色风格，保留所有功能。","label":"WHAT"}
+{"text":"Prefetch 正常跑完但返回空，最可能根因是 hook 进程打开的 DB 路径与 MCP 服务器","label":"WHAT"}
