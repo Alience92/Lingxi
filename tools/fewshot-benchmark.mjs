@@ -6,7 +6,7 @@ import { openDb, getDb } from "../dist/db/connection.js";
 const VALID = new Set(["WHAT", "FEEL", "WHO", "WHERE"]);
 
 function loadTrainingData() {
-  const raw = fs.readFileSync("D:/Lingxi-v4/tools/feel-training-dataset.jsonl", "utf-8");
+  const raw = fs.readFileSync("./tools/feel-training-dataset.jsonl", "utf-8");
   return raw.split("\n").filter(Boolean).map(line => JSON.parse(line));
 }
 

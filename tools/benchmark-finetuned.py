@@ -3,8 +3,8 @@ import json, torch, random
 from transformers import AutoModelForCausalLM, AutoTokenizer
 from peft import PeftModel
 
-adapter_path = "D:/Lingxi-v4/tools/lora-output/final-adapter"
-base_model = "D:/Lingxi-v4/tools/model-cache/Qwen/Qwen2___5-1___5B"
+adapter_path = "./tools/lora-output/final-adapter"
+base_model = "./tools/model-cache/Qwen/Qwen2___5-1___5B"
 
 print("Loading fine-tuned model...")
 tokenizer = AutoTokenizer.from_pretrained(adapter_path, trust_remote_code=True)
@@ -16,7 +16,7 @@ print(f"VRAM: {torch.cuda.memory_allocated()/1e9:.1f} GB")
 
 # Load test fragments from JSONL
 print("Loading test data...")
-with open("D:/Lingxi-v4/tools/feel-training-dataset.jsonl", encoding="utf-8") as f:
+with open("./tools/feel-training-dataset.jsonl", encoding="utf-8") as f:
     all_data = [json.loads(l) for l in f if l.strip()]
 
 # Use holdout set (last 15%), not training data

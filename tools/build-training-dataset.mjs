@@ -3,7 +3,7 @@ import * as fs from "node:fs";
 import { openDb, getDb } from "../dist/db/connection.js";
 
 const TARGET_PER_CHANNEL = 500;
-const OUTPUT_PATH = "D:/Lingxi-v4/tools/feel-training-dataset.jsonl";
+const OUTPUT_PATH = "./tools/feel-training-dataset.jsonl";
 
 function deduplicate(texts) {
   const seen = new Set();
@@ -29,7 +29,7 @@ function main() {
   // 1. SYNTHETIC FEEL samples
   let synthetic = [];
   try {
-    synthetic = JSON.parse(fs.readFileSync("D:/Lingxi-v4/tools/synthetic-feel-samples.json", "utf-8"));
+    synthetic = JSON.parse(fs.readFileSync("./tools/synthetic-feel-samples.json", "utf-8"));
   } catch { console.error("No synthetic samples found"); }
 
   // 2. REAL FEEL from DB

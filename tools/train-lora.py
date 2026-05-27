@@ -15,14 +15,14 @@ from modelscope import snapshot_download
 
 # ── Config ──────────────────────────────────────────────────
 MODEL_ID = "Qwen/Qwen2.5-1.5B"
-MODEL_CACHE_DIR = "D:/Lingxi-v4/tools/model-cache"
-OUTPUT_DIR = "D:/Lingxi-v4/tools/lora-output"
+MODEL_CACHE_DIR = "./tools/model-cache"
+OUTPUT_DIR = "./tools/lora-output"
 
 # ── Download model from ModelScope ───────────────────────────
 print(f"Downloading {MODEL_ID} from ModelScope...")
 model_dir = snapshot_download(MODEL_ID, cache_dir=MODEL_CACHE_DIR)
 print(f"Model downloaded to: {model_dir}")
-DATASET_PATH = "D:/Lingxi-v4/tools/feel-training-dataset.jsonl"
+DATASET_PATH = "./tools/feel-training-dataset.jsonl"
 MAX_LENGTH = 256
 BATCH_SIZE = 1
 GRADIENT_ACCUMULATION = 8
