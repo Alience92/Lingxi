@@ -35,7 +35,7 @@ async function main() {
   const lastDreamingAt = project?.last_dreaming_at ?? 0;
 
   const newFragments = db.prepare(
-    "SELECT COUNT(*) as cnt FROM fragments WHERE project_id = ? AND created_at > ? AND status = 'active'"
+    "SELECT COUNT(*) as cnt FROM fragments WHERE project_id = ? AND created_at > ? AND retrieval_state IN ('active','warm') AND asset_state != 'user_deleted'"
   ).get(projectId, lastDreamingAt) as { cnt: number };
 
   if (newFragments.cnt < threshold) {
@@ -69,10 +69,10 @@ async function main() {
   }
 
   // Step 1: Decay with constitutional protection
-  let stats = { archived: 0, deleted: 0 };
+  let stats = { warmed: 0, archived: 0, cooled: 0 };
   try {
     stats = engine.runDecay({ protectConstitutional: true });
-    console.error(`[AgentMemory] dreaming: decay done — ${stats.archived} archived, ${stats.deleted} deleted`);
+    console.error(`[AgentMemory] dreaming: decay done — ${stats.archived} archived, ${stats.cooled} cooled`);
   } catch (e) {
     console.error(`[AgentMemory] dreaming: decay failed:`, (e as Error).message?.slice(0, 80));
   }
@@ -94,7 +94,7 @@ async function main() {
 
   const abandonedFrags = db.prepare(`
     SELECT id, summary, vector FROM fragments
-    WHERE project_id = ? AND status = 'active'
+    WHERE project_id = ? AND retrieval_state IN ('active','warm') AND asset_state != 'user_deleted'
       AND recalled_count < 2 AND created_at < ?
       AND vector IS NOT NULL
     LIMIT 20
@@ -102,7 +102,7 @@ async function main() {
 
   const recentFrags = db.prepare(`
     SELECT id, summary, vector FROM fragments
-    WHERE project_id = ? AND status = 'active'
+    WHERE project_id = ? AND retrieval_state IN ('active','warm') AND asset_state != 'user_deleted'
       AND created_at > ?
       AND vector IS NOT NULL
     ORDER BY created_at DESC
@@ -229,7 +229,7 @@ async function main() {
   db.prepare("UPDATE projects SET last_dreaming_at = ? WHERE id = ?").run(Date.now(), projectId);
 
   const parts: string[] = [];
-  if (stats.archived + stats.deleted > 0) parts.push(`清理 ${stats.archived + stats.deleted} 条过期记忆`);
+  if (stats.archived + stats.cooled > 0) parts.push(`清理 ${stats.archived + stats.cooled} 条过期记忆`);
   if (distilled > 0) parts.push(`蒸馏 ${distilled} 条 L0 规则`);
   if (criteriaRows.length > 0) parts.push(`蒸馏 ${criteriaRows.length} 条决策判据`);
   if (parts.length === 0) parts.push("记忆库状态良好");

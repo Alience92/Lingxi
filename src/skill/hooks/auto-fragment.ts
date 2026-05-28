@@ -394,7 +394,7 @@ async function main() {
 
   // Chain dreaming if threshold met
   const newFragments = db.prepare(
-    "SELECT COUNT(*) as cnt FROM fragments WHERE project_id = ? AND created_at > ? AND status = 'active'"
+    "SELECT COUNT(*) as cnt FROM fragments WHERE project_id = ? AND created_at > ? AND retrieval_state IN ('active','warm') AND asset_state != 'user_deleted'"
   ).get(projectId, lastDreamingAt) as { cnt: number };
 
   if (newFragments.cnt >= DREAMING_THRESHOLD) {

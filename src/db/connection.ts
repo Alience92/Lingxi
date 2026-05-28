@@ -356,6 +356,26 @@ function ensureSchemaMigrations(database: Database.Database): void {
     `);
     database.exec(`CREATE INDEX IF NOT EXISTS idx_query_events_project ON query_events(project_id, searched_at)`);
   }
+
+  // Migration 24: retrieval_state on fragments (system-managed, flows active→warm→archived→cold)
+  const fragCols6 = database.prepare(`PRAGMA table_info(fragments)`).all() as Array<{ name: string }>;
+  const hasRetrievalState = fragCols6.some((column) => column.name === "retrieval_state");
+  if (!hasRetrievalState) {
+    database.exec(`ALTER TABLE fragments ADD COLUMN retrieval_state TEXT NOT NULL DEFAULT 'warm' CHECK(retrieval_state IN ('active','warm','archived','cold'))`);
+    database.exec(`UPDATE fragments SET retrieval_state = 'active' WHERE status = 'active' AND retrieval_state = 'warm'`);
+    database.exec(`UPDATE fragments SET retrieval_state = 'archived' WHERE status IN ('archived', 'distilled') AND retrieval_state = 'warm'`);
+    database.exec(`UPDATE fragments SET retrieval_state = 'cold' WHERE status = 'deleted' AND retrieval_state = 'warm'`);
+    database.exec(`CREATE INDEX IF NOT EXISTS idx_fragments_project_retrieval ON fragments(project_id, retrieval_state)`);
+  }
+
+  // Migration 25: asset_state on fragments (user-managed: retained | exportable | user_deleted)
+  const fragCols7 = database.prepare(`PRAGMA table_info(fragments)`).all() as Array<{ name: string }>;
+  const hasAssetState = fragCols7.some((column) => column.name === "asset_state");
+  if (!hasAssetState) {
+    database.exec(`ALTER TABLE fragments ADD COLUMN asset_state TEXT NOT NULL DEFAULT 'retained' CHECK(asset_state IN ('retained','exportable','user_deleted'))`);
+    database.exec(`UPDATE fragments SET asset_state = 'user_deleted' WHERE status = 'deleted' AND asset_state = 'retained'`);
+    database.exec(`CREATE INDEX IF NOT EXISTS idx_fragments_project_asset ON fragments(project_id, asset_state)`);
+  }
 }
 
 export function closeDb(): void {

@@ -20,6 +20,8 @@ CREATE TABLE IF NOT EXISTS fragments (
   recalled_count INTEGER NOT NULL DEFAULT 0,
   created_at INTEGER NOT NULL,
   status TEXT NOT NULL DEFAULT 'active',
+  retrieval_state TEXT NOT NULL DEFAULT 'warm' CHECK(retrieval_state IN ('active','warm','archived','cold')),
+  asset_state TEXT NOT NULL DEFAULT 'retained' CHECK(asset_state IN ('retained','exportable','user_deleted')),
   distilled_to TEXT,
   subtype TEXT CHECK(subtype IN ('decision','todo','preference',NULL)),
   vector BLOB
@@ -117,7 +119,6 @@ CREATE TABLE IF NOT EXISTS trust_profile (
   updated_at INTEGER NOT NULL
 );
 
-CREATE INDEX IF NOT EXISTS idx_fragments_project_status ON fragments(project_id, status);
 
 CREATE VIRTUAL TABLE IF NOT EXISTS fragments_fts USING fts5(
   summary,

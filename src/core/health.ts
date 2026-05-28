@@ -60,8 +60,8 @@ export function getMemoryHealth(projectId: string): MemoryHealth {
   const counts = db.prepare(`
     SELECT
       COUNT(*) as total,
-      SUM(CASE WHEN status = 'active' THEN 1 ELSE 0 END) as active,
-      SUM(CASE WHEN status = 'archived' THEN 1 ELSE 0 END) as archived
+      SUM(CASE WHEN retrieval_state = 'active' THEN 1 ELSE 0 END) as active,
+      SUM(CASE WHEN retrieval_state IN ('archived','cold') THEN 1 ELSE 0 END) as archived
     FROM fragments WHERE project_id = ?
   `).get(projectId) as { total: number; active: number; archived: number };
 
@@ -83,7 +83,7 @@ export function getMemoryHealth(projectId: string): MemoryHealth {
     SELECT fa.channel, COUNT(*) as cnt
     FROM fragment_anchors fa
     JOIN fragments f ON f.id = fa.fragment_id
-    WHERE f.project_id = ? AND f.status = 'active'
+    WHERE f.project_id = ? AND f.retrieval_state IN ('active','warm') AND f.asset_state != 'user_deleted'
     GROUP BY fa.channel
   `).all(projectId) as Array<{ channel: string; cnt: number }>;
 

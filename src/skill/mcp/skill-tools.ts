@@ -33,7 +33,7 @@ export function buildToolHandlers(engine: MemoryEngine) {
       }
       const db = getDb();
       const fragments = db.prepare(`
-        SELECT * FROM fragments WHERE project_id = ? AND status = 'active'
+        SELECT * FROM fragments WHERE project_id = ? AND retrieval_state IN ('active','warm') AND asset_state != 'user_deleted'
         ORDER BY created_at DESC LIMIT 10
       `).all(params.projectId) as Array<{ id: string; decay_score: number; recalled_count: number; last_recalled_at: number | null }>;
 
@@ -123,13 +123,13 @@ export function buildToolHandlers(engine: MemoryEngine) {
       const distilled = engine.runDistillation(params.projectId);
 
       const parts: string[] = [];
-      if (stats.archived + stats.deleted > 0) parts.push(`已清理 ${stats.archived + stats.deleted} 条过期记忆`);
+      if (stats.archived + stats.cooled > 0) parts.push(`已清理 ${stats.archived + stats.cooled} 条过期记忆`);
       if (distilled > 0) parts.push(`已蒸馏 ${distilled} 条规则（L0）`);
       if (parts.length === 0) parts.push("记忆库状态良好，无需清理");
 
       return {
         archived: stats.archived,
-        deleted: stats.deleted,
+        deleted: stats.cooled,
         distilled,
         message: parts.join("，") + "。",
       };

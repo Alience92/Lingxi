@@ -34,15 +34,15 @@ export async function fourLayerRecall(
 
   if (archiveRows.length > 0) {
     const db = getDb();
-    // Only reactivate archived fragments; distilled fragments stay distilled
+    // Reactivate archived/cold fragments to warm (system's retrieval tier)
     for (const row of archiveRows) {
-      db.prepare(`UPDATE fragments SET status = 'active', decay_score = 0.5 WHERE id = ? AND status = 'archived'`).run(row.id);
+      db.prepare(`UPDATE fragments SET retrieval_state = 'warm', decay_score = 0.5 WHERE id = ? AND retrieval_state IN ('archived', 'cold')`).run(row.id);
     }
     const reactivatedResults = await explicitSearch(queryText, projectId, 0.3, 5);
-    // If some results are distilled, include them with a different message
+    // If some were cold (previously distilled/deleted), note it
     const hasDistilled = archiveRows.some((r) => {
-      const frag = db.prepare("SELECT status FROM fragments WHERE id = ?").get(r.id) as { status: string } | undefined;
-      return frag?.status === "distilled";
+      const frag = db.prepare("SELECT retrieval_state FROM fragments WHERE id = ?").get(r.id) as { retrieval_state: string } | undefined;
+      return frag?.retrieval_state === "cold";
     });
     return {
       fragments: reactivatedResults,

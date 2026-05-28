@@ -21,7 +21,8 @@ export interface Fragment {
   lastRecalledAt: number | null;
   recalledCount: number;
   readonly createdAt: number;
-  status: "active" | "archived" | "deleted" | "distilled";
+  retrievalState: "active" | "warm" | "archived" | "cold";
+  assetState: "retained" | "exportable" | "user_deleted";
   distilledTo: string | undefined;
   subtype?: "decision" | "todo" | "preference" | null;
 }
@@ -57,7 +58,7 @@ export interface FragmentationInput {
 }
 
 export interface FragmentationOutput {
-  fragments: Omit<Fragment, "decayScore" | "lastRecalledAt" | "recalledCount" | "status" | "distilledTo">[];
+  fragments: Omit<Fragment, "decayScore" | "lastRecalledAt" | "recalledCount" | "retrievalState" | "assetState" | "distilledTo">[];
   summary: string;
 }
 

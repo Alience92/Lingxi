@@ -46,8 +46,8 @@ export async function persistFragments(input: PersistInput): Promise<Fragment[]>
   }
 
   const insertFrag = db.prepare(`
-    INSERT INTO fragments (id, session_id, project_id, summary, linked_count, decay_score, created_at, status, distilled_to, subtype, vector)
-    VALUES (?, ?, ?, ?, ?, 1.0, ?, 'active', NULL, ?, ?)
+    INSERT INTO fragments (id, session_id, project_id, summary, linked_count, decay_score, created_at, status, retrieval_state, asset_state, distilled_to, subtype, vector)
+    VALUES (?, ?, ?, ?, ?, 1.0, ?, 'active', 'active', 'retained', NULL, ?, ?)
   `);
   const insertAnchor = db.prepare(`
     INSERT INTO fragment_anchors (fragment_id, channel, label, weight, source, timestamp)
@@ -66,7 +66,8 @@ export async function persistFragments(input: PersistInput): Promise<Fragment[]>
         decayScore: 1.0,
         lastRecalledAt: null,
         recalledCount: 0,
-        status: "active",
+        retrievalState: "active",
+        assetState: "retained",
         distilledTo: undefined,
       };
 
@@ -133,7 +134,7 @@ export function searchArchiveFragments(
     return db.prepare(`
       SELECT f.id, f.summary FROM fragments_fts ft
       JOIN fragments f ON f.rowid = ft.rowid
-      WHERE fragments_fts MATCH ? AND f.project_id = ? AND f.status IN ('archived', 'distilled')
+      WHERE fragments_fts MATCH ? AND f.project_id = ? AND f.retrieval_state IN ('archived', 'cold') AND f.asset_state != 'user_deleted'
       LIMIT ?
     `).all(ftsQuery, projectId, limit) as Array<{ id: string; summary: string }>;
   } catch {

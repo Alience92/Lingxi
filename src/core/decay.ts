@@ -7,7 +7,7 @@ const ONE_EIGHTY_DAYS_MS = 180 * 24 * 60 * 60 * 1000;
 
 export interface DecayResult {
   score: number;
-  status: "active" | "archived" | "deleted";
+  retrievalState: "active" | "warm" | "archived" | "cold";
 }
 
 // Anchor weight slows down decay — higher weight = slower aging.
@@ -31,22 +31,24 @@ export function computeDecayScore(
 
   if (lastRecalledAt) {
     const hoursSinceRecall = (now - lastRecalledAt) / (60 * 60 * 1000);
-    if (hoursSinceRecall < 24) return { score: 1.0, status: "active" };
+    if (hoursSinceRecall < 24) return { score: 1.0, retrievalState: "active" };
   }
 
   const age = now - createdAt;
   const wm = weightMultiplier(anchorWeight);
 
-  if (age < SEVEN_DAYS_MS) return { score: 1.0, status: "active" };
+  if (age < SEVEN_DAYS_MS) return { score: 1.0, retrievalState: "active" };
 
   const recalledMultiplier = recalledCount === 0 ? 0.8 : 1.0;
 
-  if (age < THIRTY_DAYS_MS) return { score: Math.max(0.1, 0.7 * recalledMultiplier * (1 - wm * 0.5)), status: "active" };
-  if (age < SIXTY_DAYS_MS) return { score: Math.max(0.1, 0.3 * recalledMultiplier * (1 - wm * 0.7)), status: "active" };
+  if (age < THIRTY_DAYS_MS) return { score: Math.max(0.1, 0.7 * recalledMultiplier * (1 - wm * 0.5)), retrievalState: "warm" };
+  if (age < SIXTY_DAYS_MS) return { score: Math.max(0.1, 0.3 * recalledMultiplier * (1 - wm * 0.7)), retrievalState: "warm" };
 
-  if (age < ONE_EIGHTY_DAYS_MS) return { score: 0, status: "archived" };
+  // 60-180 days: archived — still in DB, searchable by explicit query only
+  if (age < ONE_EIGHTY_DAYS_MS) return { score: 0, retrievalState: "archived" };
 
-  return { score: 0, status: "deleted" };
+  // 180+ days: cold — skipped by normal queries, only L1_archive recall
+  return { score: 0, retrievalState: "cold" };
 }
 
 export function boostDecayScore(fragment: {

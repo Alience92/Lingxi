@@ -30,7 +30,7 @@ const _dfCaches = new Map<string, { df: Map<string, number>; fragmentCount: numb
 function buildDFCache(projectId: string): Map<string, number> {
   const db = getDb();
   const rows = db.prepare(
-    "SELECT summary FROM fragments WHERE project_id = ? AND status = 'active' AND decay_score > 0"
+    "SELECT summary FROM fragments WHERE project_id = ? AND retrieval_state IN ('active','warm') AND asset_state != 'user_deleted' AND decay_score > 0"
   ).all(projectId) as Array<{ summary: string }>;
 
   const df = new Map<string, number>();
@@ -57,7 +57,7 @@ function buildDFCache(projectId: string): Map<string, number> {
 function getDFCache(projectId: string): Map<string, number> {
   const db = getDb();
   const currentCount = (db.prepare(
-    "SELECT COUNT(*) as cnt FROM fragments WHERE project_id = ? AND status = 'active' AND decay_score > 0"
+    "SELECT COUNT(*) as cnt FROM fragments WHERE project_id = ? AND retrieval_state IN ('active','warm') AND asset_state != 'user_deleted' AND decay_score > 0"
   ).get(projectId) as { cnt: number }).cnt;
 
   const cached = _dfCaches.get(projectId);
@@ -291,7 +291,7 @@ async function vectorSearch(
     // P0+P2: Alpha tokens first (most discriminative), then CJK bigrams ranked by IDF (rarest first)
     const df = getDFCache(projectId);
     const totalDocs = (db.prepare(
-      "SELECT COUNT(*) as cnt FROM fragments WHERE project_id = ? AND status = 'active' AND decay_score > 0"
+      "SELECT COUNT(*) as cnt FROM fragments WHERE project_id = ? AND retrieval_state IN ('active','warm') AND asset_state != 'user_deleted' AND decay_score > 0"
     ).get(projectId) as { cnt: number }).cnt;
     const idfRankedCjk = cjkBigrams
       .filter(t => df.has(t))
@@ -306,25 +306,25 @@ async function vectorSearch(
       const likeParams = uniqueTerms.map(t => `%${t}%`);
       rawRows = db.prepare(`
         SELECT * FROM fragments
-        WHERE project_id = ? AND status = 'active' AND decay_score > 0
+        WHERE project_id = ? AND retrieval_state IN ('active','warm') AND asset_state != 'user_deleted' AND decay_score > 0
           AND (${likeClauses})
         LIMIT 500
       `).all(projectId, ...likeParams) as Array<Record<string, unknown>>;
     } else {
       rawRows = db.prepare(`
-        SELECT * FROM fragments WHERE project_id = ? AND status = 'active' AND decay_score > 0
+        SELECT * FROM fragments WHERE project_id = ? AND retrieval_state IN ('active','warm') AND asset_state != 'user_deleted' AND decay_score > 0
       `).all(projectId) as Array<Record<string, unknown>>;
     }
   } else {
     rawRows = db.prepare(`
-      SELECT * FROM fragments WHERE project_id = ? AND status = 'active' AND decay_score > 0
+      SELECT * FROM fragments WHERE project_id = ? AND retrieval_state IN ('active','warm') AND asset_state != 'user_deleted' AND decay_score > 0
     `).all(projectId) as Array<Record<string, unknown>>;
   }
 
   // Fallback: if keyword filter returned too few, retry with full scan
   if (rawRows.length < 3 && originalQuery) {
     rawRows = db.prepare(`
-      SELECT * FROM fragments WHERE project_id = ? AND status = 'active' AND decay_score > 0
+      SELECT * FROM fragments WHERE project_id = ? AND retrieval_state IN ('active','warm') AND asset_state != 'user_deleted' AND decay_score > 0
     `).all(projectId) as Array<Record<string, unknown>>;
   }
 
@@ -398,7 +398,8 @@ async function vectorSearch(
       lastRecalledAt: r.last_recalled_at as number | null,
       recalledCount: r.recalled_count as number,
       createdAt: r.created_at as number,
-      status: r.status as "active" | "archived" | "deleted" | "distilled",
+      retrievalState: (r.retrieval_state as "active" | "warm" | "archived" | "cold") ?? "warm",
+      assetState: (r.asset_state as "retained" | "exportable" | "user_deleted") ?? "retained",
       distilledTo: r.distilled_to as string | undefined,
       anchors: anchors.map((a) => ({
         channel: a.channel as import("../types.js").Channel,

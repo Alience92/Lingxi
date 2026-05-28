@@ -100,7 +100,7 @@ export class MemoryEngine {
     };
   }
 
-  runDecay(options?: { protectConstitutional?: boolean }): { archived: number; deleted: number } {
+  runDecay(options?: { protectConstitutional?: boolean }): { warmed: number; archived: number; cooled: number } {
     const protectConstitutional = options?.protectConstitutional ?? false;
     const db = getDb();
 
@@ -115,7 +115,7 @@ export class MemoryEngine {
       protectedIds = new Set(constitutional.map(r => r.fragment_id));
     }
 
-    rows = db.prepare(`SELECT * FROM fragments WHERE status IN ('active', 'distilled')`).all() as Array<Record<string, unknown>>;
+    rows = db.prepare(`SELECT * FROM fragments WHERE retrieval_state IN ('active', 'warm') AND asset_state != 'user_deleted'`).all() as Array<Record<string, unknown>>;
 
     const weightMap = new Map<string, number>();
     const weightRows = db.prepare(`
@@ -126,8 +126,9 @@ export class MemoryEngine {
       weightMap.set(w.fragment_id, w.max_weight);
     }
 
+    let warmed = 0;
     let archived = 0;
-    let deleted = 0;
+    let cooled = 0;
 
     const update = db.transaction(() => {
       for (const r of rows) {
@@ -137,22 +138,22 @@ export class MemoryEngine {
         const createdAt = r.created_at as number;
         const lastRecalledAt = r.last_recalled_at as number | null;
         const recalledCount = r.recalled_count as number;
-        const status = r.status as string;
+        const currentRetrieval = r.retrieval_state as string;
         const anchorWeight = weightMap.get(id) ?? 10;
 
         const decay = computeDecayScore(createdAt, lastRecalledAt, recalledCount, anchorWeight);
-        if (decay.status === "archived" && status !== "archived") {
-          db.prepare(`UPDATE fragments SET status = 'archived', decay_score = 0 WHERE id = ?`).run(id);
-          archived++;
-        } else if (decay.status === "deleted") {
-          deleteFragment(id);
-          deleted++;
+        if (decay.retrievalState !== currentRetrieval) {
+          const newScore = decay.retrievalState === "active" ? 1.0 : decay.retrievalState === "warm" ? 0.5 : 0;
+          db.prepare(`UPDATE fragments SET retrieval_state = ?, decay_score = ? WHERE id = ?`).run(decay.retrievalState, newScore, id);
+          if (decay.retrievalState === "warm") warmed++;
+          else if (decay.retrievalState === "archived") archived++;
+          else if (decay.retrievalState === "cold") cooled++;
         }
       }
     });
 
     update();
-    return { archived, deleted };
+    return { warmed, archived, cooled };
   }
 
   runDistillation(projectId: string, options?: { minFeelScore?: number; minMembers?: number }): number {
@@ -167,7 +168,7 @@ export class MemoryEngine {
              MAX(CASE WHEN fa.channel = 'FEEL' AND fa.weight >= 80 THEN 1 ELSE 0 END) as is_constitutional
       FROM fragments f
       JOIN fragment_anchors fa ON fa.fragment_id = f.id
-      WHERE f.project_id = ? AND f.status = 'active'
+      WHERE f.project_id = ? AND f.retrieval_state IN ('active', 'warm') AND f.asset_state != 'user_deleted'
       GROUP BY f.id, f.summary
     `).all(projectId) as Array<{ id: string; summary: string; label: string; channel: string; max_feel: number | null; is_constitutional: number }>;
 
@@ -301,7 +302,7 @@ export class MemoryEngine {
       SELECT fa.fragment_id as fragmentId, fa.label, fa.weight
       FROM fragment_anchors fa
       JOIN fragments f ON f.id = fa.fragment_id
-      WHERE fa.channel = 'FEEL' AND fa.weight >= ${CONSTITUTIONAL_WEIGHT_THRESHOLD} AND f.status = 'active' AND f.project_id = ?
+      WHERE fa.channel = 'FEEL' AND fa.weight >= ${CONSTITUTIONAL_WEIGHT_THRESHOLD} AND f.retrieval_state IN ('active','warm') AND f.asset_state != 'user_deleted' AND f.project_id = ?
       ORDER BY fa.weight DESC
     `).all(projectId) as Array<{ fragmentId: string; label: string; weight: number }>;
   }
@@ -437,6 +438,112 @@ export class MemoryEngine {
       }
     }
     return expanded;
+  }
+
+  // ── Memory Repair Loop v1 ──────────────────────────
+
+  repairMemory(projectId: string): {
+    zeroHitAliases: number;
+    downweighted: number;
+    jobsCreated: number;
+  } {
+    const db = getDb();
+    let zeroHitAliases = 0;
+    let downweighted = 0;
+    let jobsCreated = 0;
+
+    // 1. Scan recent zero-hit queries (last 7 days)
+    const zeroHitQueries = db.prepare(`
+      SELECT DISTINCT query FROM query_events
+      WHERE project_id = ? AND result_count = 0 AND searched_at > ?
+      ORDER BY searched_at DESC LIMIT 20
+    `).all(projectId, Date.now() - 7 * 24 * 60 * 60 * 1000) as Array<{ query: string }>;
+
+    for (const zq of zeroHitQueries) {
+      // Extract clean keywords from the query
+      const cleaned = zq.query.replace(/[，。！？、；：""''（）\s]+/g, "");
+      const bigrams: string[] = [];
+      for (let i = 0; i < cleaned.length - 1; i++) {
+        const pair = cleaned.slice(i, i + 2);
+        if (/[一-鿿]/.test(pair[0]!) && /[一-鿿]/.test(pair[1]!)) {
+          bigrams.push(pair);
+        }
+      }
+      if (bigrams.length === 0) continue;
+
+      const likeClauses = bigrams.slice(0, 6).map(() => "summary LIKE ?").join(" OR ");
+      const likeParams = bigrams.slice(0, 6).map((bg) => `%${bg}%`);
+
+      const candidates = db.prepare(`
+        SELECT id, summary FROM fragments
+        WHERE project_id = ? AND retrieval_state IN ('active','warm') AND asset_state != 'user_deleted'
+          AND (${likeClauses})
+        LIMIT 10
+      `).all(projectId, ...likeParams) as Array<{ id: string; summary: string }>;
+
+      if (candidates.length >= 2) {
+        // Create aliases between the highest-scoring pair of candidates
+        const best = candidates[0]!;
+        const second = candidates[1]!;
+        const canonical = best.summary.slice(0, 30);
+        const alias = second.summary.slice(0, 30);
+
+        if (canonical !== alias) {
+          db.prepare(`
+            INSERT OR IGNORE INTO aliases (id, project_id, canonical, alias, source, confidence, created_at)
+            VALUES (?, ?, ?, ?, 'auto', 0.7, ?)
+          `).run(
+            `alias-auto-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+            projectId, canonical, alias, Date.now()
+          );
+          zeroHitAliases++;
+
+          db.prepare(`
+            INSERT INTO memory_repair_jobs (id, project_id, job_type, trigger, fragments_affected, action_taken, created_at)
+            VALUES (?, ?, 'auto_alias', ?, ?, ?, ?)
+          `).run(
+            `mrj-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+            projectId,
+            `zero-hit query: ${zq.query.slice(0, 80)}`,
+            JSON.stringify([best.id, second.id]),
+            `created alias: "${canonical}" ↔ "${alias}"`,
+            Date.now(),
+          );
+          jobsCreated++;
+        }
+      }
+    }
+
+    // 2. Downweight low-hit fragments: recalled_count < 2, age > 30 days, retrieval_state = 'active'
+    const lowHitFrags = db.prepare(`
+      SELECT id FROM fragments
+      WHERE project_id = ? AND recalled_count < 2 AND retrieval_state = 'active' AND asset_state != 'user_deleted'
+        AND created_at < ?
+      LIMIT 10
+    `).all(projectId, Date.now() - 30 * 24 * 60 * 60 * 1000) as Array<{ id: string }>;
+
+    if (lowHitFrags.length > 0) {
+      const updateStmt = db.prepare(`UPDATE fragments SET retrieval_state = 'warm', decay_score = 0.5 WHERE id = ?`);
+      for (const f of lowHitFrags) {
+        updateStmt.run(f.id);
+        downweighted++;
+      }
+
+      db.prepare(`
+        INSERT INTO memory_repair_jobs (id, project_id, job_type, trigger, fragments_affected, action_taken, created_at)
+        VALUES (?, ?, 'weight_adjust', ?, ?, ?, ?)
+      `).run(
+        `mrj-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+        projectId,
+        `low recall count (< 2) + age > 30 days`,
+        JSON.stringify(lowHitFrags.map((f) => f.id)),
+        `downweighted ${lowHitFrags.length} fragments: active → warm, decay_score = 0.5`,
+        Date.now(),
+      );
+      jobsCreated++;
+    }
+
+    return { zeroHitAliases, downweighted, jobsCreated };
   }
 
   private async callFragmenter(input: FragmentationInput): Promise<FragmentResult> {
