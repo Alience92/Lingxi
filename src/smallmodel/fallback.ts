@@ -28,7 +28,8 @@ const FALLBACK_PROMPT = `将文本分类到一个主通道：WHAT / FEEL / WHERE
 - "整体运转正常，三个环节都触发了" → FEEL
 - "用户认为 2-4 秒延迟可接受，同意开始实施" → FEEL
 - "编导工具 1.0 功能完整但 UI 未翻新" → WHAT
-- "12倍性能提升：优化前17s，优化后1.4s" → FEEL
+- "这次终于对了，可以继续推进" → FEEL
+- "性能从17s优化到1.4s，瓶颈在 I/O" → WHAT
 
 仅输出 JSON：
 {"label":"WHAT|FEEL|WHERE|WHO","confidence":0.0-1.0}

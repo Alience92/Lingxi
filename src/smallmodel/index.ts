@@ -49,6 +49,7 @@ WHAT=实质决策/方案/需求 FEEL=用户对AI的情绪反馈 WHO=涉及人物
   const res = await fetch(`${OLLAMA_URL}/api/generate`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
+    signal: controller.signal,
     body: JSON.stringify({
       model,
       prompt,

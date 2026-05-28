@@ -163,7 +163,9 @@ export class MemoryEngine {
     const minMembers = options?.minMembers ?? 3;
     const db = getDb();
 
-    // Load fragments with their max FEEL weight for quality gating
+    // Load fragments with their max FEEL weight for quality gating.
+    // Includes archived — their content may form useful L0 rules even though
+    // the fragments themselves are no longer in active retrieval. status and retrieval_state are independent axes.
     const fragments = db.prepare(`
       SELECT f.id, f.summary, MIN(fa.label) AS label, MIN(fa.channel) AS channel,
              MAX(CASE WHEN fa.channel = 'FEEL' THEN fa.weight ELSE NULL END) as max_feel,
