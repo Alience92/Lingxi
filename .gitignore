@@ -6,3 +6,8 @@ dist/
 *.db
 *.db-shm
 *.db-wal
+
+# Encoder model files (generated locally)
+tools/two-stage-output/*.onnx
+tools/encoder-output/
+
