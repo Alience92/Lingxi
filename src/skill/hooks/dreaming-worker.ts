@@ -5,21 +5,8 @@
 import { openDb, getDb } from "../../db/connection.js";
 import * as fs from "node:fs";
 import { cosineSimilarity } from "../../core/embedder.js";
-
-function loadSettingsEnv(): Record<string, string> {
-  const settingsPaths = [
-    `${process.env.HOME || process.env.USERPROFILE}/.claude/settings.json`,
-    `${process.env.HOME || process.env.USERPROFILE}/.claude/settings.local.json`,
-  ];
-  const env: Record<string, string> = { ...process.env } as Record<string, string>;
-  for (const p of settingsPaths) {
-    try {
-      const obj = JSON.parse(fs.readFileSync(p, "utf-8"));
-      if (obj.env) Object.assign(env, obj.env);
-    } catch {}
-  }
-  return env;
-}
+import { loadSettingsEnv } from "./settings.js";
+import type { MemoryEngine } from "../engine.js";
 
 async function main() {
   const args = process.argv.slice(2);
@@ -53,7 +40,7 @@ async function main() {
     process.exit(0);
   }
 
-  let engine: any = null;
+  let engine: MemoryEngine | null = null;
   try {
     const { MemoryEngine } = await import("../engine.js");
     engine = new MemoryEngine({
@@ -236,4 +223,4 @@ async function main() {
   console.error(`[AgentMemory] 后台 Dreaming 完成: ${parts.join("，")}。`);
 }
 
-main().catch(() => process.exit(1));
+main().catch((e: unknown) => { console.error("[AgentMemory] hook failed:", (e as Error).message?.slice(0, 120)); process.exit(1); });

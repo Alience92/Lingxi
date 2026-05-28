@@ -8,7 +8,8 @@ Rationale: FEEL is already at 92%. The main confusion is within NON-FEEL
 and lets Stage 2 focus on discriminating WHAT/WHERE/WHO boundaries.
 """
 import os
-os.environ["HF_ENDPOINT"] = "https://hf-mirror.com"
+if not os.environ.get("HF_ENDPOINT") and os.environ.get("USE_HF_MIRROR") == "1":
+    os.environ["HF_ENDPOINT"] = "https://hf-mirror.com"
 
 import json, random
 import numpy as np
@@ -41,6 +42,12 @@ def load_jsonl(path):
 train_data = load_jsonl(TRAIN_PATH)
 test_data = json.load(open(TEST_PATH, "r", encoding="utf-8"))
 random.seed(42)
+np.random.seed(42)
+torch.manual_seed(42)
+if torch.cuda.is_available():
+    torch.cuda.manual_seed_all(42)
+    torch.backends.cudnn.deterministic = True
+    torch.backends.cudnn.benchmark = False
 
 # Balance training data
 ALL_LABELS = ["WHAT", "FEEL", "WHERE", "WHO"]

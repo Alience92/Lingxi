@@ -3,7 +3,8 @@ Encoder classifier for 4-channel classification (macbert-base).
 Discriminative classification — no generative LM, no label collapse.
 """
 import os
-os.environ["HF_ENDPOINT"] = "https://hf-mirror.com"
+if not os.environ.get("HF_ENDPOINT") and os.environ.get("USE_HF_MIRROR") == "1":
+    os.environ["HF_ENDPOINT"] = "https://hf-mirror.com"
 
 import json, random
 import numpy as np
@@ -40,6 +41,12 @@ test_data = json.load(open(TEST_PATH, "r", encoding="utf-8"))
 
 # Balance: downsample majority classes to minority class size
 random.seed(42)
+np.random.seed(42)
+torch.manual_seed(42)
+if torch.cuda.is_available():
+    torch.cuda.manual_seed_all(42)
+    torch.backends.cudnn.deterministic = True
+    torch.backends.cudnn.benchmark = False
 minority = min(sum(1 for x in train_data if x["label"] == l) for l in LABEL_MAP)
 balanced = []
 for l in LABEL_MAP:

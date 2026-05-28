@@ -5,6 +5,8 @@ import { openDb, getDb } from "../../db/connection.js";
 import * as fs from "node:fs";
 import * as path from "node:path";
 import { spawn } from "node:child_process";
+import { loadSettingsEnv } from "./settings.js";
+import type { MemoryEngine } from "../engine.js";
 import { fileURLToPath } from "node:url";
 
 const PER_SESSION_TIMEOUT_MS = 30_000;
@@ -13,21 +15,6 @@ const DREAMING_THRESHOLD = 100;
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-
-function loadSettingsEnv(): Record<string, string> {
-  const settingsPaths = [
-    `${process.env.HOME || process.env.USERPROFILE}/.claude/settings.json`,
-    `${process.env.HOME || process.env.USERPROFILE}/.claude/settings.local.json`,
-  ];
-  const env: Record<string, string> = { ...process.env } as Record<string, string>;
-  for (const p of settingsPaths) {
-    try {
-      const obj = JSON.parse(fs.readFileSync(p, "utf-8"));
-      if (obj.env) Object.assign(env, obj.env);
-    } catch {}
-  }
-  return env;
-}
 
 function extractConversation(filePath: string): string[] {
   const content = fs.readFileSync(filePath, "utf-8");
@@ -151,7 +138,7 @@ async function main() {
   const fragmentationBaseURL = settingsEnv.DEEPSEEK_BASE_URL
     || (settingsEnv.DEEPSEEK_API_KEY ? "https://api.deepseek.com" : "https://api.minimax.chat");
 
-  let engine: any = null;
+  let engine: MemoryEngine | null = null;
   if (fragmentationKey && fragmentationKey.length > 10 && fragmentationKey !== "test-key") {
     try {
       const { MemoryEngine } = await import("../engine.js");
@@ -409,4 +396,4 @@ async function main() {
   }
 }
 
-main().catch(() => process.exit(1));
+main().catch((e: unknown) => { console.error("[AgentMemory] hook failed:", (e as Error).message?.slice(0, 120)); process.exit(1); });

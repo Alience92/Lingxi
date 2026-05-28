@@ -171,7 +171,7 @@ function buildBoundaryWhatPrompt(count) {
 
 async function generate(prompt, label, retries = 3) {
   const env = loadSettingsEnv();
-  const apiKey = env.DEEPSEEK_API_KEY || env.ANTHROPIC_AUTH_TOKEN || "";
+  const apiKey = env.DEEPSEEK_API_KEY || "";
   const baseURL = env.DEEPSEEK_BASE_URL || "https://api.deepseek.com";
   if (!apiKey || apiKey.length < 10) throw new Error("No API key");
 

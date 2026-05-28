@@ -321,12 +321,25 @@ export async function startServer(apiKey: string, dbPath?: string) {
 
   server.setRequestHandler(CallToolRequestSchema, async (request) => {
     const { name, arguments: args } = request.params;
-    const handler = (handlers as Record<string, Function>)[name];
+    // Each handler has its own typed params — the catch below handles runtime mismatches
+    const handler = (handlers as unknown as Record<string, (args: Record<string, unknown>) => unknown>)[name];
     if (!handler) {
       return { content: [{ type: "text", text: `Unknown tool: ${name}` }], isError: true };
     }
-    const result = await handler(args ?? {});
-    return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+    // Validate required arguments against tool inputSchema
+    const toolDef = TOOL_DEFINITIONS.find(t => t.name === name);
+    if (toolDef?.inputSchema?.required) {
+      const missing = (toolDef.inputSchema.required as string[]).filter(r => !(r in (args ?? {})));
+      if (missing.length > 0) {
+        return { content: [{ type: "text", text: `Missing required arguments: ${missing.join(", ")}` }], isError: true };
+      }
+    }
+    try {
+      const result = await handler(args ?? {});
+      return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+    } catch (e) {
+      return { content: [{ type: "text", text: `Tool error: ${(e as Error).message?.slice(0, 200)}` }], isError: true };
+    }
   });
 
   const transport = new StdioServerTransport();

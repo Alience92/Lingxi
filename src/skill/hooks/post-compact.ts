@@ -65,4 +65,4 @@ async function main() {
   console.log(`[AgentMemory] Session ${sessionId.slice(0, 8)} flagged.`);
 }
 
-main().catch(() => {});
+main().catch((e: unknown) => { console.error("[AgentMemory] hook failed:", (e as Error).message?.slice(0, 120)); });

@@ -68,7 +68,7 @@ function tokenize(text: string): { input_ids: Int32Array; attention_mask: Int32A
   const vocab = loadVocab();
 
   // Basic tokenization
-  const basicTokens = basicTokenize(text.slice(0, 500));
+  const basicTokens = basicTokenize(text.slice(0, 256));
 
   // WordPiece
   const wpTokens: string[] = ["[CLS]"];
@@ -127,8 +127,10 @@ export async function classify(text: string): Promise<EncoderResult> {
   // Stage 1: FEEL vs NON-FEEL
   const s1 = await getS1();
   const s1Out = await s1.run(feed);
-  const s1Logits = (s1Out.logits!.data) as Float32Array;  // [1, 2]
-  const feelProb = 1 / (1 + Math.exp(-(s1Logits[1] ?? 0) + (s1Logits[0] ?? 0)));  // softmax for binary
+  const s1Logits = (s1Out.logits!.data) as Float32Array;
+  if (s1Logits.length < 2) throw new Error("Stage 1 output has unexpected shape");
+  // Assumes s1Logits[0]=NON-FEEL, s1Logits[1]=FEEL (matching training label order)
+  const feelProb = 1 / (1 + Math.exp(-(s1Logits[1] ?? 0) + (s1Logits[0] ?? 0)));
 
   if (feelProb > 0.5) {
     return { label: "FEEL", confidence: Math.round(feelProb * 10000) / 10000, stage: "s1" };
@@ -137,7 +139,8 @@ export async function classify(text: string): Promise<EncoderResult> {
   // Stage 2: WHAT vs WHERE vs WHO
   const s2 = await getS2();
   const s2Out = await s2.run(feed);
-  const s2Logits = (s2Out.logits!.data) as Float32Array;  // [1, 3]
+  const s2Logits = (s2Out.logits!.data) as Float32Array;
+  if (s2Logits.length < 3) throw new Error("Stage 2 output has unexpected shape");
   // Softmax
   const s2_0 = s2Logits[0] ?? 0, s2_1 = s2Logits[1] ?? 0, s2_2 = s2Logits[2] ?? 0;
   const maxLogit = Math.max(s2_0, s2_1, s2_2);
@@ -145,6 +148,12 @@ export async function classify(text: string): Promise<EncoderResult> {
   const sum = exps[0]! + exps[1]! + exps[2]!;
   const p0 = exps[0]! / sum, p1 = exps[1]! / sum, p2 = exps[2]! / sum;
   const probs = [p0, p1, p2];
+
+
+  // Guard against NaN/Infinity from corrupted model or degenerate input
+  if (!isFinite(p0) || !isFinite(p1) || !isFinite(p2)) {
+    return { label: "WHAT", confidence: 0, stage: "s2" };
+  }
 
   const S2_LABELS: Array<"WHAT" | "WHERE" | "WHO"> = ["WHAT", "WHERE", "WHO"];
   const bestIdx = probs.indexOf(Math.max(p0, p1, p2));
@@ -164,6 +173,12 @@ export async function classifyBatch(texts: string[]): Promise<EncoderResult[]> {
     results.push(await classify(text));
   }
   return results;
+}
+
+// ── Resource cleanup ──────────────────────────────────────────
+export async function dispose(): Promise<void> {
+  if (_sessionS1) { await _sessionS1.release(); _sessionS1 = null; }
+  if (_sessionS2) { await _sessionS2.release(); _sessionS2 = null; }
 }
 
 // ── Health check ─────────────────────────────────────────────

@@ -41,19 +41,29 @@ export interface FallbackResult {
   source: "llm-fallback";
 }
 
+const _clientCache = new Map<string, OpenAI>();
+
+function getClient(apiKey: string, baseURL: string): OpenAI {
+  const key = apiKey + "::" + baseURL;
+  if (!_clientCache.has(key)) {
+    _clientCache.set(key, new OpenAI({ apiKey, baseURL }));
+  }
+  return _clientCache.get(key)!;
+}
+
 export async function classifyFallback(
   text: string,
   apiKey: string,
   baseURL: string = "https://api.deepseek.com",
 ): Promise<FallbackResult> {
   const normalizedURL = baseURL.endsWith("/v1") ? baseURL : `${baseURL}/v1`;
-  const client = new OpenAI({ apiKey, baseURL: normalizedURL });
+  const client = getClient(apiKey, normalizedURL);
 
   const response = await client.chat.completions.create({
     model: "deepseek-chat",
     max_tokens: 80,
     temperature: 0,
-    messages: [{ role: "user", content: FALLBACK_PROMPT.replace("{text}", text) }],
+    messages: [{ role: "user", content: FALLBACK_PROMPT.replace("{text}", text.replace(/[{}]/g, "").slice(0, 300)) }],
   });
 
   const content = (response.choices[0]?.message?.content ?? "").trim();
@@ -71,11 +81,12 @@ export async function classifyFallback(
     }
   } catch {}
 
-  // Fallback: extract label from text
-  const match = content.match(/WHAT|FEEL|WHERE|WHO/);
+  // Fallback: extract label from text (find last channel word in response)
+  const matches = content.match(/WHAT|FEEL|WHERE|WHO/g);
+  const bestMatch = matches ? matches[matches.length - 1] : null;
   return {
-    label: (match?.[0] ?? "WHAT") as "WHAT" | "FEEL" | "WHERE" | "WHO",
-    confidence: 0.5,
+    label: (bestMatch ?? "WHAT") as "WHAT" | "FEEL" | "WHERE" | "WHO",
+    confidence: 0.3,
     source: "llm-fallback",
   };
 }

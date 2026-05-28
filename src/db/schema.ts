@@ -256,6 +256,13 @@ CREATE TABLE IF NOT EXISTS query_events (
 );
 
 CREATE INDEX IF NOT EXISTS idx_query_events_project ON query_events(project_id, searched_at);
+CREATE INDEX IF NOT EXISTS idx_fragments_project_retrieval_asset ON fragments(project_id, retrieval_state, asset_state, decay_score);
+CREATE INDEX IF NOT EXISTS idx_fragments_project_created ON fragments(project_id, created_at);
+CREATE INDEX IF NOT EXISTS idx_fragments_project_subtype ON fragments(project_id, subtype);
+CREATE INDEX IF NOT EXISTS idx_recall_log_fragment ON recall_log(fragment_id);
+CREATE INDEX IF NOT EXISTS idx_sessions_project_pending ON sessions(project_id, pending_fragmentation);
+CREATE INDEX IF NOT EXISTS idx_query_events_project_result ON query_events(project_id, result_count, searched_at);
+
 `;
 
 export const VECTOR_DIMENSIONS = 1536;

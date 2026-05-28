@@ -74,30 +74,6 @@ export async function classifyChannel(
 
   const latencyMs = Date.now() - t0;
 
-  // Record disagreement to DB shadow_comparisons for later analysis
-  if (encoderResult && finalChannel !== encoderChannel) {
-    try {
-      const { getDb } = await import("../db/connection.js");
-      const db = getDb();
-      const projectId = process.env.AGENTMEMORY_PROJECT ?? "C--Users-Administrator";
-      db.prepare(`INSERT INTO shadow_comparisons (id, project_id, fragment_id, summary_preview, slm_channel, llm_channel, slm_model, match_result, latency_ms, created_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`).run(
-        `sc-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
-        projectId,
-        `fallback-${Date.now()}`,
-        text.slice(0, 200),
-        encoderChannel,
-        finalChannel,
-        "macbert-2stage+fallback",
-        0,
-        latencyMs,
-        Date.now(),
-      );
-    } catch {
-      // DB not available — skip recording
-    }
-  }
-
   return {
     channel: finalChannel,
     confidence: finalConfidence,

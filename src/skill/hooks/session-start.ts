@@ -100,4 +100,4 @@ async function main() {
   }
 }
 
-main().catch(() => {});
+main().catch((e: unknown) => { console.error("[AgentMemory] hook failed:", (e as Error).message?.slice(0, 120)); });

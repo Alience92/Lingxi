@@ -13,9 +13,10 @@ export async function getDefaultModel(): Promise<string> {
     const res = await fetch(`${OLLAMA_URL}/api/tags`);
     const data = await res.json() as { models?: Array<{ name: string }> };
     const models = (data.models ?? []).map(m => m.name);
-    _defaultModel = models.find(m => m.includes("7b"))
-      ?? models.find(m => m.includes("qwen"))
-      ?? models[0]
+    const chatModels = models.filter(m => !m.includes("embed") && !m.includes("vision") && !m.includes("llava") && !m.includes("bakllava"));
+    _defaultModel = chatModels.find(m => m.includes("7b"))
+      ?? chatModels.find(m => m.includes("qwen"))
+      ?? chatModels[0]
       ?? "qwen2.5:7b";
     return _defaultModel;
   } catch {
@@ -42,6 +43,9 @@ WHAT=实质决策/方案/需求 FEEL=用户对AI的情绪反馈 WHO=涉及人物
 "${text.slice(0, 300)}"
 通道:`;
 
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 30_000);
+  try {
   const res = await fetch(`${OLLAMA_URL}/api/generate`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -59,6 +63,7 @@ WHAT=实质决策/方案/需求 FEEL=用户对AI的情绪反馈 WHO=涉及人物
   const data = await res.json() as { response?: string; error?: string };
   if (data.error) throw new Error(`Ollama: ${data.error}`);
   return (data.response ?? "").trim().toUpperCase();
+  } finally { clearTimeout(timer); }
 }
 
 export async function pullModel(name: string): Promise<boolean> {

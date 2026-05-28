@@ -4,14 +4,15 @@ Listens on localhost:8765, accepts POST /classify with {"text": "..."}
 Returns {"label": "FEEL", "confidence": 0.92, "stage": "s1"}
 """
 import os, json, sys
-os.environ["HF_ENDPOINT"] = "https://hf-mirror.com"
+if not os.environ.get("HF_ENDPOINT") and os.environ.get("USE_HF_MIRROR") == "1":
+    os.environ["HF_ENDPOINT"] = "https://hf-mirror.com"
 
 import torch
 import numpy as np
 from transformers import AutoTokenizer, AutoModelForSequenceClassification
 from http.server import HTTPServer, BaseHTTPRequestHandler
 
-MODEL_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "two-stage-output")
+MODEL_DIR = os.environ.get("ENCODER_MODEL_DIR", os.path.join(os.path.dirname(os.path.abspath(__file__)), "clean-model-output"))
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 print(f"Loading models on {device}...")
@@ -52,6 +53,15 @@ def classify(text):
 
 class Handler(BaseHTTPRequestHandler):
     def do_POST(self):
+        try:
+            self._do_post_impl()
+        except Exception as e:
+            self.send_response(400)
+            self.send_header("Content-Type", "application/json")
+            self.end_headers()
+            self.wfile.write(json.dumps({"error": str(e)[:200]}, ensure_ascii=False).encode())
+
+    def _do_post_impl(self):
         if self.path == "/classify":
             length = int(self.headers.get("Content-Length", 0))
             body = json.loads(self.rfile.read(length))

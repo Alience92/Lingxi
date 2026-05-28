@@ -49,7 +49,7 @@ export class Embedder {
 
   constructor(apiKey: string, baseURL = "https://api.minimax.chat") {
     this.apiKey = apiKey;
-    this.baseURL = baseURL;
+    this.baseURL = baseURL.replace(/\/+$/, "");
     this.groupId = "";
     const m = baseURL.match(/[?&]GroupId=([^&]+)/);
     if (m) this.groupId = m[1]!;
@@ -64,12 +64,17 @@ export class Embedder {
     return this.baseURL.includes("minimax");
   }
 
+  private _fallbackWarned = false;
+
   async embed(text: string, purpose: EmbedPurpose = "store"): Promise<number[]> {
     if (this.apiKey && this.apiKey.length > 10 && this.apiKey !== "test-key") {
       try {
         return await this.embedViaApi(text, purpose);
-      } catch {
-        // Fall through to hash fallback on any error
+      } catch (e) {
+        if (!this._fallbackWarned) {
+          console.error("[AgentMemory] Embedding API failed, using hash fallback:", (e as Error).message?.slice(0, 80));
+          this._fallbackWarned = true;
+        }
       }
     }
     return embedHash(text);

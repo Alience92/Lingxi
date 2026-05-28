@@ -378,6 +378,10 @@ function ensureSchemaMigrations(database: Database.Database): void {
   }
 }
 
+export function checkpointWAL(): void {
+  if (db) { db.pragma("wal_checkpoint(RESTART)"); }
+}
+
 export function closeDb(): void {
   if (db) { db.close(); db = null; }
 }

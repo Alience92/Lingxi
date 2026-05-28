@@ -93,7 +93,7 @@ async function main() {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        model: "qwen2.5:7b",
+        model: process.env.FEWSHOT_MODEL || "qwen2.5:7b",
         prompt,
         stream: false,
         options: { temperature: 0.1, num_predict: 8 },

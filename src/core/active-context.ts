@@ -67,7 +67,7 @@ export function updateActiveContext(projectId: string): void {
     };
 
     if (frag.subtype === "decision") {
-      const dupIdx = ctx.decisions.findIndex(d => d.text.slice(0, 20) === entry.text.slice(0, 20));
+      const dupIdx = ctx.decisions.findIndex(d => d.text.slice(0, 50) === entry.text.slice(0, 20));
       if (dupIdx >= 0) {
         ctx.decisions[dupIdx] = entry; // replace older
       } else {

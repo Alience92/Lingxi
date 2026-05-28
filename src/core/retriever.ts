@@ -153,7 +153,9 @@ export async function prefetch(
           return { contextBlock: summaries, fragmentIds: recall.fragments.map(r => r.fragment.id), confidence: 0.3 };
         }
       }
-    } catch {}
+    } catch (e) {
+      console.error("[AgentMemory] backup recall failed:", (e as Error).message?.slice(0, 80));
+    }
 
     return { contextBlock: "", fragmentIds: [], confidence: 0 };
   }
@@ -202,7 +204,7 @@ export async function prefetch(
   for (const r of selected) {
     const anchor = r.fragment.anchors[0];
     const channel = anchor ? anchor.channel : "WHAT";
-    const maxWeight = Math.max(...r.fragment.anchors.map((a) => a.weight));
+    const maxWeight = Math.max(...r.fragment.anchors.map((a) => a.weight), 0);
     const signal = maxWeight > 50 ? "⚡" : "";
     const candidate = `${signal}[${channel}] ${r.fragment.summary}`;
     if (block.length + candidate.length + 2 <= PREFETCH_BUDGET_CHARS) {
@@ -506,6 +508,9 @@ export interface MemoryEvent {
 
 const MAX_EVENT_NODES = 50;
 
+// BFS batch bind limit (SQLite default max is 999)
+const MAX_BIND = 900;
+
 // Follow fragment_links to rebuild the full event that a fragment belongs to
 export function buildMemoryEvent(fragmentId: string): MemoryEvent | null {
   const db = getDb();
@@ -521,18 +526,26 @@ export function buildMemoryEvent(fragmentId: string): MemoryEvent | null {
   const linkedIds: string[] = [];
 
   while (queue.length > 0 && linkedIds.length < MAX_EVENT_NODES) {
-    const current = queue.shift()!;
-    if (visited.has(current)) continue;
-    visited.add(current);
-    linkedIds.push(current);
+    // Batch: process up to MAX_BIND nodes at once, 2 queries total per batch
+    const batchSize = Math.min(queue.length, MAX_BIND);
+    const batch = queue.splice(0, batchSize);
+    const ph = batch.map(() => "?").join(",");
 
-    // Batch-load links for this node (single query each direction)
-    const outgoing = db.prepare("SELECT target_id FROM fragment_links WHERE source_id = ?").all(current) as Array<{ target_id: string }>;
-    for (const l of outgoing) {
+    for (const nodeId of batch) {
+      if (visited.has(nodeId)) continue;
+      visited.add(nodeId);
+      linkedIds.push(nodeId);
+    }
+
+    if (batch.length === 0) continue;
+
+    const outRows = db.prepare(`SELECT source_id, target_id FROM fragment_links WHERE source_id IN (${ph})`).all(...batch) as Array<{ source_id: string; target_id: string }>;
+    for (const l of outRows) {
       if (!visited.has(l.target_id)) queue.push(l.target_id);
     }
-    const incoming = db.prepare("SELECT source_id FROM fragment_links WHERE target_id = ?").all(current) as Array<{ source_id: string }>;
-    for (const l of incoming) {
+
+    const inRows = db.prepare(`SELECT source_id, target_id FROM fragment_links WHERE target_id IN (${ph})`).all(...batch) as Array<{ source_id: string; target_id: string }>;
+    for (const l of inRows) {
       if (!visited.has(l.source_id)) queue.push(l.source_id);
     }
   }

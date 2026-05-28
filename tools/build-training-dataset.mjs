@@ -1,6 +1,7 @@
 // Build balanced 4-channel training dataset for LoRA fine-tuning
 import * as fs from "node:fs";
 import { openDb, getDb } from "../dist/db/connection.js";
+// Set AGENTMEMORY_HOME env var to point to the DB directory if not using default
 
 const TARGET_PER_CHANNEL = 500;
 const OUTPUT_PATH = "./tools/feel-training-dataset.jsonl";

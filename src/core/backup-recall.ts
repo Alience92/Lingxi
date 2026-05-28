@@ -1,7 +1,8 @@
 import type { SearchResult } from "../types.js";
 import { getDb } from "../db/connection.js";
 import { explicitSearch, DEFAULT_MIN_SCORE } from "./retriever.js";
-import * as fs from "node:fs";
+import * as fs from "node:fs/promises";
+import { existsSync, readdirSync } from "node:fs";
 import * as path from "node:path";
 
 function sanitizeSnippet(text: string): string {
@@ -53,11 +54,11 @@ export async function fourLayerRecall(
 
   // Layer 3: Raw transcript files — substring match + trigger on-the-fly fragmentation hint
   const transcriptDir = path.join(workspaceDir, "transcripts");
-  if (fs.existsSync(transcriptDir)) {
-    const files = fs.readdirSync(transcriptDir).filter((f) => f.endsWith(".jsonl")).slice(-30);
+  if (existsSync(transcriptDir)) {
+    const files = readdirSync(transcriptDir).filter((f) => f.endsWith(".jsonl")).slice(-30);
     for (const file of files) {
       try {
-        const content = fs.readFileSync(path.join(transcriptDir, file), "utf-8");
+        const content = await fs.readFile(path.join(transcriptDir, file), "utf-8");
         const lowerContent = content.toLowerCase();
         const lowerQuery = queryText.toLowerCase();
         if (lowerContent.includes(lowerQuery)) {
@@ -85,9 +86,9 @@ export async function fourLayerRecall(
   const dateMatch = queryText.match(datePattern);
   for (const dir of designDirs) {
     const fullPath = path.join(workspaceDir, dir);
-    if (!fs.existsSync(fullPath)) continue;
+    if (!existsSync(fullPath)) continue;
     try {
-      const designFiles = fs.readdirSync(fullPath)
+      const designFiles = readdirSync(fullPath)
         .filter((f) => f.endsWith(".md"))
         // If a date was found in the query, prefer files matching that date
         .sort((a, b) => {
@@ -100,7 +101,7 @@ export async function fourLayerRecall(
         });
       for (const file of designFiles.slice(0, 20)) {
         try {
-          const content = fs.readFileSync(path.join(fullPath, file), "utf-8");
+          const content = await fs.readFile(path.join(fullPath, file), "utf-8");
           if (content.toLowerCase().includes(queryText.toLowerCase())) {
             return {
               fragments: [],
