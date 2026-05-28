@@ -1,4 +1,4 @@
-// Fragment channel classifier: two-stage (encoder → LLM fallback) with shadow mode
+// Fragment channel classifier: two-stage encoder → LLM fallback
 import { classify as encoderClassify } from "./encoder.js";
 import { classifyFallback } from "./fallback.js";
 
@@ -11,17 +11,6 @@ export interface ClassificationResult {
   latencyMs: number;
   source: "encoder" | "encoder+s1" | "encoder+s2" | "llm-fallback";
 }
-
-export interface ShadowComparison {
-  text: string;
-  slm: ClassificationResult;
-  llm: { channel: string } | null;
-  match: boolean;
-  timestamp: number;
-}
-
-const _comparisons: ShadowComparison[] = [];
-const MAX_COMPARISONS = 500;
 
 const LOW_CONFIDENCE_THRESHOLD = 0.6;
 
@@ -81,48 +70,4 @@ export async function classifyChannel(
     latencyMs,
     source,
   };
-}
-
-export function recordComparison(
-  text: string,
-  slm: ClassificationResult,
-  llm: { channel: string } | null
-): void {
-  _comparisons.push({
-    text, slm, llm,
-    match: llm ? slm.channel === llm.channel : false,
-    timestamp: Date.now(),
-  });
-  if (_comparisons.length > MAX_COMPARISONS) _comparisons.shift();
-}
-
-export function getShadowStats(): {
-  total: number;
-  matchRate: number;
-  channelAccuracy: Record<string, { correct: number; total: number }>;
-  avgLatencyMs: number;
-} {
-  const total = _comparisons.length;
-  const matches = _comparisons.filter(c => c.match).length;
-  const totalLatency = _comparisons.reduce((s, c) => s + c.slm.latencyMs, 0);
-
-  const channelAccuracy: Record<string, { correct: number; total: number }> = {};
-  for (const c of _comparisons) {
-    if (!c.llm) continue;
-    const ch = c.llm.channel;
-    if (!channelAccuracy[ch]) channelAccuracy[ch] = { correct: 0, total: 0 };
-    channelAccuracy[ch]!.total++;
-    if (c.match) channelAccuracy[ch]!.correct++;
-  }
-
-  return {
-    total,
-    matchRate: total > 0 ? matches / total : 0,
-    channelAccuracy,
-    avgLatencyMs: total > 0 ? totalLatency / total : 0,
-  };
-}
-
-export function getRecentComparisons(limit: number = 20): ShadowComparison[] {
-  return _comparisons.slice(-limit);
 }
