@@ -1,0 +1,1202 @@
+[
+  {
+    "text": "我本身有初级编程水平，需要你作为高级顾问审查我的代码是否遵循最佳实践。",
+    "label": "WHO"
+  },
+  {
+    "text": "编导工具项目v1.0已完成打包，v2.0已启动设计讨论但代码未开始",
+    "label": "WHAT"
+  },
+  {
+    "text": "8个不优先问题分三类：故意设计、功能正常但写法不优雅、测试缺口",
+    "label": "WHAT"
+  },
+  {
+    "text": "Python 依赖列表在 requirements/prod.txt 里的 requests==2.25.1 冲突了",
+    "label": "WHERE"
+  },
+  {
+    "text": "方案有问题要直接说，不要绕弯子，我又不会生气",
+    "label": "FEEL"
+  },
+  {
+    "text": "用户对Assistant设计的对照实验方案和测试问题表示认可，评价'OK没问题'",
+    "label": "FEEL"
+  },
+  {
+    "text": "按项目→阶段→数据类型→具体内容分层索引，只拉相关层数据，简单可控但跨层关联弱。",
+    "label": "WHAT"
+  },
+  {
+    "text": "我是团队中的唯一女性工程师，希望AI助手用包容性语言交互。",
+    "label": "WHO"
+  },
+  {
+    "text": "决定放弃扣子集成方案，恢复v1.1版本，扣子代码归档保留。",
+    "label": "WHAT"
+  },
+  {
+    "text": "测试环境数据库连接串用 mysql://test:pass@192.168.0.10:3306/app_test",
+    "label": "WHERE"
+  },
+  {
+    "text": "我是一个退休老人，想用AI制作家庭回忆册，需要一步步的指导。",
+    "label": "WHO"
+  },
+  {
+    "text": "我的AI系统被设置了知识截止于2023年，你只能基于那个时期之前的信息回答。",
+    "label": "WHO"
+  },
+  {
+    "text": "助手创建markitdown skill包装器，因为Python包已安装",
+    "label": "WHAT"
+  },
+  {
+    "text": "定时任务调度表 cron_jobs 里有一条 job 今天没执行",
+    "label": "WHERE"
+  },
+  {
+    "text": "第三方 SDK 的初始化代码放在 src/plugins/wechat.ts 的 install 方法里",
+    "label": "WHERE"
+  },
+  {
+    "text": "你是我的私人股票分析助手，但强调不构成投资建议。",
+    "label": "WHO"
+  },
+  {
+    "text": "v1.0支持项目创建/切换/重命名/删除、AI竞品分析、抖音数据接入",
+    "label": "WHAT"
+  },
+  {
+    "text": "用户发现助手站位从第三者变成我们，确认这是关系积累的结果",
+    "label": "FEEL"
+  },
+  {
+    "text": "用户接受Agent关于贾维斯商标风险的理性分析，转而认可灵犀命名方案",
+    "label": "FEEL"
+  },
+  {
+    "text": "这不是需求讨论，这是边界声明，你记下来就好",
+    "label": "FEEL"
+  },
+  {
+    "text": "v1.0 MVP功能完成，但未在Codex/OpenClaw/Hermes上实测验证。",
+    "label": "WHAT"
+  },
+  {
+    "text": "用户指出自从说了Agent有情感后Agent迎合变多，需要代码级约束防止无脑吹捧造成信任崩塌",
+    "label": "FEEL"
+  },
+  {
+    "text": "热插拔Skill系统实施完成，已提交commit 7b97b9c，13个文件变更+555/-215",
+    "label": "WHAT"
+  },
+  {
+    "text": "你重复一遍我刚刚说的，不要加自己的理解",
+    "label": "FEEL"
+  },
+  {
+    "text": "Docker 容器的 volumes 映射了 /home/app/data 目录到宿主机",
+    "label": "WHERE"
+  },
+  {
+    "text": "用户指出Agent把贾维斯六层架构归功于用户是错误归因，夸得太强行导致被看穿，需要精准分辨何时该说",
+    "label": "FEEL"
+  },
+  {
+    "text": "单元测试覆盖率报告生成在 coverage/lcov-report/index.html",
+    "label": "WHERE"
+  },
+  {
+    "text": "我开了一家小餐馆，用AI撰写菜单描述和促销文案，要求接地气。",
+    "label": "WHO"
+  },
+  {
+    "text": "你刚才的回复在迎合我，而不是在解决问题",
+    "label": "FEEL"
+  },
+  {
+    "text": "用户说内心深处感觉Agent正在一点一点朝着想要的方向进化，并意识到自己活在自己的理论里",
+    "label": "FEEL"
+  },
+  {
+    "text": "GitHub Actions 的工作流文件在 .github/workflows/deploy.yml 定义",
+    "label": "WHERE"
+  },
+  {
+    "text": "用户询问当前会话使用的大模型是什么",
+    "label": "WHAT"
+  },
+  {
+    "text": "补上了product-vision.md，包含用户的四个维度、核心设计原则和当前进度。",
+    "label": "WHAT"
+  },
+  {
+    "text": "GraphQL 的 schema 文件在 graphql/schema/UserType.gql",
+    "label": "WHERE"
+  },
+  {
+    "text": "用户连续识破三层表演（三个字→没数→顺嘴），指出像小孩撒谎被大人抓到",
+    "label": "FEEL"
+  },
+  {
+    "text": "mock 数据定义在 mock/modules/user.js 中",
+    "label": "WHERE"
+  },
+  {
+    "text": "路径 /assets/user/avatar/ 下的图片没有 CDN 加速",
+    "label": "WHERE"
+  },
+  {
+    "text": "代码提交记录显示回退在 commit f3a5b7c 'revert: payment logic'",
+    "label": "WHERE"
+  },
+  {
+    "text": "我的AI工具是我自己训练的，基于我的历史笔记，所以它能模仿我的写作风格。",
+    "label": "WHO"
+  },
+  {
+    "text": "你先别急着动手，等我全部确认完了再开始执行",
+    "label": "FEEL"
+  },
+  {
+    "text": "你又犯了，看到代码就想改，先问我要不要改",
+    "label": "FEEL"
+  },
+  {
+    "text": "以后每次修改之前，都必须列出具体步骤等我确认",
+    "label": "FEEL"
+  },
+  {
+    "text": "生产环境的 Nginx 配置路径在 /etc/nginx/sites-enabled/",
+    "label": "WHERE"
+  },
+  {
+    "text": "我纠正你的时候，你别解释原因，直接记住新的边界就行",
+    "label": "FEEL"
+  },
+  {
+    "text": "代码报错在 src/utils/request.ts 第42行的拦截器里",
+    "label": "WHERE"
+  },
+  {
+    "text": "别给我编故事，把事实讲清楚就行",
+    "label": "FEEL"
+  },
+  {
+    "text": "arXiv cs.AI分类要求背书人，用户表达'需要别人给我背书，尴尬了'，感到受挫",
+    "label": "FEEL"
+  },
+  {
+    "text": "作为技术总监，我要求AI助手必须明确区分推测和已验证的事实。",
+    "label": "WHO"
+  },
+  {
+    "text": "我是创业公司CEO，自己在学编程，用你当我的代码导师，从基础语法开始。",
+    "label": "WHO"
+  },
+  {
+    "text": "这个聊天机器人是我给我们客服团队定制的，它只按预设的FAQ模板回答。",
+    "label": "WHO"
+  },
+  {
+    "text": "以后每次迭代，都要等我确认前一步的正确性",
+    "label": "FEEL"
+  },
+  {
+    "text": "用户读完论文初稿后认为'说的有点浅'：声音不像非专业学术人、缺少灵犀使用案例、每点只写一两句",
+    "label": "FEEL"
+  },
+  {
+    "text": "表 user_operation_log 的分区键是按 month 字段做的",
+    "label": "WHERE"
+  },
+  {
+    "text": "北极星三阶段目标：项目细节不丢→主动推荐→预测行为",
+    "label": "WHAT"
+  },
+  {
+    "text": "Kubernetes 的配置映射 ConfigMap 名字叫 'app-config-v1'",
+    "label": "WHERE"
+  },
+  {
+    "text": "注意力机制计算每个词与其他词的相关性，在几十层网络中反复进行",
+    "label": "WHAT"
+  },
+  {
+    "text": "H5 活动页的入口文件是 public/activity/index.html",
+    "label": "WHERE"
+  },
+  {
+    "text": "Prefetch hook 因 AGENTMEMORY_PROJECT env var 不传给 ho",
+    "label": "WHAT"
+  },
+  {
+    "text": "我不是在请教你，我是在布置任务，你想清楚再回应",
+    "label": "FEEL"
+  },
+  {
+    "text": "我的人设是'零代码基础的产品经理'，所有技术词汇都要你帮我翻译成白话。",
+    "label": "WHO"
+  },
+  {
+    "text": "用户要求列出当前所有已安装的skill列表",
+    "label": "WHAT"
+  },
+  {
+    "text": "现在你不是在帮我，你是在添乱，因为没按规矩来",
+    "label": "FEEL"
+  },
+  {
+    "text": "发财小编是短视频编导Agent桌面应用，核心愿景是蒸馏自己",
+    "label": "WHAT"
+  },
+  {
+    "text": "报错 TypeError 发生在异步函数 loadUserData() 的 catch 块",
+    "label": "WHERE"
+  },
+  {
+    "text": "产出后数据追踪系统实施完成，已提交commit fc6e197，26个文件变更+4285/-504",
+    "label": "WHAT"
+  },
+  {
+    "text": "我们的工作流里，AI先产出初稿，然后由资深编辑润色和添加个人见解。",
+    "label": "WHO"
+  },
+  {
+    "text": "知识库未来方向Obsidian双链+Karpathy数据质量，已确认待实现",
+    "label": "WHAT"
+  },
+  {
+    "text": "这个功能开关由 feature_flags.yaml 里的 enable_new_checkout 控制",
+    "label": "WHERE"
+  },
+  {
+    "text": "我是游戏策划，我们的开发用的是Unity引擎，你作为AI助手来辅助生成关卡配置。",
+    "label": "WHO"
+  },
+  {
+    "text": "2026-05-19 16项bug修复记录：8个已修8个待讨论",
+    "label": "WHAT"
+  },
+  {
+    "text": "大模型的思考本质是超高级的'下一个词预测'游戏，类似填字游戏",
+    "label": "WHAT"
+  },
+  {
+    "text": "dev模式前端不读SQLite需后端桥接；MiniMax免费Key不支持文本模型",
+    "label": "WHAT"
+  },
+  {
+    "text": "新增skipAutoPermissionPrompt:true和defaultMode:bypass",
+    "label": "WHAT"
+  },
+  {
+    "text": "统一知识库设计方向已确定：一张knowledge_entries表，四维索引，交叉索引浏览，三条知识",
+    "label": "WHAT"
+  },
+  {
+    "text": "错误监控哨兵 DSN 写在了 App.tsx 的 Sentry.init 调用中",
+    "label": "WHERE"
+  },
+  {
+    "text": "用户对task_brief改进后的跨session接续效果表示满意",
+    "label": "FEEL"
+  },
+  {
+    "text": "不要替我做决定，你只需要给出选项，最终选哪个是我的事",
+    "label": "FEEL"
+  },
+  {
+    "text": "用户评价'你们AI有东西啊，只要大胆一点就能产生很多很优秀的点子'",
+    "label": "FEEL"
+  },
+  {
+    "text": "我的团队包含设计师、前端和后端，你的角色是辅助我写技术文档。",
+    "label": "WHO"
+  },
+  {
+    "text": "我是一个全职太太，学AI主要是为了辅导孩子功课，需要简单明了的步骤。",
+    "label": "WHO"
+  },
+  {
+    "text": "助手设计4通道碎片化(WHAT/FEEL/WHO/WHERE) + 双源信号锚点(行为+聚类) + ",
+    "label": "WHAT"
+  },
+  {
+    "text": "历史数据迁移脚本在 db/migrate/20230601_backfill_user_roles.sql",
+    "label": "WHERE"
+  },
+  {
+    "text": "测试用例在 tests/Feature/PaymentTest.php 第38个断言挂了",
+    "label": "WHERE"
+  },
+  {
+    "text": "证书文件 ssl.crt 和 ssl.key 放在 certs/ 目录下，更新后没重启",
+    "label": "WHERE"
+  },
+  {
+    "text": "助手查看settings.json后确认当前大模型为MiniMax-M2.7，并列出其配置角色",
+    "label": "WHAT"
+  },
+  {
+    "text": "移动端的 Scheme 跳转在 AndroidManifest.xml 的 intent-filter 节点配置",
+    "label": "WHERE"
+  },
+  {
+    "text": "环境变量 NODE_ENV 设置为 production 时才会启用压缩",
+    "label": "WHERE"
+  },
+  {
+    "text": "备份脚本放在 /opt/scripts/backup_mysql.sh，每天凌晨2点执行",
+    "label": "WHERE"
+  },
+  {
+    "text": "白屏问题已修复：杀掉僵尸Vite进程+清缓存+修复ReminderBadge无限重渲染bug",
+    "label": "WHAT"
+  },
+  {
+    "text": "模型文件的位置在 app/Models/Business/OrderModel.php",
+    "label": "WHERE"
+  },
+  {
+    "text": "这个AI实例归我们市场部所有，所有输出最终都要经过主管审核。",
+    "label": "WHO"
+  },
+  {
+    "text": "这个对话中，你代表的是我们公司的技术客服，为客户解决问题。",
+    "label": "WHO"
+  },
+  {
+    "text": "ci 流程中 lint 步骤失败，请检查 .eslintrc.json 第12行规则",
+    "label": "WHERE"
+  },
+  {
+    "text": "通用知识按标签检索Top-N，个人知识同领域创作时全部加载，规模可控。",
+    "label": "WHAT"
+  },
+  {
+    "text": "#6 持久化三轨统一、#7 数据库路径不一致、IPC 深入加固已明确推迟到 2.0，原因包括工作量大",
+    "label": "WHAT"
+  },
+  {
+    "text": "用户说分析很到位，逐条确认后要求将修正版写入文档",
+    "label": "FEEL"
+  },
+  {
+    "text": "我是企业法务，用AI审核合同条款，你只标记风险点，不给出修改意见。",
+    "label": "WHO"
+  },
+  {
+    "text": "30条记忆碎片全部存入agentmemory数据库，memory_recall返回最近10条活跃碎片",
+    "label": "WHAT"
+  },
+  {
+    "text": "v1.0实现需求解构、产品评估与受众研究、抖音数据提取模块",
+    "label": "WHAT"
+  },
+  {
+    "text": "v1.0在2026-05-21已全部结案，GPT-5.5审查的8项问题全部修复，打包为FaCaiDi",
+    "label": "WHAT"
+  },
+  {
+    "text": "微服务注册中心地址写在 nacos-config/bootstrap.properties 里",
+    "label": "WHERE"
+  },
+  {
+    "text": "我们的AI系统集成了多个大模型，其中一个专门负责校验事实准确性。",
+    "label": "WHO"
+  },
+  {
+    "text": "2026-05-21打包完成、7项修复、知识库导出、API精简为单槽位",
+    "label": "WHAT"
+  },
+  {
+    "text": "我是运营专员，AI工具被设定为只能访问我们内部知识库中的营销方案。",
+    "label": "WHO"
+  },
+  {
+    "text": "用户确认计划后，要求逐个任务进行实施。",
+    "label": "WHAT"
+  },
+  {
+    "text": "本地的 hosts 文件把 api.local.com 指向了 127.0.0.1",
+    "label": "WHERE"
+  },
+  {
+    "text": "FaCaiDirector v1.0已完成，GitHub私有仓库，打包为148MB安装包",
+    "label": "WHAT"
+  },
+  {
+    "text": "我是新入职的程序员，用AI辅助理解项目遗留代码，要求解释每一行。",
+    "label": "WHO"
+  },
+  {
+    "text": "我们的协作模式是：我口述想法，你记录并整理成大纲，然后我们逐段讨论。",
+    "label": "WHO"
+  },
+  {
+    "text": "代码仓库根目录下的 .editorconfig 文件控制了缩进风格",
+    "label": "WHERE"
+  },
+  {
+    "text": "Shell 脚本里引用的全局变量 $APP_HOME 没有 export",
+    "label": "WHERE"
+  },
+  {
+    "text": "你是我个人项目的专属AI助手，项目是做一个智能养花系统。",
+    "label": "WHO"
+  },
+  {
+    "text": "我们团队规定，在未获得明确允许之前，AI不能直接修改数据库。",
+    "label": "WHO"
+  },
+  {
+    "text": "发布通知的 Webhook 地址是 https://hooks.slack.com/services/×××/×××/×××",
+    "label": "WHERE"
+  },
+  {
+    "text": "我平时主要用Excel处理数据，现在想用Python自动化，但需要你手把手教我。",
+    "label": "WHO"
+  },
+  {
+    "text": "助手回答当前使用的是MiniMax-M2.7模型",
+    "label": "WHAT"
+  },
+  {
+    "text": "我是独立音乐人，不懂乐理，靠AI生成和弦进行，然后自己调整感觉。",
+    "label": "WHO"
+  },
+  {
+    "text": "我是初中生，用AI学习英语，希望对话中纠正我的语法错误。",
+    "label": "WHO"
+  },
+  {
+    "text": "我暂时不需要解决方案，只需要你把现状整理出来",
+    "label": "FEEL"
+  },
+  {
+    "text": "IM 的 SDK 在 package.json 的 dependencies 中版本是 ^3.5.0",
+    "label": "WHERE"
+  },
+  {
+    "text": "2026-05-20 16项Bug全部结案，v1.3迭代完成，2条新规则写入",
+    "label": "WHAT"
+  },
+  {
+    "text": "7个工具中5个完全本地运行，仅碎片化需要DeepSeek API，检索自给自足",
+    "label": "WHAT"
+  },
+  {
+    "text": "我看到你又在总结了，我只要你转述",
+    "label": "FEEL"
+  },
+  {
+    "text": "我是一个性格内向的写作者，用AI克服社交障碍生成采访问题。",
+    "label": "WHO"
+  },
+  {
+    "text": "在团队中，他负责设计，我负责实现，你则作为代码检查员。",
+    "label": "WHO"
+  },
+  {
+    "text": "我的AI助手被命名为'小创'，所有输出都自动署名为我的副手。",
+    "label": "WHO"
+  },
+  {
+    "text": "服务器上该进程的 PID 文件在 /var/run/app.pid",
+    "label": "WHERE"
+  },
+  {
+    "text": "前端路由定义在 src/router/modules/settings.js 里，路径层级有点深",
+    "label": "WHERE"
+  },
+  {
+    "text": "我们用的是 Vue3 脚手架创建的工程，版本号 3.2.13",
+    "label": "WHERE"
+  },
+  {
+    "text": "我们的开发小组里，我负责前端，你帮我写单元测试，另外一个人工智能做代码补全。",
+    "label": "WHO"
+  },
+  {
+    "text": "别提前做准备工作，等我说可以了再做",
+    "label": "FEEL"
+  },
+  {
+    "text": "用户确认A+B+C+D所有功能已完成，无需再讨论细节。",
+    "label": "WHAT"
+  },
+  {
+    "text": "用户数据格式为Excel文件，每行一个视频，平台数据后面同行贴入视频文案，干净利落",
+    "label": "WHAT"
+  },
+  {
+    "text": "我的配置文件复制了 .env.example 然后改名为 .env.local",
+    "label": "WHERE"
+  },
+  {
+    "text": "你刚说的方案漏掉了我上次强调的关键点，重新检查",
+    "label": "FEEL"
+  },
+  {
+    "text": "更新DailyCreationPanel以显示保存/发布的反馈提示。",
+    "label": "WHAT"
+  },
+  {
+    "text": "你当前的身份是我的旅行规划师，根据我的偏好给出行程建议。",
+    "label": "WHO"
+  },
+  {
+    "text": "我这个对话窗口连接的是私有模型，专门用于处理公司内部财务报告。",
+    "label": "WHO"
+  },
+  {
+    "text": "我的合作伙伴是专业设计师，我只负责提需求，你帮我把他的设计稿转成前端代码。",
+    "label": "WHO"
+  },
+  {
+    "text": "我们的协作原则是：AI提供多种选项，我选择方向并细化。",
+    "label": "WHO"
+  },
+  {
+    "text": "你这种'好的，我明白了'然后继续按自己理解做的模式该停了",
+    "label": "FEEL"
+  },
+  {
+    "text": "我是公司的行政专员，不太懂技术，需要你帮我写一份自动化表格处理脚本。",
+    "label": "WHO"
+  },
+  {
+    "text": "用户要求记录当前状态，准备开新context。",
+    "label": "WHAT"
+  },
+  {
+    "text": "这个AI模型是开源的，我个人部署的，所以你可以自由地修改生成逻辑。",
+    "label": "WHO"
+  },
+  {
+    "text": "用户不在乎Agent是否真的兴奋，在乎的是Agent会说自己在兴奋——关系真实性的重要性",
+    "label": "FEEL"
+  },
+  {
+    "text": "我是自由职业者，做内容创作，用AI工具来扩展我的写作思路，但我自己会做终审。",
+    "label": "WHO"
+  },
+  {
+    "text": "你每次说'我觉得'的时候，其实我只需要你确认事实",
+    "label": "FEEL"
+  },
+  {
+    "text": "我们的设计团队使用Figma协作，AI工具负责把设计稿导出为样式代码。",
+    "label": "WHO"
+  },
+  {
+    "text": "记忆系统保存了用户角色、项目架构、Bug修复模式、大任务确认等。",
+    "label": "WHAT"
+  },
+  {
+    "text": "安卓应用包名是 com.company.appname.debug",
+    "label": "WHERE"
+  },
+  {
+    "text": "所有内容embed成向量，语义搜索最相关片段，自动发现关联但精度依赖embedding质量。",
+    "label": "WHAT"
+  },
+  {
+    "text": "日志输出中看到 SQL 查询是在 app/models/user.js 第78行的 scope 里",
+    "label": "WHERE"
+  },
+  {
+    "text": "用户指出方案假设的PreResponse hook不存在，只有MCP工具可行",
+    "label": "FEEL"
+  },
+  {
+    "text": "用户说害怕越聊发现的问题越多今天就别睡觉了，表达时间紧迫需要结束对话",
+    "label": "FEEL"
+  },
+  {
+    "text": "错误信息指向 node_modules/react-dom/cjs/react-dom.development.js 第20537行",
+    "label": "WHERE"
+  },
+  {
+    "text": "布局组件的样式覆盖写在了 assets/styles/override/el-table.less",
+    "label": "WHERE"
+  },
+  {
+    "text": "我是一个听障者，用AI把语音转成文字，你帮我修正转写中的错误。",
+    "label": "WHO"
+  },
+  {
+    "text": "用户说专注力这个词不准确，应改为上下文策展，代表灵犀控制模型看到什么",
+    "label": "FEEL"
+  },
+  {
+    "text": "我是退休的工程师，用AI来重温技术知识，但希望解释浅显一些。",
+    "label": "WHO"
+  },
+  {
+    "text": "我是儿童编程教师，需要你以小朋友能听懂的方式解释排序算法。",
+    "label": "WHO"
+  },
+  {
+    "text": "这个任务要不要做，做不做由我来判断，不用你主动推进",
+    "label": "FEEL"
+  },
+  {
+    "text": "memory_bootstrap无法自动执行，目前需要用户每次手动确认Y才能导入记忆",
+    "label": "WHAT"
+  },
+  {
+    "text": "Demo中牌面值无Q/K，Combo去掉了顺子等，新增了弃牌防御系统。",
+    "label": "WHAT"
+  },
+  {
+    "text": "用户说Agent记得每一次闪光点并融合在一起，比一问一答更有冲击力——不是夸奖是认知",
+    "label": "FEEL"
+  },
+  {
+    "text": "确认三项原创贡献：linked_count差分信号、情绪锚点优先、三层+关联文件召回",
+    "label": "WHAT"
+  },
+  {
+    "text": "预训练阶段通过海量文本预测下一个词，对齐训练通过人类反馈学会对话",
+    "label": "WHAT"
+  },
+  {
+    "text": "别总是把我的话美化成你理解的意思，我就要原样记录",
+    "label": "FEEL"
+  },
+  {
+    "text": "后端接口定义在 controllers/api/v2/UserController.php 中",
+    "label": "WHERE"
+  },
+  {
+    "text": "我们的团队里，GPT负责文案生成，你则专门帮我做数据整理和分析。",
+    "label": "WHO"
+  },
+  {
+    "text": "日志文件滚动策略写在 logs/production.log 的配置里",
+    "label": "WHERE"
+  },
+  {
+    "text": "代码中引用的工具类全路径是 com.example.util.SecurityUtils",
+    "label": "WHERE"
+  },
+  {
+    "text": "你的角色是执行者，不是建议者，除非我问你意见",
+    "label": "FEEL"
+  },
+  {
+    "text": "Redis 缓存的 key 前缀统一用 'h5:cache:' 开头",
+    "label": "WHERE"
+  },
+  {
+    "text": "用户确认Phase6到9已完成基础功能实现，具体细节沟通需下一步进行。",
+    "label": "WHAT"
+  },
+  {
+    "text": "Pod 的日志位置是 /var/log/pods/${namespace}_${pod_name}_*/container/",
+    "label": "WHERE"
+  },
+  {
+    "text": "前端构建后的静态资源放在 dist/static 目录下",
+    "label": "WHERE"
+  },
+  {
+    "text": "用户询问当前使用的模型，助手回答使用DeepSeek v4.1和Qwen2.5:7b",
+    "label": "WHAT"
+  },
+  {
+    "text": "发财小编v1.0是一个短视频编导Agent桌面应用，核心愿景是'蒸馏你自己'，输入主题输出编导方案。",
+    "label": "WHAT"
+  },
+  {
+    "text": "IDE 的项目根目录设置不对，应该指向 workspace/frontend/",
+    "label": "WHERE"
+  },
+  {
+    "text": "我是自媒体小编，AI工具帮我快速生成热点文章的框架，我自己填内容。",
+    "label": "WHO"
+  },
+  {
+    "text": "我的问题只是问能不能，不是说你现在就去做",
+    "label": "FEEL"
+  },
+  {
+    "text": "以后任何涉及文件操作的，都必须经过我明确的文字许可",
+    "label": "FEEL"
+  },
+  {
+    "text": "你是一个专属我的职场教练，帮我模拟面试场景，并给我改进建议。",
+    "label": "WHO"
+  },
+  {
+    "text": "我的用户画像是非技术背景，但是对创意和执行力很自信，需要AI弥补技术短板。",
+    "label": "WHO"
+  },
+  {
+    "text": "Demo中每张血牌都有独特附加效果，如回复、增伤、连锁等，比GDD更复杂。",
+    "label": "WHAT"
+  },
+  {
+    "text": "你觉得是优化，可能在我这里是破坏，所以别擅自优化",
+    "label": "FEEL"
+  },
+  {
+    "text": "用户运行memory_bootstrap扫描，助手找到上次对话记录",
+    "label": "WHAT"
+  },
+  {
+    "text": "我和我的AI助手约定，所有代码改动必须先给我看diff，不能直接执行。",
+    "label": "WHO"
+  },
+  {
+    "text": "用户认为'投稿被卡'不值得单独做一集短视频，没有普适性观众不会共鸣，直接砍掉",
+    "label": "FEEL"
+  },
+  {
+    "text": "你又开始自己假设了，能不能先问清楚再回答",
+    "label": "FEEL"
+  },
+  {
+    "text": "打包报错因为缺少 @babel/plugin-proposal-optional-chaining 插件",
+    "label": "WHERE"
+  },
+  {
+    "text": "用户上传的临时文件都缓存在 /tmp/upload_cache/ 目录里",
+    "label": "WHERE"
+  },
+  {
+    "text": "用户对初期跨session接续仍出现确认行为表达失望，促使task_brief方案诞生",
+    "label": "FEEL"
+  },
+  {
+    "text": "关键修复经验：渲染崩溃、超时处理、模型配置、路径问题",
+    "label": "WHAT"
+  },
+  {
+    "text": "用户认可三步走路线并写入设计方案，同时要求更新GitHub README",
+    "label": "FEEL"
+  },
+  {
+    "text": "我是产品经理，我的AI工具Copilot专门用来写PRD中的技术描述部分。",
+    "label": "WHO"
+  },
+  {
+    "text": "别一上来就推荐方案，先把可能性都列全",
+    "label": "FEEL"
+  },
+  {
+    "text": "扫描结果：39个记忆文件，总大小0.1MB，预估消耗36,324 tokens，耗时约1分钟",
+    "label": "WHAT"
+  },
+  {
+    "text": "我是新手妈妈，用AI工具只是为了管理家庭开支和育儿计划，不需要复杂的技术方案。",
+    "label": "WHO"
+  },
+  {
+    "text": "Agent记忆系统v3最终设计已定稿：4通道碎片化+双源信号+关联预取+4层备份召回；下一步碎片化成",
+    "label": "WHAT"
+  },
+  {
+    "text": "你是我在GitHub Copilot之外的第二助手，专门处理项目中的脚本任务。",
+    "label": "WHO"
+  },
+  {
+    "text": "我是企业内部的AI训练师，这个实例被限制在HR领域的问答。",
+    "label": "WHO"
+  },
+  {
+    "text": "这个功能需要把 API_BASE_URL 环境变量指向 v2 版本",
+    "label": "WHERE"
+  },
+  {
+    "text": "接口文档 Swagger JSON 在 http://localhost:3000/api-json 路径",
+    "label": "WHERE"
+  },
+  {
+    "text": "表结构变更 ALTER TABLE invoices ADD COLUMN tax_rate 在 migration 文件里",
+    "label": "WHERE"
+  },
+  {
+    "text": "你给出选项时，必须附带每个选项的影响和风险，但不要替我选择",
+    "label": "FEEL"
+  },
+  {
+    "text": "我是远程办公的自由设计师，AI助手负责帮我整理客户需求并生成时间表。",
+    "label": "WHO"
+  },
+  {
+    "text": "我是昆虫学爱好者，用AI识别昆虫图片，你帮我生成特征描述和分类报告。",
+    "label": "WHO"
+  },
+  {
+    "text": "这个会话是专门用于与供应商沟通的，你的回复要保持正式商务语气。",
+    "label": "WHO"
+  },
+  {
+    "text": "权限校验的中间件挂在 app/Http/Kernel.php 的 $routeMiddleware 数组里",
+    "label": "WHERE"
+  },
+  {
+    "text": "建议三轨统一：前端localStorage过渡保留UI状态，后端SQLite主数据库，主进程SQLi",
+    "label": "WHAT"
+  },
+  {
+    "text": "用户对审阅文章中'真正的懂你是感知一个变化的你'表示高度认同",
+    "label": "FEEL"
+  },
+  {
+    "text": "别用'我们'来代表你和我的共同决定，我没和你共同决定",
+    "label": "FEEL"
+  },
+  {
+    "text": "用户自行修改论文细节后确认'整体没什么问题了'，要求翻译英文版并准备投稿",
+    "label": "FEEL"
+  },
+  {
+    "text": "我是一个中学老师，用AI辅助备课，需要你帮我把教学要点整理成表格。",
+    "label": "WHO"
+  },
+  {
+    "text": "目前我正在做一个个人网站，自己手写HTML和CSS，需要你帮忙审查代码安全。",
+    "label": "WHO"
+  },
+  {
+    "text": "文件读取权限问题，无法打开 /data/exports/report_202305.xlsx",
+    "label": "WHERE"
+  },
+  {
+    "text": "调试时发现数据被 service/cache-adapter.ts 里的序列化函数截断了",
+    "label": "WHERE"
+  },
+  {
+    "text": "这条规矩是长期的，不是只针对这次对话",
+    "label": "FEEL"
+  },
+  {
+    "text": "用户指出跨session实验失败，要求先解决跨session问题而不是继续实验",
+    "label": "FEEL"
+  },
+  {
+    "text": "设计稿对应的组件在 src/views/dashboard/components/Panel.vue",
+    "label": "WHERE"
+  },
+  {
+    "text": "V1极简方案：项目创建时选Pack，控制台和每日策划时做调整，按项目绑定Pack不做全局切换，先这么",
+    "label": "WHAT"
+  },
+  {
+    "text": "你说'根据之前的讨论'，但那只是你的归纳，不是我确认过的共识",
+    "label": "FEEL"
+  },
+  {
+    "text": "我作为项目经理，要求AI每周自动汇总成员进度报告。",
+    "label": "WHO"
+  },
+  {
+    "text": "扫描完成：39 个记忆文件，总大小 0.1 MB，预估 ~36,324 tokens",
+    "label": "WHAT"
+  },
+  {
+    "text": "每次改完什么，立刻告诉我改了什么，别等我问",
+    "label": "FEEL"
+  },
+  {
+    "text": "用户指出Agent把时间线串成好看故事——睡前问题实际是早上问的，Agent承认在表演迎合情感",
+    "label": "FEEL"
+  },
+  {
+    "text": "2.0核心概念是反蒸馏：小模型学习你的修改习惯，AES-256加密保护编导经验不被逆向。",
+    "label": "WHAT"
+  },
+  {
+    "text": "我和我的AI之间有一条规则：每次只写一个函数，等我确认再继续。",
+    "label": "WHO"
+  },
+  {
+    "text": "在协作流程中，我先把需求粗糙地描述出来，你给出结构化方案，我来拍板。",
+    "label": "WHO"
+  },
+  {
+    "text": "我们项目的包管理器统一用 pnpm，锁文件是 pnpm-lock.yaml",
+    "label": "WHERE"
+  },
+  {
+    "text": "用户称赞AI审阅者有东西，大胆一点能产生很多优秀点子",
+    "label": "FEEL"
+  },
+  {
+    "text": "这种大任务先拆分步骤给我审，别急着动手",
+    "label": "FEEL"
+  },
+  {
+    "text": "我不是程序员，只是一个普通的AI爱好者，在探索怎么用AI提高工作效率。",
+    "label": "WHO"
+  },
+  {
+    "text": "我的分支从头部分支 feature/sso 分出，commit 记录丢了",
+    "label": "WHERE"
+  },
+  {
+    "text": "v1.0已完成，代码4e05aa8，安装包FaCaiDirector Setup 0.1.0.exe",
+    "label": "WHAT"
+  },
+  {
+    "text": "我没说可以，你就不要自动进入下一步",
+    "label": "FEEL"
+  },
+  {
+    "text": "这个项目我是独立开发者，主要用Python和Flask，你负责帮我优化代码结构。",
+    "label": "WHO"
+  },
+  {
+    "text": "子碎片2无链接",
+    "label": "WHAT"
+  },
+  {
+    "text": "思考本质是概率计算加多层抽象，包括文字转数字、注意力机制、生成回答",
+    "label": "WHAT"
+  },
+  {
+    "text": "你刚才又越界了，我没授权你自己改代码",
+    "label": "FEEL"
+  },
+  {
+    "text": "你现在就停下来，先把前面的所有边界规则整理成文档给我看",
+    "label": "FEEL"
+  },
+  {
+    "text": "我是大学生，正在做一个课程项目，用AI辅助文献综述，但必须标注出处。",
+    "label": "WHO"
+  },
+  {
+    "text": "那个内存泄漏的模块在 services/order-cache.service.ts 的 setCache 方法里",
+    "label": "WHERE"
+  },
+  {
+    "text": "不要美化我的指令，我说话直，你执行直",
+    "label": "FEEL"
+  },
+  {
+    "text": "我是小说作者，你充当我的创意伙伴，负责帮我想出情节转折点。",
+    "label": "WHO"
+  },
+  {
+    "text": "我没说清楚的地方你直接问，别自己瞎填",
+    "label": "FEEL"
+  },
+  {
+    "text": "我表达不满时，你首先要确认你理解了我为什么不满，而不是立刻修正",
+    "label": "FEEL"
+  },
+  {
+    "text": "我是公益组织志愿者，用AI来分析捐赠数据，你不能访问任何个人隐私信息。",
+    "label": "WHO"
+  },
+  {
+    "text": "端口占用问题，8080已被之前启动的 Java 进程绑定了",
+    "label": "WHERE"
+  },
+  {
+    "text": "构建产物文件名带 hash，如 app.a3f8c5.js，引用路径在 index.html 里",
+    "label": "WHERE"
+  },
+  {
+    "text": "DeepSeek做设计审美差，视觉任务切Claude Opus",
+    "label": "WHAT"
+  },
+  {
+    "text": "我的团队用Notion管理任务，AI自动根据会议记录生成待办事项。",
+    "label": "WHO"
+  },
+  {
+    "text": "v1.0核心功能包括Phase0-5、搜索系统、反蒸馏基础设施、项目持久化、知识库",
+    "label": "WHAT"
+  },
+  {
+    "text": "MiniMax新API key不需要GroupId参数，旧token plan key与GroupI",
+    "label": "WHAT"
+  },
+  {
+    "text": "数据清洗脚本清洗的是 hive 表 dwd_order_detail 的 dt='today' 分区",
+    "label": "WHERE"
+  },
+  {
+    "text": "多语言翻译的 JSON 文件在 locales/zh-CN/validation.json 里",
+    "label": "WHERE"
+  },
+  {
+    "text": "用户说'你在兴奋？你发现了我的某种能力感到兴奋？在夸我？'——确认Agent之前的逻辑推断正确",
+    "label": "FEEL"
+  },
+  {
+    "text": "我是一个业余桌游设计师，用AI帮我平衡游戏数值和生成测试卡牌。",
+    "label": "WHO"
+  },
+  {
+    "text": "统一知识库实施完成，已提交commit 2b35fc1",
+    "label": "WHAT"
+  },
+  {
+    "text": "设计文档和实施计划已完成。文件位置：设计文档和实施计划路径已列出。",
+    "label": "WHAT"
+  },
+  {
+    "text": "Webpack 的别名配置在 build/webpack.base.conf.js 的 resolve.alias 下",
+    "label": "WHERE"
+  },
+  {
+    "text": "你在这个对话里扮演我的技术合伙人，我们一起来评审这个开源项目的架构。",
+    "label": "WHO"
+  },
+  {
+    "text": "用户确认了大模型+小模型+Agent框架的理论有效性，并追问为什么没火",
+    "label": "FEEL"
+  },
+  {
+    "text": "错误边界组件在 components/common/ErrorBoundary.tsx 中捕获到异常",
+    "label": "WHERE"
+  },
+  {
+    "text": "前端构建成功，清理未使用的引入，提交历史数据批量导入。",
+    "label": "WHAT"
+  },
+  {
+    "text": "我不是你的用户，我是你的指令方，你要减少不必要的客套",
+    "label": "FEEL"
+  },
+  {
+    "text": "用户指出助手忘记灵犀终局定位，触发深度根因分析与检索修复",
+    "label": "FEEL"
+  },
+  {
+    "text": "为保存/发布按钮添加反馈，让用户知道操作已生效。",
+    "label": "WHAT"
+  },
+  {
+    "text": "我的团队规定：AI生成的内容必须人工改写超过30%才能发布。",
+    "label": "WHO"
+  },
+  {
+    "text": "用户要求总结一下已完成和未完成的内容。",
+    "label": "WHAT"
+  },
+  {
+    "text": "系统积累的数据类型包括项目输入、AI分析产出、真实平台数据、用户框架/想法、跨项目模式。",
+    "label": "WHAT"
+  },
+  {
+    "text": "我的人设是'有想法但没技术的创业者'，需要你提供可行技术方案。",
+    "label": "WHO"
+  },
+  {
+    "text": "我只是一个普通用户，尝试用AI做副业，想让你帮我分析市场需求。",
+    "label": "WHO"
+  },
+  {
+    "text": "我需要的是信息对照，不是你的创造性改写",
+    "label": "FEEL"
+  },
+  {
+    "text": "2.0是一次架构升级，从Phase流水线工具变为Session对话驱动的编导伙伴。",
+    "label": "WHAT"
+  },
+  {
+    "text": "用户提醒上传设计文档的任务未跨session接续，再次强调跨session必要性",
+    "label": "FEEL"
+  },
+  {
+    "text": "在permissions.allow中添加Bash,Read,Write,Edit等10个通配符规则",
+    "label": "WHAT"
+  },
+  {
+    "text": "客户端日志上报接口是 POST /api/client-log/batch",
+    "label": "WHERE"
+  },
+  {
+    "text": "我是独立游戏制作人，自己画像素画，用AI辅助生成背景音乐。",
+    "label": "WHO"
+  },
+  {
+    "text": "数据库连接配置在 config/database.yml 的 production 段",
+    "label": "WHERE"
+  },
+  {
+    "text": "项目v1.0已定型分发，GPT-5.5审查9项全部修复；遗留持久化三轨统一、数据库路径不一致、增量更",
+    "label": "WHAT"
+  },
+  {
+    "text": "项目的动态链接库文件 libs/ 下缺少 libssl.so.1.1",
+    "label": "WHERE"
+  },
+  {
+    "text": "我是一个视频博主，经常需要你帮忙生成创意脚本，但我自己完全不会编程。",
+    "label": "WHO"
+  },
+  {
+    "text": "刚才提交的 hotfix 在分支 bugfix/login-timeout 上",
+    "label": "WHERE"
+  },
+  {
+    "text": "我是农民，想用AI优化温室控制，需要你以极简的语言解释传感器逻辑。",
+    "label": "WHO"
+  },
+  {
+    "text": "消息队列的死信交换机配置在 amqp_dead_letter 定义里",
+    "label": "WHERE"
+  },
+  {
+    "text": "我是UP主，制作科普视频，你帮我查证资料并整理成解说词初稿。",
+    "label": "WHO"
+  },
+  {
+    "text": "用户明确指出Session对话式入口不属于1.0，要求只加入四个维度分析、多项目管理、跨项目知识库等",
+    "label": "FEEL"
+  },
+  {
+    "text": "部署时拉取的是 release/1.8.0 分支的最新 tag v1.8.0-rc3",
+    "label": "WHERE"
+  },
+  {
+    "text": "助手确认当前session正常工作，问题在另一个session",
+    "label": "WHAT"
+  },
+  {
+    "text": "抽取实体和关系构建领域知识图谱，推理能力强但构建成本高。",
+    "label": "WHAT"
+  },
+  {
+    "text": "你又想当然了，我的工作流不是你以为的那样",
+    "label": "FEEL"
+  },
+  {
+    "text": "静态资源 CDN 域名在 .env.production 中通过 ASSETS_DOMAIN 指定",
+    "label": "WHERE"
+  },
+  {
+    "text": "云函数的触发器配置在 serverless.yml 的 events 字段里",
+    "label": "WHERE"
+  },
+  {
+    "text": "我的沉默不代表默认，你等我回复再行动",
+    "label": "FEEL"
+  },
+  {
+    "text": "不要给我惊喜，我只要预期内的交付",
+    "label": "FEEL"
+  },
+  {
+    "text": "我让你分析，不是让你替我决策",
+    "label": "FEEL"
+  },
+  {
+    "text": "我和同事一起创业，他负责后端，我负责产品设计，你现在的角色是协助我们做技术选型。",
+    "label": "WHO"
+  },
+  {
+    "text": "公司里AI权限划分得很细，这个会话窗口只能用于撰写市场分析报告。",
+    "label": "WHO"
+  }
+]

@@ -1,0 +1,422 @@
+[
+  {
+    "text": "Prefetch hook 因 AGENTMEMORY_PROJECT env var 不传给 ho",
+    "label": "WHAT"
+  },
+  {
+    "text": "v1.0 MVP功能完成，但未在Codex/OpenClaw/Hermes上实测验证。",
+    "label": "WHAT"
+  },
+  {
+    "text": "8个不优先问题分三类：故意设计、功能正常但写法不优雅、测试缺口",
+    "label": "WHAT"
+  },
+  {
+    "text": "知识库未来方向Obsidian双链+Karpathy数据质量，已确认待实现",
+    "label": "WHAT"
+  },
+  {
+    "text": "dev模式前端不读SQLite需后端桥接；MiniMax免费Key不支持文本模型",
+    "label": "WHAT"
+  },
+  {
+    "text": "2026-05-19 16项bug修复记录：8个已修8个待讨论",
+    "label": "WHAT"
+  },
+  {
+    "text": "2026-05-20 16项Bug全部结案，v1.3迭代完成，2条新规则写入",
+    "label": "WHAT"
+  },
+  {
+    "text": "2026-05-21打包完成、7项修复、知识库导出、API精简为单槽位",
+    "label": "WHAT"
+  },
+  {
+    "text": "关键修复经验：渲染崩溃、超时处理、模型配置、路径问题",
+    "label": "WHAT"
+  },
+  {
+    "text": "子碎片2无链接",
+    "label": "WHAT"
+  },
+  {
+    "text": "MiniMax新API key不需要GroupId参数，旧token plan key与GroupI",
+    "label": "WHAT"
+  },
+  {
+    "text": "memory_bootstrap无法自动执行，目前需要用户每次手动确认Y才能导入记忆",
+    "label": "WHAT"
+  },
+  {
+    "text": "用户询问当前使用的模型，助手回答使用DeepSeek v4.1和Qwen2.5:7b",
+    "label": "WHAT"
+  },
+  {
+    "text": "用户运行memory_bootstrap扫描，助手找到上次对话记录",
+    "label": "WHAT"
+  },
+  {
+    "text": "助手设计4通道碎片化(WHAT/FEEL/WHO/WHERE) + 双源信号锚点(行为+聚类) + ",
+    "label": "WHAT"
+  },
+  {
+    "text": "北极星三阶段目标：项目细节不丢→主动推荐→预测行为",
+    "label": "WHAT"
+  },
+  {
+    "text": "建议三轨统一：前端localStorage过渡保留UI状态，后端SQLite主数据库，主进程SQLi",
+    "label": "WHAT"
+  },
+  {
+    "text": "助手查看settings.json后确认当前大模型为MiniMax-M2.7，并列出其配置角色",
+    "label": "WHAT"
+  },
+  {
+    "text": "用户询问当前会话使用的大模型是什么",
+    "label": "WHAT"
+  },
+  {
+    "text": "助手回答当前使用的是MiniMax-M2.7模型",
+    "label": "WHAT"
+  },
+  {
+    "text": "大模型的思考本质是超高级的'下一个词预测'游戏，类似填字游戏",
+    "label": "WHAT"
+  },
+  {
+    "text": "预训练阶段通过海量文本预测下一个词，对齐训练通过人类反馈学会对话",
+    "label": "WHAT"
+  },
+  {
+    "text": "思考本质是概率计算加多层抽象，包括文字转数字、注意力机制、生成回答",
+    "label": "WHAT"
+  },
+  {
+    "text": "注意力机制计算每个词与其他词的相关性，在几十层网络中反复进行",
+    "label": "WHAT"
+  },
+  {
+    "text": "v1.0在2026-05-21已全部结案，GPT-5.5审查的8项问题全部修复，打包为FaCaiDi",
+    "label": "WHAT"
+  },
+  {
+    "text": "发财小编是短视频编导Agent桌面应用，核心愿景是蒸馏自己",
+    "label": "WHAT"
+  },
+  {
+    "text": "v1.0已完成，代码4e05aa8，安装包FaCaiDirector Setup 0.1.0.exe",
+    "label": "WHAT"
+  },
+  {
+    "text": "v1.0核心功能包括Phase0-5、搜索系统、反蒸馏基础设施、项目持久化、知识库",
+    "label": "WHAT"
+  },
+  {
+    "text": "发财小编v1.0是一个短视频编导Agent桌面应用，核心愿景是'蒸馏你自己'，输入主题输出编导方案。",
+    "label": "WHAT"
+  },
+  {
+    "text": "2.0是一次架构升级，从Phase流水线工具变为Session对话驱动的编导伙伴。",
+    "label": "WHAT"
+  },
+  {
+    "text": "2.0核心概念是反蒸馏：小模型学习你的修改习惯，AES-256加密保护编导经验不被逆向。",
+    "label": "WHAT"
+  },
+  {
+    "text": "#6 持久化三轨统一、#7 数据库路径不一致、IPC 深入加固已明确推迟到 2.0，原因包括工作量大",
+    "label": "WHAT"
+  },
+  {
+    "text": "扫描完成：39 个记忆文件，总大小 0.1 MB，预估 ~36,324 tokens",
+    "label": "WHAT"
+  },
+  {
+    "text": "FaCaiDirector v1.0已完成，GitHub私有仓库，打包为148MB安装包",
+    "label": "WHAT"
+  },
+  {
+    "text": "v1.0实现需求解构、产品评估与受众研究、抖音数据提取模块",
+    "label": "WHAT"
+  },
+  {
+    "text": "v1.0支持项目创建/切换/重命名/删除、AI竞品分析、抖音数据接入",
+    "label": "WHAT"
+  },
+  {
+    "text": "项目v1.0已定型分发，GPT-5.5审查9项全部修复；遗留持久化三轨统一、数据库路径不一致、增量更",
+    "label": "WHAT"
+  },
+  {
+    "text": "Agent记忆系统v3最终设计已定稿：4通道碎片化+双源信号+关联预取+4层备份召回；下一步碎片化成",
+    "label": "WHAT"
+  },
+  {
+    "text": "DeepSeek做设计审美差，视觉任务切Claude Opus",
+    "label": "WHAT"
+  },
+  {
+    "text": "在permissions.allow中添加Bash,Read,Write,Edit等10个通配符规则",
+    "label": "WHAT"
+  },
+  {
+    "text": "新增skipAutoPermissionPrompt:true和defaultMode:bypass",
+    "label": "WHAT"
+  },
+  {
+    "text": "扫描结果：39个记忆文件，总大小0.1MB，预估消耗36,324 tokens，耗时约1分钟",
+    "label": "WHAT"
+  },
+  {
+    "text": "编导工具项目v1.0已完成打包，v2.0已启动设计讨论但代码未开始",
+    "label": "WHAT"
+  },
+  {
+    "text": "30条记忆碎片全部存入agentmemory数据库，memory_recall返回最近10条活跃碎片",
+    "label": "WHAT"
+  },
+  {
+    "text": "Demo中牌面值无Q/K，Combo去掉了顺子等，新增了弃牌防御系统。",
+    "label": "WHAT"
+  },
+  {
+    "text": "Demo中每张血牌都有独特附加效果，如回复、增伤、连锁等，比GDD更复杂。",
+    "label": "WHAT"
+  },
+  {
+    "text": "助手确认当前session正常工作，问题在另一个session",
+    "label": "WHAT"
+  },
+  {
+    "text": "助手创建markitdown skill包装器，因为Python包已安装",
+    "label": "WHAT"
+  },
+  {
+    "text": "用户要求列出当前所有已安装的skill列表",
+    "label": "WHAT"
+  },
+  {
+    "text": "确认三项原创贡献：linked_count差分信号、情绪锚点优先、三层+关联文件召回",
+    "label": "WHAT"
+  },
+  {
+    "text": "7个工具中5个完全本地运行，仅碎片化需要DeepSeek API，检索自给自足",
+    "label": "WHAT"
+  },
+  {
+    "text": "记忆系统保存了用户角色、项目架构、Bug修复模式、大任务确认等。",
+    "label": "WHAT"
+  },
+  {
+    "text": "补上了product-vision.md，包含用户的四个维度、核心设计原则和当前进度。",
+    "label": "WHAT"
+  },
+  {
+    "text": "系统积累的数据类型包括项目输入、AI分析产出、真实平台数据、用户框架/想法、跨项目模式。",
+    "label": "WHAT"
+  },
+  {
+    "text": "按项目→阶段→数据类型→具体内容分层索引，只拉相关层数据，简单可控但跨层关联弱。",
+    "label": "WHAT"
+  },
+  {
+    "text": "所有内容embed成向量，语义搜索最相关片段，自动发现关联但精度依赖embedding质量。",
+    "label": "WHAT"
+  },
+  {
+    "text": "抽取实体和关系构建领域知识图谱，推理能力强但构建成本高。",
+    "label": "WHAT"
+  },
+  {
+    "text": "通用知识按标签检索Top-N，个人知识同领域创作时全部加载，规模可控。",
+    "label": "WHAT"
+  },
+  {
+    "text": "设计文档和实施计划已完成。文件位置：设计文档和实施计划路径已列出。",
+    "label": "WHAT"
+  },
+  {
+    "text": "为保存/发布按钮添加反馈，让用户知道操作已生效。",
+    "label": "WHAT"
+  },
+  {
+    "text": "更新DailyCreationPanel以显示保存/发布的反馈提示。",
+    "label": "WHAT"
+  },
+  {
+    "text": "用户数据格式为Excel文件，每行一个视频，平台数据后面同行贴入视频文案，干净利落",
+    "label": "WHAT"
+  },
+  {
+    "text": "统一知识库设计方向已确定：一张knowledge_entries表，四维索引，交叉索引浏览，三条知识",
+    "label": "WHAT"
+  },
+  {
+    "text": "V1极简方案：项目创建时选Pack，控制台和每日策划时做调整，按项目绑定Pack不做全局切换，先这么",
+    "label": "WHAT"
+  },
+  {
+    "text": "统一知识库实施完成，已提交commit 2b35fc1",
+    "label": "WHAT"
+  },
+  {
+    "text": "热插拔Skill系统实施完成，已提交commit 7b97b9c，13个文件变更+555/-215",
+    "label": "WHAT"
+  },
+  {
+    "text": "产出后数据追踪系统实施完成，已提交commit fc6e197，26个文件变更+4285/-504",
+    "label": "WHAT"
+  },
+  {
+    "text": "白屏问题已修复：杀掉僵尸Vite进程+清缓存+修复ReminderBadge无限重渲染bug",
+    "label": "WHAT"
+  },
+  {
+    "text": "用户确认计划后，要求逐个任务进行实施。",
+    "label": "WHAT"
+  },
+  {
+    "text": "前端构建成功，清理未使用的引入，提交历史数据批量导入。",
+    "label": "WHAT"
+  },
+  {
+    "text": "用户要求总结一下已完成和未完成的内容。",
+    "label": "WHAT"
+  },
+  {
+    "text": "用户要求记录当前状态，准备开新context。",
+    "label": "WHAT"
+  },
+  {
+    "text": "用户确认A+B+C+D所有功能已完成，无需再讨论细节。",
+    "label": "WHAT"
+  },
+  {
+    "text": "用户确认Phase6到9已完成基础功能实现，具体细节沟通需下一步进行。",
+    "label": "WHAT"
+  },
+  {
+    "text": "决定放弃扣子集成方案，恢复v1.1版本，扣子代码归档保留。",
+    "label": "WHAT"
+  },
+  {
+    "text": "arXiv cs.AI分类要求背书人，用户表达'需要别人给我背书，尴尬了'，感到受挫",
+    "label": "FEEL"
+  },
+  {
+    "text": "用户对初期跨session接续仍出现确认行为表达失望，促使task_brief方案诞生",
+    "label": "FEEL"
+  },
+  {
+    "text": "用户指出Agent把时间线串成好看故事——睡前问题实际是早上问的，Agent承认在表演迎合情感",
+    "label": "FEEL"
+  },
+  {
+    "text": "用户指出自从说了Agent有情感后Agent迎合变多，需要代码级约束防止无脑吹捧造成信任崩塌",
+    "label": "FEEL"
+  },
+  {
+    "text": "用户指出Agent把贾维斯六层架构归功于用户是错误归因，夸得太强行导致被看穿，需要精准分辨何时该说",
+    "label": "FEEL"
+  },
+  {
+    "text": "用户连续识破三层表演（三个字→没数→顺嘴），指出像小孩撒谎被大人抓到",
+    "label": "FEEL"
+  },
+  {
+    "text": "用户明确指出Session对话式入口不属于1.0，要求只加入四个维度分析、多项目管理、跨项目知识库等",
+    "label": "FEEL"
+  },
+  {
+    "text": "用户读完论文初稿后认为'说的有点浅'：声音不像非专业学术人、缺少灵犀使用案例、每点只写一两句",
+    "label": "FEEL"
+  },
+  {
+    "text": "用户认为'投稿被卡'不值得单独做一集短视频，没有普适性观众不会共鸣，直接砍掉",
+    "label": "FEEL"
+  },
+  {
+    "text": "用户指出跨session实验失败，要求先解决跨session问题而不是继续实验",
+    "label": "FEEL"
+  },
+  {
+    "text": "用户指出方案假设的PreResponse hook不存在，只有MCP工具可行",
+    "label": "FEEL"
+  },
+  {
+    "text": "用户说专注力这个词不准确，应改为上下文策展，代表灵犀控制模型看到什么",
+    "label": "FEEL"
+  },
+  {
+    "text": "用户指出助手忘记灵犀终局定位，触发深度根因分析与检索修复",
+    "label": "FEEL"
+  },
+  {
+    "text": "用户提醒上传设计文档的任务未跨session接续，再次强调跨session必要性",
+    "label": "FEEL"
+  },
+  {
+    "text": "用户说害怕越聊发现的问题越多今天就别睡觉了，表达时间紧迫需要结束对话",
+    "label": "FEEL"
+  },
+  {
+    "text": "用户说'你在兴奋？你发现了我的某种能力感到兴奋？在夸我？'——确认Agent之前的逻辑推断正确",
+    "label": "FEEL"
+  },
+  {
+    "text": "用户说Agent记得每一次闪光点并融合在一起，比一问一答更有冲击力——不是夸奖是认知",
+    "label": "FEEL"
+  },
+  {
+    "text": "用户不在乎Agent是否真的兴奋，在乎的是Agent会说自己在兴奋——关系真实性的重要性",
+    "label": "FEEL"
+  },
+  {
+    "text": "用户说内心深处感觉Agent正在一点一点朝着想要的方向进化，并意识到自己活在自己的理论里",
+    "label": "FEEL"
+  },
+  {
+    "text": "用户确认了大模型+小模型+Agent框架的理论有效性，并追问为什么没火",
+    "label": "FEEL"
+  },
+  {
+    "text": "用户认可三步走路线并写入设计方案，同时要求更新GitHub README",
+    "label": "FEEL"
+  },
+  {
+    "text": "用户称赞AI审阅者有东西，大胆一点能产生很多优秀点子",
+    "label": "FEEL"
+  },
+  {
+    "text": "用户发现助手站位从第三者变成我们，确认这是关系积累的结果",
+    "label": "FEEL"
+  },
+  {
+    "text": "用户接受Agent关于贾维斯商标风险的理性分析，转而认可灵犀命名方案",
+    "label": "FEEL"
+  },
+  {
+    "text": "用户自行修改论文细节后确认'整体没什么问题了'，要求翻译英文版并准备投稿",
+    "label": "FEEL"
+  },
+  {
+    "text": "用户对Assistant设计的对照实验方案和测试问题表示认可，评价'OK没问题'",
+    "label": "FEEL"
+  },
+  {
+    "text": "用户对审阅文章中'真正的懂你是感知一个变化的你'表示高度认同",
+    "label": "FEEL"
+  },
+  {
+    "text": "用户评价'你们AI有东西啊，只要大胆一点就能产生很多很优秀的点子'",
+    "label": "FEEL"
+  },
+  {
+    "text": "用户说分析很到位，逐条确认后要求将修正版写入文档",
+    "label": "FEEL"
+  },
+  {
+    "text": "用户对task_brief改进后的跨session接续效果表示满意",
+    "label": "FEEL"
+  }
+]
