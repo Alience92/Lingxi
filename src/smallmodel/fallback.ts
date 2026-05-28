@@ -1,31 +1,37 @@
 // LLM few-shot fallback for low-confidence encoder predictions.
 // Only called when macbert-2stage confidence < 0.6 (~18% of samples).
-// Uses 5 boundary examples targeting the main confusion pairs:
-//   WHAT→WHERE (file paths), WHO→FEEL (emotional role descriptions)
+// Prompt v2 — per GPT review: main-semantic-first, evaluation-target awareness,
+// explicit "implicit FEEL" and "pseudo-FEEL" boundary examples.
 
 import OpenAI from "openai";
 
-const FALLBACK_PROMPT = `分类以下文本到四个通道之一：WHAT/FEEL/WHERE/WHO。
+const FALLBACK_PROMPT = `将文本分类到一个主通道：WHAT / FEEL / WHERE / WHO。
 
-WHAT: 实质内容（决策、方案、需求、技术细节、观点陈述）
-FEEL: 用户对AI行为的情绪反馈（纠正错误、表达不满、认可工作、要求加速）
-WHERE: 场景/环境（文件路径、项目名、工具名、时间节点）
-WHO: 人物/角色（身份、协作关系、提到的具体人）
+定义：
+- WHAT：核心信息是决策、方案、需求、技术结论、事实判断、工作内容本身
+- FEEL：核心信息是用户对 AI 工作方式或结果的反馈，包括纠正、否定、认可、催促、边界提醒
+- WHERE：核心信息是上下文定位信息，如文件、项目、模块、路径、时间点、工具环境
+- WHO：核心信息是人物、角色、协作关系、谁对谁说了什么
 
-规则：
-- 提到文件路径/项目名/工具 → WHERE
-- 用户评价/纠正/认可AI的行为 → FEEL
-- 陈述自己的偏好或观点（不是针对AI） → WHAT
-- 提到人/角色/团队 → WHO
+判定原则：
+1. 先看"主语义"，不要只看有没有路径、人名、评价词
+2. 如果文本在评价系统、代码、性能、数据、方案本身，归 WHAT
+3. 如果文本在评价 AI 的行为、结果、节奏、理解是否到位，归 FEEL
+4. 文件路径、项目名、工具名只有在"定位上下文"是主语义时才归 WHERE
+5. 提到用户、同事、团队，只有在"谁/角色关系"是主语义时才归 WHO
 
-示例：
-"AIGC流水线分了三个层次：基础层、策略层、表现层" → WHAT
-"你又把我的注释删了，那些注释是给后面维护的人看的" → FEEL
-"在 D:/GodotProject/Scripts/Core/GameState.cs 里加个字段" → WHERE
-"后端老张建议用RS256，比HS256更安全" → WHO
-"选择pandas处理数据报表，原生循环性能太差受不了" → WHAT
+容易混淆的边界：
+- "缓存命中率92%，瓶颈在 search" → WHAT
+- "你又把我的注释删了" → FEEL
+- "在 src/core/retriever.ts 里改" → WHERE
+- "后端老张建议改成 RS256" → WHO
+- "整体运转正常，三个环节都触发了" → FEEL
+- "用户认为 2-4 秒延迟可接受，同意开始实施" → FEEL
+- "编导工具 1.0 功能完整但 UI 未翻新" → WHAT
+- "12倍性能提升：优化前17s，优化后1.4s" → FEEL
 
-仅输出JSON：{"label":"WHAT|FEEL|WHERE|WHO","confidence":0.0-1.0}
+仅输出 JSON：
+{"label":"WHAT|FEEL|WHERE|WHO","confidence":0.0-1.0}
 
 文本：{text}`;
 
