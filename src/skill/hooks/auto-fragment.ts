@@ -325,11 +325,34 @@ async function main() {
         let encLatency = 0;
         const encNow = Date.now();
 
+        // Lazy-load fallback module only if needed
+        let classifyFallback: ((text: string) => Promise<{ label: string; confidence: number; source: string }>) | null = null;
+        let fallbackUsed = 0;
+
         for (const frag of recentFrags) {
           try {
             const t0 = Date.now();
-            const result = await classify(frag.summary);
-            const lat = Date.now() - t0;
+            let result = await classify(frag.summary);
+            let lat = Date.now() - t0;
+            let modelName = "macbert-2stage";
+
+            // Low-confidence fallback → LLM few-shot
+            if (result.confidence < 0.6 && fragmentationKey && fragmentationKey.length > 10) {
+              if (!classifyFallback) {
+                const fb = await import("../../smallmodel/fallback.js");
+                classifyFallback = (text: string) =>
+                  fb.classifyFallback(text, fragmentationKey, fragmentationBaseURL);
+              }
+              try {
+                const fbResult = await classifyFallback(frag.summary);
+                const fbLabel = fbResult.label as "WHAT" | "FEEL" | "WHERE" | "WHO";
+                result = { label: fbLabel, confidence: fbResult.confidence, stage: "s2" as const };
+                modelName = "macbert-2stage+fallback";
+                lat = Date.now() - t0;
+                fallbackUsed++;
+              } catch {}
+            }
+
             encLatency += lat;
             const match = result.label === frag.llm_channel ? 1 : 0;
             if (match) encMatches++;
@@ -343,7 +366,7 @@ async function main() {
               `enc-${encNow}-${encCompared}`,
               projectId, frag.id, frag.summary.slice(0, 200),
               result.label, frag.llm_channel,
-              "macbert-2stage", match, lat, encNow,
+              modelName, match, lat, encNow,
             );
           } catch {}
         }
@@ -356,11 +379,12 @@ async function main() {
             SELECT COUNT(*) as total,
                    SUM(CASE WHEN match_result = 1 THEN 1 ELSE 0 END) as matches,
                    AVG(latency_ms) as avgLatency
-            FROM shadow_comparisons WHERE project_id = ? AND slm_model = 'macbert-2stage'
+            FROM shadow_comparisons WHERE project_id = ? AND slm_model IN ('macbert-2stage', 'macbert-2stage+fallback')
           `).get(projectId) as { total: number; matches: number; avgLatency: number };
 
           const cumRate = cumStats.total > 0 ? (cumStats.matches / cumStats.total * 100) : 0;
-          console.error(`[AgentMemory] Encoder影子对比: 本批 ${encCompared} 条 匹配率 ${encMatchRate.toFixed(0)}% 延时 ${encAvgLatency.toFixed(0)}ms | 累计 ${cumStats.total} 条 匹配率 ${cumRate.toFixed(0)}%`);
+          const fbNote = fallbackUsed > 0 ? ` (${fallbackUsed}条fallback)` : "";
+          console.error(`[AgentMemory] Encoder影子对比: 本批 ${encCompared} 条 匹配率 ${encMatchRate.toFixed(0)}% 延时 ${encAvgLatency.toFixed(0)}ms${fbNote} | 累计 ${cumStats.total} 条 匹配率 ${cumRate.toFixed(0)}%`);
         }
       }
     } catch (e) {
