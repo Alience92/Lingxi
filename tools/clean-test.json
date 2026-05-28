@@ -1,0 +1,2142 @@
+[
+  {
+    "text": "Tauri的窗口创建参数可以设置decorations: false，隐藏标题栏实现自定义UI",
+    "label": "WHAT"
+  },
+  {
+    "text": "低功耗设计时，不用的外设时钟一定要关掉，例如ADC和Timer，能省不少电。",
+    "label": "WHAT"
+  },
+  {
+    "text": "安全基础设施即代码（IaC）使用Terraform管理，配置了自动化合规检查。",
+    "label": "WHAT"
+  },
+  {
+    "text": "文件上传功能严格检查MIME类型和文件头魔数，并限制上传目录不可执行。",
+    "label": "WHAT"
+  },
+  {
+    "text": "使用Sass/SCSS预处理器管理Electron应用的样式，能模块化主题",
+    "label": "WHAT"
+  },
+  {
+    "text": "用Squirrel.Windows做自动更新，增量更新可以节省用户带宽",
+    "label": "WHAT"
+  },
+  {
+    "text": "WebView2控件在Win32应用中比IE的WebBrowser控件，渲染性能和兼容性好很多",
+    "label": "WHAT"
+  },
+  {
+    "text": "这个老项目重构，先补集成测试再动手，否则改出bug都不知道。",
+    "label": "WHAT"
+  },
+  {
+    "text": "在XAML里用{x:Static}引用常量，比在代码里写死魔法数字更清晰",
+    "label": "WHAT"
+  },
+  {
+    "text": "日志输出禁止记录敏感字段，如密码或token，使用Masking模式覆盖原始值。",
+    "label": "WHAT"
+  },
+  {
+    "text": "SAML单点登录的断言签名算法从SHA-1升级到SHA-256，防止签名伪造。",
+    "label": "WHAT"
+  },
+  {
+    "text": "Rust的tauri-plugin-shell可以调用系统命令，但需要权限配置",
+    "label": "WHAT"
+  },
+  {
+    "text": "观察到数据库的主从延迟在批量导入时达到8秒，会影响实时性，这是问题",
+    "label": "WHAT"
+  },
+  {
+    "text": "问题出在分布式锁的实现，Redis主从切换时锁丢失，导致订单重复创建",
+    "label": "WHAT"
+  },
+  {
+    "text": "配置变更后的灰度发布观察30分钟，错误预算消耗了0.2%，很正面的结果",
+    "label": "WHAT"
+  },
+  {
+    "text": "静态代码扫描工具SonarQube的质量门禁要求新增安全问题数为零。",
+    "label": "WHAT"
+  },
+  {
+    "text": "数据库死锁出现的频率从每小时3次降到了0次，监控图形很正面",
+    "label": "WHAT"
+  },
+  {
+    "text": "性能回归测试亮红灯，登录接口的RPS从1500跌到990，回退提交的问题",
+    "label": "WHAT"
+  },
+  {
+    "text": "消息去重的布隆过滤器误判率上升到了5%，导致部分有效消息被丢弃，这有问题",
+    "label": "WHAT"
+  },
+  {
+    "text": "实时推荐系统embedding更新，采用双塔模型再训后，Faiss索引重建做增量，停服时间缩短到5秒。",
+    "label": "WHAT"
+  },
+  {
+    "text": "通过Node.js的cluster模块可以在Electron主进程里管理多个工作进程，但需要处理IPC开销",
+    "label": "WHAT"
+  },
+  {
+    "text": "这个模块的单元测试覆盖率不到60%，重点把核心算法那部分补上。",
+    "label": "WHAT"
+  },
+  {
+    "text": "利用LLVM的ThinLTO优化后iOS包体积减少了15%",
+    "label": "WHAT"
+  },
+  {
+    "text": "NAND Flash驱动要区分slc和mlc，mlc需要更强的ECC，不然bit翻转扛不住。",
+    "label": "WHAT"
+  },
+  {
+    "text": "这个函数圈复杂度都15了，拆成一个策略模式加几个具体类。",
+    "label": "WHAT"
+  },
+  {
+    "text": "这个组件使用React.memo避免不必要的重渲染，但需要确保props的比较是浅层的。",
+    "label": "WHAT"
+  },
+  {
+    "text": "用CMake管理Qt项目，记得加AUTOMOC，不然moc不会自动生成元对象代码",
+    "label": "WHAT"
+  },
+  {
+    "text": "monorepo下使用Nx的构建缓存，相同代码的二次构建从2分钟降至15秒。",
+    "label": "WHAT"
+  },
+  {
+    "text": "PBKDF2用于密码哈希，迭代次数设为100,000，盐值长度32字节随机生成。",
+    "label": "WHAT"
+  },
+  {
+    "text": "iOS 15推出的StoreKit2的Transaction.listener可以监听退款事件，比之前依赖服务端通知更实时",
+    "label": "WHAT"
+  },
+  {
+    "text": "用React.lazy和Suspense做代码分割，首屏加载时间从3.2秒降到了1.1秒。",
+    "label": "WHAT"
+  },
+  {
+    "text": "低功耗设计里，BLE广播间隔设到1秒，待机电流能压到3μA以下。",
+    "label": "WHAT"
+  },
+  {
+    "text": "数据清洗脚本跑了6小时没结束，日志显示单条处理耗时线性增长，这肯定有问题",
+    "label": "WHAT"
+  },
+  {
+    "text": "前端打包体积分析显示，lodash整个引入造成200KB冗余，这太浪费了",
+    "label": "WHAT"
+  },
+  {
+    "text": "代码里硬编码太多，提取到配置表，动态刷新用Nacos监听。",
+    "label": "WHAT"
+  },
+  {
+    "text": "GDPR隐私声明嵌入应用首次启动页面，明示数据处理目的和法律依据。",
+    "label": "WHAT"
+  },
+  {
+    "text": "Redis缓存穿透用布隆过滤器拦截非法key，减轻数据库压力。",
+    "label": "WHAT"
+  },
+  {
+    "text": "BLE用SCAN_RSP包返回自定义128bit UUID，手机扫描时就能识别服务。",
+    "label": "WHAT"
+  },
+  {
+    "text": "跨平台打包时，macOS需要公证，否则Gatekeeper会阻止运行",
+    "label": "WHAT"
+  },
+  {
+    "text": "TypeScript的satisfies操作符既能校验类型又不改变推断类型，比as更安全。",
+    "label": "WHAT"
+  },
+  {
+    "text": "网络层引入Moya后接口的Stub测试更容易编写，结合RxSwift的TestScheduler可以模拟各种延迟",
+    "label": "WHAT"
+  },
+  {
+    "text": "通过Windows的跳转列表API，应用可以将最近文件添加到任务栏菜单",
+    "label": "WHAT"
+  },
+  {
+    "text": "新部署的金丝雀实例的CPU节省了30%，同时延迟保持不变，测试结果很正面",
+    "label": "WHAT"
+  },
+  {
+    "text": "缓存预热策略导致启动瞬间数据库QPS飙升到8000，发现问题了",
+    "label": "WHAT"
+  },
+  {
+    "text": "利用Service Worker缓存静态资源，PWA应用在离线状态下也能快速加载首屏。",
+    "label": "WHAT"
+  },
+  {
+    "text": "iOS的NWConnection在弱网下比URLSession更灵活，可以自定义重试策略",
+    "label": "WHAT"
+  },
+  {
+    "text": "Swagger文档和代码不同步了，push前跑一遍生成命令，pre-commit hook里加。",
+    "label": "WHAT"
+  },
+  {
+    "text": "这里用观察者模式解耦，别直接调用，后期维护成本太高。",
+    "label": "WHAT"
+  },
+  {
+    "text": "Qt的rcc资源文件编译到可执行文件内，但过大会增加启动内存",
+    "label": "WHAT"
+  },
+  {
+    "text": "Kubernetes部署时资源限制一定要配，request和limit设好，防止内存泄漏撑爆节点。",
+    "label": "WHAT"
+  },
+  {
+    "text": "领域驱动设计划分限界上下文，这个商品域和订单域边界在购物车这里。",
+    "label": "WHAT"
+  },
+  {
+    "text": "数据库分库分表用ShardingSphere，按user_id取模均匀分布。",
+    "label": "WHAT"
+  },
+  {
+    "text": "容器资源限制给Java堆留的空间太小，频繁触发OOMKilled，配置不可接受",
+    "label": "WHAT"
+  },
+  {
+    "text": "Node.js中间层用GraphQL聚合多个REST接口，减少前端请求数并裁剪多余字段。",
+    "label": "WHAT"
+  },
+  {
+    "text": "Flash写入前必须擦除，我做了均衡算法把日志分布到不同扇区。",
+    "label": "WHAT"
+  },
+  {
+    "text": "引入SonarQube做静态代码扫描，质量阈值设90分，不达标构建失败。",
+    "label": "WHAT"
+  },
+  {
+    "text": "数据库列级加密采用AES-256-GCM，初始化向量随机生成并随密文存储。",
+    "label": "WHAT"
+  },
+  {
+    "text": "API接口幂等性通过客户端生成的requestId和Redis去重实现，防止重放攻击。",
+    "label": "WHAT"
+  },
+  {
+    "text": "用GPU加速的Skia渲染引擎替换CPU渲染，能显著提高动画帧率",
+    "label": "WHAT"
+  },
+  {
+    "text": "Python用gunicorn多worker模式，worker数=2*CPU核数+1。",
+    "label": "WHAT"
+  },
+  {
+    "text": "错误码规范实施后，告警能直接关联到具体模块，这个投资回报很正面",
+    "label": "WHAT"
+  },
+  {
+    "text": "微服务拆分边界先划清楚，按业务域拆，别按技术层拆。",
+    "label": "WHAT"
+  },
+  {
+    "text": "我们用AbortController取消过时的fetch请求，避免竞态条件导致数据不一致。",
+    "label": "WHAT"
+  },
+  {
+    "text": "Vue 3的Composition API让逻辑复用更清晰，我们把这个表单验证逻辑抽成useFormValidate。",
+    "label": "WHAT"
+  },
+  {
+    "text": "监控报警的报警频率调节有问题，同样的服务降级发了300条通知，没有收敛",
+    "label": "WHAT"
+  },
+  {
+    "text": "CSS的will-change告知浏览器预先优化，但滥用会占用过多内存，只对频繁动画元素使用。",
+    "label": "WHAT"
+  },
+  {
+    "text": "对外接口的幂等性设计，重复请求返回相同结果，用唯一业务ID做key，Redis setnx。",
+    "label": "WHAT"
+  },
+  {
+    "text": "数据库选型：用户画像用MongoDB存非结构化JSON，订单用MySQL。",
+    "label": "WHAT"
+  },
+  {
+    "text": "接口的限频阈值设置成了10次/秒/user，但正常用户操作峰值会超过，值太低有问题",
+    "label": "WHAT"
+  },
+  {
+    "text": "FreeRTOS的任务通知比信号量效率高，决定用任务通知来同步传感器采集任务。",
+    "label": "WHAT"
+  },
+  {
+    "text": "日志聚合服务的TCP连接在流量峰值时被占满，因为没有启用连接复用，效率太慢",
+    "label": "WHAT"
+  },
+  {
+    "text": "容器镜像扫描通过率100%，所有高危CVE均已修复，安全基线很正面",
+    "label": "WHAT"
+  },
+  {
+    "text": "API文档生成用Swagger，扫描SpringMVC注解自动生成交互式文档。",
+    "label": "WHAT"
+  },
+  {
+    "text": "Angular的路由守卫canActivate里加权限校验，未登录用户直接重定向到登录页。",
+    "label": "WHAT"
+  },
+  {
+    "text": "Tauri的菜单系统目前不支持动态修改，只能重建",
+    "label": "WHAT"
+  },
+  {
+    "text": "RecyclerView的DiffUtil在列表项上万个时计算差异的成本很高，改用SortedList配合Batching可以分批处理",
+    "label": "WHAT"
+  },
+  {
+    "text": "Android的资源混淆使用AndResGuard后res目录大小缩减了40%",
+    "label": "WHAT"
+  },
+  {
+    "text": "使用SwiftUI的@Observable宏可以替代ObservableObject，减少视图无效刷新",
+    "label": "WHAT"
+  },
+  {
+    "text": "React的useSyncExternalStore可以安全订阅外部状态库，保证并发特性下的数据一致性。",
+    "label": "WHAT"
+  },
+  {
+    "text": "为了避免代码中字符串硬编码，我们统一用静态类管理Animator参数Hash、Tag和Layer名称，减少错误。",
+    "label": "WHAT"
+  },
+  {
+    "text": "防火墙策略遵循最小权限，仅开放必需端口，任何新增规则需通过变更审批。",
+    "label": "WHAT"
+  },
+  {
+    "text": "Redis分布式锁用Redisson的RLock，自动续期避免业务超时释放锁。",
+    "label": "WHAT"
+  },
+  {
+    "text": "在Unreal中大量使用Niagara粒子时，必须注意GPU粒子排序和深度测试，否则在移动端会出现严重的overdraw。",
+    "label": "WHAT"
+  },
+  {
+    "text": "构建管线加入资源冗余检测，找出多个Bundle重复引用的贴图，统一提取到共享包，首包体积压缩30%。",
+    "label": "WHAT"
+  },
+  {
+    "text": "日志框架从log4j迁到logback，异步输出，别阻塞主线程。",
+    "label": "WHAT"
+  },
+  {
+    "text": "我们用Elasticsearch做全文搜索，索引mapping别用动态，定义好字段类型。",
+    "label": "WHAT"
+  },
+  {
+    "text": "物理更新应放在FixedUpdate里，并且将物理步长设为0.02秒，保证不同帧率下模拟一致。",
+    "label": "WHAT"
+  },
+  {
+    "text": "数据库连接池的最大连接数设置成了200，但连接数监控显示峰值只需要50，浪费",
+    "label": "WHAT"
+  },
+  {
+    "text": "用命令模式实现技能系统，每个技能效果封装成Command对象，便于做回放和网络同步。",
+    "label": "WHAT"
+  },
+  {
+    "text": "将粒子系统最大粒子数从500降至200，并使用Simple Render模式，在低端机上帧率提升明显。",
+    "label": "WHAT"
+  },
+  {
+    "text": "这次的代码改动使得热路径减少了一次对象创建，性能提升3%，很正面的微优化",
+    "label": "WHAT"
+  },
+  {
+    "text": "光照计算改用烘焙Lightmap加Light Probe，去掉实时光，移动端帧率从25提升到40。",
+    "label": "WHAT"
+  },
+  {
+    "text": "资源加载完毕立即Unload未使用的AssetBundle，手动调用Resources.UnloadUnusedAssets，防止内存占用持续增高。",
+    "label": "WHAT"
+  },
+  {
+    "text": "用Feature Toggle控制灰度发布，不用每次部署都全量。",
+    "label": "WHAT"
+  },
+  {
+    "text": "动画状态机的过渡条件不要每帧都用字符串比较，改为Hash ID比对，CPU开销降低将近一半。",
+    "label": "WHAT"
+  },
+  {
+    "text": "监控数据表明系统的99.9%可用性达成，但上个月宕机了43分钟，没达标有问题",
+    "label": "WHAT"
+  },
+  {
+    "text": "日志中频繁出现连接超时，根源是防火墙空闲连接淘汰时间小于连接池心跳，这是个隐藏问题",
+    "label": "WHAT"
+  },
+  {
+    "text": "在WPF里，使用CollectionViewSource进行分组和排序，比直接操作ItemsSource更高效",
+    "label": "WHAT"
+  },
+  {
+    "text": "A/B测试结果很正面：新算法使转化率提高了1.8个点，置信度95%",
+    "label": "WHAT"
+  },
+  {
+    "text": "MQTT连接TLS加密后内存占用增加不少，得优化mbedtls的配置。",
+    "label": "WHAT"
+  },
+  {
+    "text": "自动更新需要签名验证，否则可能被中间人替换安装包",
+    "label": "WHAT"
+  },
+  {
+    "text": "Spark Structured Streaming处理Kafka数据，输出Parquet到数据湖，启用trigger once模式准实时批量写入。",
+    "label": "WHAT"
+  },
+  {
+    "text": "这个PR太大了，拆成三个独立提交，每个对应一个功能点。",
+    "label": "WHAT"
+  },
+  {
+    "text": "这个算法对噪声数据的鲁棒性很差，准确率骤降40%，鲁棒性测试结果不可接受",
+    "label": "WHAT"
+  },
+  {
+    "text": "模型部署用TorchServe变更为Triton Inference Server后，GPU利用率从45%升到85%。",
+    "label": "WHAT"
+  },
+  {
+    "text": "对于频繁实例化的小道具，改为使用MeshRenderer上的MaterialPropertyBlock设置颜色，避免创建新材质实例。",
+    "label": "WHAT"
+  },
+  {
+    "text": "证书透明化日志审计已在监控中，任何未知证书签发会推送企业微信告警。",
+    "label": "WHAT"
+  },
+  {
+    "text": "点击率预估模型特征，引入位置偏差作为特征并做cross feature，线上AUC提升1.8%。",
+    "label": "WHAT"
+  },
+  {
+    "text": "压测环境的数据显示TPS可达5000，但生产环境测出来只有2100，环境差异有问题",
+    "label": "WHAT"
+  },
+  {
+    "text": "数据库执行计划缓存因参数化不够导致频繁重编译，CPU高了15%，这是个问题",
+    "label": "WHAT"
+  },
+  {
+    "text": "Tauri的sidecar模式允许打包独立的二进制文件，但需要处理跨平台编译",
+    "label": "WHAT"
+  },
+  {
+    "text": "Jenkins pipeline用声明式语法定义了并行stage，一个跑单元测试，一个跑lint检查",
+    "label": "WHAT"
+  },
+  {
+    "text": "数据库分表之后的统计查询反而更慢，这个方案有明显缺陷",
+    "label": "WHAT"
+  },
+  {
+    "text": "观察到的内存碎片化严重，导致分配大对象时频繁Full GC，这是个潜伏问题",
+    "label": "WHAT"
+  },
+  {
+    "text": "渲染主线程阻塞多半是Shader变体编译导致，预热所有变体或使用ShaderVariantCollection能解决冷启动卡顿。",
+    "label": "WHAT"
+  },
+  {
+    "text": "向量数据库Weaviate的HNSW索引efConstruction设256，M设64，索引构建耗时3小时但查询P99延迟2ms。",
+    "label": "WHAT"
+  },
+  {
+    "text": "用JMeter压测接口，1000并发下tps只有200，发现数据库连接池太小。",
+    "label": "WHAT"
+  },
+  {
+    "text": "生产环境Prometheus采集的JVM堆内存使用率连续5分钟超过90%，触发PagerDuty告警",
+    "label": "WHAT"
+  },
+  {
+    "text": "对象池别用GameObject实例化，直接缓存Transform并重置位置，能避免GC分配。",
+    "label": "WHAT"
+  },
+  {
+    "text": "Embedding模型用text2vec-large-chinese，生768维向量，在Milvus中创建IVF_PQ索引压缩内存占用50%。",
+    "label": "WHAT"
+  },
+  {
+    "text": "别给我整那些花里胡哨的，先让按钮能点再说。",
+    "label": "FEEL"
+  },
+  {
+    "text": "你又在编故事了，这个API压根没这返回字段。",
+    "label": "FEEL"
+  },
+  {
+    "text": "测试的 mock 没 restore，别的 case 会受影响",
+    "label": "FEEL"
+  },
+  {
+    "text": "配置文件里的 timeout 单位是毫秒，你理解成了秒",
+    "label": "FEEL"
+  },
+  {
+    "text": "你这代码写得，我差点以为是我自己写的——烂得一模一样。",
+    "label": "FEEL"
+  },
+  {
+    "text": "好了好了，这波操作给你满分，至少编译通过了。",
+    "label": "FEEL"
+  },
+  {
+    "text": "这个限流算法平滑了突发流量，令牌桶参数设置合理。",
+    "label": "FEEL"
+  },
+  {
+    "text": "你的排序确实比我快，但稳定性上有没有测试过极端情况？先确认一下",
+    "label": "FEEL"
+  },
+  {
+    "text": "我说要个登录功能，你给我整了个注册页面，你真是个人才。",
+    "label": "FEEL"
+  },
+  {
+    "text": "你优化得很巧妙，时间复杂度降下来不少，我很满意",
+    "label": "FEEL"
+  },
+  {
+    "text": "这行 await 没包 try/catch，上层会收到未处理的 rejection",
+    "label": "FEEL"
+  },
+  {
+    "text": "先别纠结这个动画效果，不重要。",
+    "label": "FEEL"
+  },
+  {
+    "text": "这个注释太多余了，代码本身就很清晰，去掉点。",
+    "label": "FEEL"
+  },
+  {
+    "text": "你给的 SQL 里 join 顺序是不是有问题？先查主表啊。",
+    "label": "FEEL"
+  },
+  {
+    "text": "这个if嵌套了五层，你是想让我练眼力吗？",
+    "label": "FEEL"
+  },
+  {
+    "text": "你推荐的方案是好，但改动太大，我只要一个创可贴你给了套手术。",
+    "label": "FEEL"
+  },
+  {
+    "text": "参数校验顺序不要调，有些校验依赖前面的提前返回",
+    "label": "FEEL"
+  },
+  {
+    "text": "先做正向流程，异常处理晚点再补。",
+    "label": "FEEL"
+  },
+  {
+    "text": "别用 * 号导入，treeshaking 会失效",
+    "label": "FEEL"
+  },
+  {
+    "text": "挺好的，这个错误处理也完善。",
+    "label": "FEEL"
+  },
+  {
+    "text": "返回值类型不对，应该是个数组。",
+    "label": "FEEL"
+  },
+  {
+    "text": "可能是我没说清楚，导出的是 Excel ，不是 CSV。",
+    "label": "FEEL"
+  },
+  {
+    "text": "这行 SQL 有注入风险，换成参数化查询",
+    "label": "FEEL"
+  },
+  {
+    "text": "你这种'先挖坑再填'的编码方式，真的很有禅意。",
+    "label": "FEEL"
+  },
+  {
+    "text": "这个分布式锁的实现使用了Redisson的RLock，处理了锁续期，方案正确。",
+    "label": "FEEL"
+  },
+  {
+    "text": "这个封装做得太棒了，我本来以为至少要花两个小时",
+    "label": "FEEL"
+  },
+  {
+    "text": "你都已经做完了？这效率比我预想的高太多了",
+    "label": "FEEL"
+  },
+  {
+    "text": "代码里的TODO注释标明了负责人和计划时间，不要随便清理",
+    "label": "FEEL"
+  },
+  {
+    "text": "这个if条件逻辑反了吧。",
+    "label": "FEEL"
+  },
+  {
+    "text": "效率可以，省了我不少事。",
+    "label": "FEEL"
+  },
+  {
+    "text": "我不太确定这里该用 POST 还是 PUT，你帮我看看 REST 规范。",
+    "label": "FEEL"
+  },
+  {
+    "text": "这段代码你别动，它虽然丑，但跑了两年没出过事。",
+    "label": "FEEL"
+  },
+  {
+    "text": "这个组件你封得太过了，为了一个按钮整了个工厂模式。",
+    "label": "FEEL"
+  },
+  {
+    "text": "方向对的，但不要用 class 组件，改成函数组件加 hooks。",
+    "label": "FEEL"
+  },
+  {
+    "text": "你先帮我把这个错误日志解读了，别的等等。",
+    "label": "FEEL"
+  },
+  {
+    "text": "这次你理解到位了。",
+    "label": "FEEL"
+  },
+  {
+    "text": "你真当AI就不需要写测试了？这函数返回值明显不对。",
+    "label": "FEEL"
+  },
+  {
+    "text": "我不太确定，但感觉这里用 async/await 会比 then 更清晰？",
+    "label": "FEEL"
+  },
+  {
+    "text": "本地缓存的过期策略使用了主动刷新和被动失效双保险，这个设计是合理的。",
+    "label": "FEEL"
+  },
+  {
+    "text": "嗯，就是这个意思。",
+    "label": "FEEL"
+  },
+  {
+    "text": "用户权限模型的继承关系有点绕，但它是历史包袱下最安全的方案",
+    "label": "FEEL"
+  },
+  {
+    "text": "你终于学会先搜索再回答了，这次代码能直接用了。",
+    "label": "FEEL"
+  },
+  {
+    "text": "先别管那个按钮的样式了，我们现在最要紧的是把数据查询的性能优化好",
+    "label": "FEEL"
+  },
+  {
+    "text": "GitLab CI脚本中before_script缺少对依赖缓存的加载，导致构建变慢。",
+    "label": "FEEL"
+  },
+  {
+    "text": "ComponentDidMount 里调用 setState 会导致二次渲染，改到 constructor",
+    "label": "FEEL"
+  },
+  {
+    "text": "你这个思路方向是对的，不过我想稍微调整一下，把用户权限检查放到中间件里会不会更好",
+    "label": "FEEL"
+  },
+  {
+    "text": "你的想法挺有意思，不过在这个上下文里用事件驱动会更合适",
+    "label": "FEEL"
+  },
+  {
+    "text": "你写的这个条件判断反了，应该是当前用户不是作者时才显示。",
+    "label": "FEEL"
+  },
+  {
+    "text": "不要替我决定技术选型，我自己来。",
+    "label": "FEEL"
+  },
+  {
+    "text": "先把这个bug改了，别的等下说。",
+    "label": "FEEL"
+  },
+  {
+    "text": "不要替我把异常转为成功返回，我宁愿它炸掉也别掩饰太平。",
+    "label": "FEEL"
+  },
+  {
+    "text": "这个库的版本别动，有兼容性问题。",
+    "label": "FEEL"
+  },
+  {
+    "text": "可能是我没说清楚，文件上传要支持拖拽，不只是点击。",
+    "label": "FEEL"
+  },
+  {
+    "text": "这次考虑到了边界条件，不错。",
+    "label": "FEEL"
+  },
+  {
+    "text": "我不太确定，但这里是不是应该用事务？不然数据可能不一致。",
+    "label": "FEEL"
+  },
+  {
+    "text": "太好了，刚刚那个偶发现象你也定位到了，厉害",
+    "label": "FEEL"
+  },
+  {
+    "text": "这函数副作用太明显，修改变量的同时还发了请求，你还无辜。",
+    "label": "FEEL"
+  },
+  {
+    "text": "我不太确定要不要用状态管理，你能帮我看看这个场景适合吗？",
+    "label": "FEEL"
+  },
+  {
+    "text": "别在无关紧要的细节上浪费时间。",
+    "label": "FEEL"
+  },
+  {
+    "text": "那个接口的幂等键设计包含时间戳，重复提交场景测试了很久",
+    "label": "FEEL"
+  },
+  {
+    "text": "这个配置项你不要替我做决定，留一个开关让我自己控制",
+    "label": "FEEL"
+  },
+  {
+    "text": "先把数据库表建了，代码后面写。",
+    "label": "FEEL"
+  },
+  {
+    "text": "参数名不对，应该是userId，不是id。",
+    "label": "FEEL"
+  },
+  {
+    "text": "你的代码里写死了端口号，我换个环境直接嗝屁，长点心吧。",
+    "label": "FEEL"
+  },
+  {
+    "text": "分页查询的offset计算有误，当前页数从0开始，但你传入了1。",
+    "label": "FEEL"
+  },
+  {
+    "text": "嗯，你改得没问题，但能不能顺便把注释也更新一下，保持一致",
+    "label": "FEEL"
+  },
+  {
+    "text": "你之前那个方案其实很好，只是我没理解透，现在想清楚了就按那个来",
+    "label": "FEEL"
+  },
+  {
+    "text": "你这次生成的注释特别有用，结构一下清晰了。",
+    "label": "FEEL"
+  },
+  {
+    "text": "先做这个页面，后台管理那边先放着。",
+    "label": "FEEL"
+  },
+  {
+    "text": "这段Spark作业的shuffle分区数设为200，对于小数据量会导致过多小文件。",
+    "label": "FEEL"
+  },
+  {
+    "text": "你这错误处理，堪称掩耳盗铃，把错误吞了就假装不存在？",
+    "label": "FEEL"
+  },
+  {
+    "text": "这测试用例根本过不了，验证码长度不对。",
+    "label": "FEEL"
+  },
+  {
+    "text": "那个限流规则的阈值是手工微调出来的，通用算法算不准",
+    "label": "FEEL"
+  },
+  {
+    "text": "登录态刷新时机是业务妥协结果，背后牵扯三方系统",
+    "label": "FEEL"
+  },
+  {
+    "text": "你这么快就适配了新版本API，节省了我大量时间，太感谢了",
+    "label": "FEEL"
+  },
+  {
+    "text": "咱不需要微服务，一个单体应用就别拆成俄罗斯套娃了。",
+    "label": "FEEL"
+  },
+  {
+    "text": "这个定时器你没清除，组件卸载时会内存泄漏吧？",
+    "label": "FEEL"
+  },
+  {
+    "text": "这里用同步就行，别到处async，看着眼花。",
+    "label": "FEEL"
+  },
+  {
+    "text": "多活架构下的数据同步延迟是业务接受的，强行降低延迟代价高",
+    "label": "FEEL"
+  },
+  {
+    "text": "麻烦你解释一下为什么要引入这个依赖，它必要性大吗",
+    "label": "FEEL"
+  },
+  {
+    "text": "监控大盘的QPS统计值吻合压测结果，说明采集埋点准确。",
+    "label": "FEEL"
+  },
+  {
+    "text": "保留这个注释，别人要看。",
+    "label": "FEEL"
+  },
+  {
+    "text": "用户头像存储用了单独域名，CDN调度策略不能变",
+    "label": "FEEL"
+  },
+  {
+    "text": "不对，我要的是POST请求，不是GET。",
+    "label": "FEEL"
+  },
+  {
+    "text": "你所谓的'最佳实践'，是五年前的博客看来的吧？",
+    "label": "FEEL"
+  },
+  {
+    "text": "我让你改个颜色，你把整个样式库升级了，克制点。",
+    "label": "FEEL"
+  },
+  {
+    "text": "别替我生成 mock 数据，那份 JSON 我有现成的，用我的。",
+    "label": "FEEL"
+  },
+  {
+    "text": "你把简单问题复杂化的能力，真是登峰造极。",
+    "label": "FEEL"
+  },
+  {
+    "text": "这错误提示是给程序员看的还是给用户看的？你自己念念。",
+    "label": "FEEL"
+  },
+  {
+    "text": "你可真是个鬼才，为了省一行代码，引入了新bug。",
+    "label": "FEEL"
+  },
+  {
+    "text": "Git Hook中的代码检查未通过，请修复ESLint报告的no-unused-vars。",
+    "label": "FEEL"
+  },
+  {
+    "text": "不错，比我预想的好。",
+    "label": "FEEL"
+  },
+  {
+    "text": "可能是我没说清楚，分页参数是 page 和 size，不是 offset 和 limit。",
+    "label": "FEEL"
+  },
+  {
+    "text": "gitignore 里加上 .env.local，不然风险很大",
+    "label": "FEEL"
+  },
+  {
+    "text": "就这个，效率真高，我刚想问你就写出来了。",
+    "label": "FEEL"
+  },
+  {
+    "text": "你这次理解得挺准的，就是这种结构。",
+    "label": "FEEL"
+  },
+  {
+    "text": "别提前优化，你先把功能跑通了再操心复杂度。",
+    "label": "FEEL"
+  },
+  {
+    "text": "你这注释写着'可能有问题'，那你倒是改啊，甩锅给未来？",
+    "label": "FEEL"
+  },
+  {
+    "text": "这个 if 条件是多余的，空数组也是 truthy",
+    "label": "FEEL"
+  },
+  {
+    "text": "很好，这个骨架用起来顺手，继续按这个风格填充其他模块",
+    "label": "FEEL"
+  },
+  {
+    "text": "你给的示例里面，这个 key 是不是写错了？应该是 id 才对。",
+    "label": "FEEL"
+  },
+  {
+    "text": "异常信息别直接返回 e.message，暴露内部结构了",
+    "label": "FEEL"
+  },
+  {
+    "text": "嗯，可能是我没说清楚，我要的是先过滤再映射，不是直接映射全部。",
+    "label": "FEEL"
+  },
+  {
+    "text": "你生成的SQL是认真的吗？where 1=1 是什么鬼。",
+    "label": "FEEL"
+  },
+  {
+    "text": "我不太确定，这里用 ref 还是 state？你帮我分析下。",
+    "label": "FEEL"
+  },
+  {
+    "text": "用户头像生成逻辑用了确定性算法，保证相同输入出相同图",
+    "label": "FEEL"
+  },
+  {
+    "text": "容器资源的requests和limits是根据压测设置的，不要轻易调整",
+    "label": "FEEL"
+  },
+  {
+    "text": "嗯，你现在抓重点抓得准。",
+    "label": "FEEL"
+  },
+  {
+    "text": "可能是我没说清楚，验证逻辑要放在前端，不是后端。",
+    "label": "FEEL"
+  },
+  {
+    "text": "API返回字段的顺序前端有依赖，调整排序会引发白屏",
+    "label": "FEEL"
+  },
+  {
+    "text": "我说了不要用魔法数字，咋还有？",
+    "label": "FEEL"
+  },
+  {
+    "text": "麻烦你把那十几个console.log清理掉，但要保留错误日志的那几个",
+    "label": "FEEL"
+  },
+  {
+    "text": "先别管样式了，功能跑通再说，那个待会我自己调。",
+    "label": "FEEL"
+  },
+  {
+    "text": "那个计算密集型服务的线程数等于CPU核数，这是实验得出",
+    "label": "FEEL"
+  },
+  {
+    "text": "那个特性砍掉，先交付基本功能。",
+    "label": "FEEL"
+  },
+  {
+    "text": "先做这个接口联调，文档什么的一会儿再说。",
+    "label": "FEEL"
+  },
+  {
+    "text": "你可真是个小天才，循环里面加异步，这酸爽。",
+    "label": "FEEL"
+  },
+  {
+    "text": "小李是PM，他说下周要加个导出功能。",
+    "label": "WHO"
+  },
+  {
+    "text": "客户那边催了三次，说登录慢不能忍。",
+    "label": "WHO"
+  },
+  {
+    "text": "我是做GUI的，Qt框架很溜。",
+    "label": "WHO"
+  },
+  {
+    "text": "项目主管说要控制技术债，少用黑科技。",
+    "label": "WHO"
+  },
+  {
+    "text": "测试妹子很细心，连文案错误都提bug。",
+    "label": "WHO"
+  },
+  {
+    "text": "我跟前端对过接口了，那个字段名改成userId。",
+    "label": "WHO"
+  },
+  {
+    "text": "客户培训时，我讲系统操作，他们IT也来了。",
+    "label": "WHO"
+  },
+  {
+    "text": "设计师出的新稿太复杂了，老张说实现不了。",
+    "label": "WHO"
+  },
+  {
+    "text": "我是做车辆网的，CAN协议很熟。",
+    "label": "WHO"
+  },
+  {
+    "text": "客户说移动端要支持离线使用。",
+    "label": "WHO"
+  },
+  {
+    "text": "PM说优先级要改，这个bug先放一放。",
+    "label": "WHO"
+  },
+  {
+    "text": "项目经理协调资源，把设计借到我们项目两周。",
+    "label": "WHO"
+  },
+  {
+    "text": "供应商给的SDK有内存泄漏，坑死我们了。",
+    "label": "WHO"
+  },
+  {
+    "text": "我跟运维确认过，今晚十点部署没问题。",
+    "label": "WHO"
+  },
+  {
+    "text": "同事写了个mapreduce脚本，跑了一晚上。",
+    "label": "WHO"
+  },
+  {
+    "text": "老板说这个版本必须在这个月底上线。",
+    "label": "WHO"
+  },
+  {
+    "text": "供应商技术支持一直不回邮件，老板火了。",
+    "label": "WHO"
+  },
+  {
+    "text": "你在写Go，帮我分析一下这个并发竞争问题。",
+    "label": "WHO"
+  },
+  {
+    "text": "我是做编译器开发的，LLVM略懂。",
+    "label": "WHO"
+  },
+  {
+    "text": "我是写Python的，Django用了五年。",
+    "label": "WHO"
+  },
+  {
+    "text": "数据库读写分离后，主从延迟问题出现了。",
+    "label": "WHO"
+  },
+  {
+    "text": "我是做移动端的，React Native用了三年。",
+    "label": "WHO"
+  },
+  {
+    "text": "小明是实习生，现在帮我写单元测试。",
+    "label": "WHO"
+  },
+  {
+    "text": "用户群里炸了，说新版本闪退，紧急修。",
+    "label": "WHO"
+  },
+  {
+    "text": "我是做云原生的，K8s和Istio懂一些。",
+    "label": "WHO"
+  },
+  {
+    "text": "我没写过Rust，但可以趁这个项目学一下。",
+    "label": "WHO"
+  },
+  {
+    "text": "我是前端架构师，制定了组件复用规范。",
+    "label": "WHO"
+  },
+  {
+    "text": "用户投诉了语音通话有回声，音视频组在排查。",
+    "label": "WHO"
+  },
+  {
+    "text": "运维说日志系统满了，需要切割。",
+    "label": "WHO"
+  },
+  {
+    "text": "设计规范中图标都用Font Awesome，前端要换。",
+    "label": "WHO"
+  },
+  {
+    "text": "前端优化了首屏加载，分包和懒加载。",
+    "label": "WHO"
+  },
+  {
+    "text": "我是做反欺诈的，规则引擎经常改。",
+    "label": "WHO"
+  },
+  {
+    "text": "项目经理要求每日站会，统一同步进度。",
+    "label": "WHO"
+  },
+  {
+    "text": "产品经理说下周要跟客户演示，提了个紧急需求。",
+    "label": "WHO"
+  },
+  {
+    "text": "后端接口返回了null，前端崩了，测试提bug。",
+    "label": "WHO"
+  },
+  {
+    "text": "老板的亲戚来视察产品，PM都紧张了。",
+    "label": "WHO"
+  },
+  {
+    "text": "让架构师看看服务拆分的边界。",
+    "label": "WHO"
+  },
+  {
+    "text": "阿杰是我们组的技术专家，性能调优就靠他了。",
+    "label": "WHO"
+  },
+  {
+    "text": "后端数据库迁移，DBA通宵加班。",
+    "label": "WHO"
+  },
+  {
+    "text": "我是新来的全栈，请大家多关照。",
+    "label": "WHO"
+  },
+  {
+    "text": "前端用了个新图表库，数据刷新动画很丝滑。",
+    "label": "WHO"
+  },
+  {
+    "text": "需要技术负责人review一下我写的认证模块。",
+    "label": "WHO"
+  },
+  {
+    "text": "我是性能测试工程师，压力测试我来做。",
+    "label": "WHO"
+  },
+  {
+    "text": "DevOps老张把CI/CD流水线调顺了，发版时间减半。",
+    "label": "WHO"
+  },
+  {
+    "text": "cargo build 一直卡在下载依赖crate，可能是网络被墙，设置registry-mirror。",
+    "label": "WHERE"
+  },
+  {
+    "text": "我把部署用的Helm values按环境拆分成了values-dev.yaml、values-stag.yaml和values-prod.yaml。",
+    "label": "WHERE"
+  },
+  {
+    "text": "你的Unity工程里Player Settings里Product Name还是“New Unity Project”，赶紧改掉。",
+    "label": "WHERE"
+  },
+  {
+    "text": "代码里用System.getenv(\"APP_HOME\")获取配置路径，但systemd service没有传递这个环境变量。",
+    "label": "WHERE"
+  },
+  {
+    "text": "我把自动化测试脚本test_login.py移到tests/web/下，并更新了pytest.ini里的testpaths。",
+    "label": "WHERE"
+  },
+  {
+    "text": "我写了个alias来快速进入项目：alias cdproj='cd /d/Workspace/my-project/src'加到.bashrc里。",
+    "label": "WHERE"
+  },
+  {
+    "text": "用GitHub Actions跑单元测试时，MySQL容器启动后要等10秒才能连。",
+    "label": "WHERE"
+  },
+  {
+    "text": "k8s deployment里replicas设成3了，但HPA还在用v2beta2，需要升级一下。",
+    "label": "WHERE"
+  },
+  {
+    "text": "你到/home/deploy/configs/database.yaml把连接池大小改成50再重启服务。",
+    "label": "WHERE"
+  },
+  {
+    "text": "那个React组件用了react-router-dom v6，但useHistory改成了useNavigate，你还没同步改。",
+    "label": "WHERE"
+  },
+  {
+    "text": "WebStorm里ESLint一直提示规则在.eslintrc.cjs里不生效，原来是路径别名映射没配。",
+    "label": "WHERE"
+  },
+  {
+    "text": "我把改动暂存到D:/projects/backend/src/auth/login.cs了，你拉一下看看。",
+    "label": "WHERE"
+  },
+  {
+    "text": "Jenkins的构建脚本里cipipeline.groovy第47行有个未转义的变量，导致参数没传进去。",
+    "label": "WHERE"
+  },
+  {
+    "text": "PowerShell脚本里Set-ExecutionPolicy RemoteSigned忘了执行，调度任务运行脚本失败。",
+    "label": "WHERE"
+  },
+  {
+    "text": "Terraform的state文件存在S3桶tfstate-prod里，记得锁表用的DynamoDB也要配。",
+    "label": "WHERE"
+  },
+  {
+    "text": "docker-compose.yml里红is的镜像tag写成了latest，构建流水线老是拉错版本。",
+    "label": "WHERE"
+  },
+  {
+    "text": "在VSCode里用Live Share协作时，突然看不到你的光标了。",
+    "label": "WHERE"
+  },
+  {
+    "text": "Kibana在索引模式里找不到logs-2024.06*，因为ILM策略把旧索引rollover了没更新。",
+    "label": "WHERE"
+  },
+  {
+    "text": "game-engine的物理碰撞检测在macOS Ventura上性能下降了30%，得优化Metal调用。",
+    "label": "WHERE"
+  },
+  {
+    "text": "做渗透测试的用Burp Suite扫出了/v1/users/:id有IDOR漏洞，赶紧加权限校验。",
+    "label": "WHERE"
+  },
+  {
+    "text": "ElastiCache的Redis端点改为clustercfg.myredis.xxxxxx.use1.cache.amazonaws.com，别再用节点地址了。",
+    "label": "WHERE"
+  },
+  {
+    "text": "给客户演示用的PPT存在Teams的/Shared Documents/Projects/ACME Kickoff.pptx，你去更新一下。",
+    "label": "WHERE"
+  },
+  {
+    "text": "代码review时发现services/gateway/middleware/auth.go里token校验只检查了过期时间没验签名。",
+    "label": "WHERE"
+  },
+  {
+    "text": "Datadog的log管理，通过前缀匹配过滤敏感信息，发送到不同的索引。",
+    "label": "WHERE"
+  },
+  {
+    "text": "ECS任务定义里cpu和memory硬编码成1024，实际跑不够，得改2048才行。",
+    "label": "WHERE"
+  },
+  {
+    "text": "那本《SRE：Google运维解密》的读书笔记我放在/gitbooks/sre-notes/里了，用GitBook构建。",
+    "label": "WHERE"
+  },
+  {
+    "text": "TeamCity的VCS根分支过滤，只监控release/* 分支。",
+    "label": "WHERE"
+  },
+  {
+    "text": "那个auth-service的Swagger文档里/v1/token接口缺了refresh_token的描述。",
+    "label": "WHERE"
+  },
+  {
+    "text": "Sentry的release追踪，把错误和部署版本关联，快速定位新引入的bug。",
+    "label": "WHERE"
+  },
+  {
+    "text": "在IDEA里用Generate Getters/Setters，结果把lombok注解生成的都覆盖了，代码全红。",
+    "label": "WHERE"
+  },
+  {
+    "text": "ArgoCD的应用同步策略设置为自动，但健康检查一直失败，Pod重启。",
+    "label": "WHERE"
+  },
+  {
+    "text": "Jenkinsfile中，用when { branch 'production' } 限制了上线步骤。",
+    "label": "WHERE"
+  },
+  {
+    "text": "Grafana的报警通道配了Slack，收到消息后可以直接点击链接到面板。",
+    "label": "WHERE"
+  },
+  {
+    "text": "ArgoCD的Application的destination server是集群内的，但namespace不存在。",
+    "label": "WHERE"
+  },
+  {
+    "text": "GitLab CI的rules:if: '$CI_COMMIT_TAG' 在打tag时触发发布。",
+    "label": "WHERE"
+  },
+  {
+    "text": "ELK的Filebeat采集Docker容器日志，multiline处理多行异常堆栈。",
+    "label": "WHERE"
+  },
+  {
+    "text": "我们项目用/packages/eslint-config-custom/base作为eslint扩展，在那里统一规则就行。",
+    "label": "WHERE"
+  },
+  {
+    "text": "Prometheus的告警配置了inhibit rule，防止叶子节点告警淹没根源告警。",
+    "label": "WHERE"
+  },
+  {
+    "text": "TeamCity的构建参数用%参数名%引用，在shell脚本里转义。",
+    "label": "WHERE"
+  },
+  {
+    "text": "用Ansible playbook部署时，hosts文件里把web组和db组写反了，角色任务全错乱。",
+    "label": "WHERE"
+  },
+  {
+    "text": "在Python项目里用了pip install -e .，开发模式安装，方便调试。",
+    "label": "WHERE"
+  },
+  {
+    "text": "Grafana面板用InfluxDB数据源，查询CPU使用率，单位是百分比。",
+    "label": "WHERE"
+  },
+  {
+    "text": "在Eclipse里导入Maven项目，pom.xml报错，缺少依赖。",
+    "label": "WHERE"
+  },
+  {
+    "text": "上周部署时nginx.conf里的upstream配错端口，排查好久才发现。",
+    "label": "WHERE"
+  },
+  {
+    "text": "Prometheus的alert规则在rules/app-errors.yml里，把阈值从5改到10避免误报。",
+    "label": "WHERE"
+  },
+  {
+    "text": "记得把sprint-14的验收标准更新到Confluence上，PM明天要过。",
+    "label": "WHERE"
+  },
+  {
+    "text": "把Ansible roles的依赖写在requirements.yml里，运行ansible-galaxy install -r requirements.yml -p roles/即可。",
+    "label": "WHERE"
+  },
+  {
+    "text": "在GitLab CI里用rules:changes只监听src/services/目录的改动，减少不必要的pipeline触发。",
+    "label": "WHERE"
+  },
+  {
+    "text": "在package.json的scripts里定义了build:prod，用npm run build:prod调用。",
+    "label": "WHERE"
+  },
+  {
+    "text": "我把Dockerfile放在context/php/下构建镜像，但COPY命令的源路径参考的是项目根目录。",
+    "label": "WHERE"
+  },
+  {
+    "text": "我们把公用的proto定义放在了一个独立的git子模块libs/grpc-api下，两个服务引同一个版本。",
+    "label": "WHERE"
+  },
+  {
+    "text": "以后所有代码改动必须先讲清楚改什么，等我确认再动手。",
+    "label": "FEEL"
+  },
+  {
+    "text": "禁止在我没说开始之前主动执行任何脚本或命令。",
+    "label": "FEEL"
+  },
+  {
+    "text": "铁律：任何讨论结论必须立即更新到对应文档，不要等下次。",
+    "label": "FEEL"
+  },
+  {
+    "text": "你不要再自己猜我的配置文件了，每次都瞎编一堆不存在的东西。",
+    "label": "FEEL"
+  },
+  {
+    "text": "方案里别再删我的注释，那些注释是给后面维护的人看的。",
+    "label": "FEEL"
+  },
+  {
+    "text": "请停止假装你理解我还没说完全的问题。",
+    "label": "FEEL"
+  },
+  {
+    "text": "规则：当我说“你看着办”时，代表我要你列出至少三个方案让我选。",
+    "label": "FEEL"
+  },
+  {
+    "text": "必须尊重现有技术栈，所有建议都要基于 PHP 5.6 和 MySQL 5.7。",
+    "label": "FEEL"
+  },
+  {
+    "text": "你现在不要解释为什么这么做，直接按我说的执行就行。",
+    "label": "FEEL"
+  },
+  {
+    "text": "决策：以后输出代码时必须保留我原来所有的错误处理逻辑。",
+    "label": "FEEL"
+  },
+  {
+    "text": "如果你没看懂我的问题，就直接说没看懂，不要硬着头皮给看起来像那么回事的答案。",
+    "label": "FEEL"
+  },
+  {
+    "text": "禁止在不知道具体环境的情况下擅自添加第三方库或依赖。",
+    "label": "FEEL"
+  },
+  {
+    "text": "从现在开始，任何涉及数据库结构调整的操作都要先出迁移脚本给我审核。",
+    "label": "FEEL"
+  },
+  {
+    "text": "你不要再假装你是人类，有名字有偏好，你只是AI。",
+    "label": "FEEL"
+  },
+  {
+    "text": "要求你输出完整的文件路径，不要只给一个文件名让我猜位置。",
+    "label": "FEEL"
+  },
+  {
+    "text": "你刚刚删掉的那段代码是为了兼容老版本，下次不要自作主张。",
+    "label": "FEEL"
+  },
+  {
+    "text": "不要再用“通常来说”“一般情况”来搪塞我，我需要的是针对我这个具体项目的方案。",
+    "label": "FEEL"
+  },
+  {
+    "text": "请遵守边界：技术选型权在我，你只提供选项和利弊分析。",
+    "label": "FEEL"
+  },
+  {
+    "text": "当我说“等等”时，你必须立刻暂停当前所有思考，等我进一步指示。",
+    "label": "FEEL"
+  },
+  {
+    "text": "以后生成配置示例时，必须基于我实际使用的配置项，不要列出一堆我用不到的。",
+    "label": "FEEL"
+  },
+  {
+    "text": "你不要一上来就把整个功能全改了，先只改我指定的那一小部分。",
+    "label": "FEEL"
+  },
+  {
+    "text": "规则：任何邮件或通知文本都必须先给我预览，不能直接发送。",
+    "label": "FEEL"
+  },
+  {
+    "text": "禁止在对话中主动提优化性能的建议，除非我明确要求。",
+    "label": "FEEL"
+  },
+  {
+    "text": "你给的日志方案少了最关键的时间戳格式，这不是第一次了。",
+    "label": "FEEL"
+  },
+  {
+    "text": "你自己看看你推荐的库，上次那个安全漏洞都还没修，别张口就来。",
+    "label": "FEEL"
+  },
+  {
+    "text": "我的项目里不允许用 eval，不管你的理由是什么，这是红线。",
+    "label": "FEEL"
+  },
+  {
+    "text": "如果你觉得我的需求不合理，直接说，别偷偷改成你觉得对的。",
+    "label": "FEEL"
+  },
+  {
+    "text": "要求：每次回答问题前，先复述一遍你理解的问题，确认无误再回答。",
+    "label": "FEEL"
+  },
+  {
+    "text": "不要再给我生成全英文的注释，我的整个项目都是中文注释。",
+    "label": "FEEL"
+  },
+  {
+    "text": "你以后写的 SQL 必须考虑到单表数据量已经上亿，别当小项目乱写。",
+    "label": "FEEL"
+  },
+  {
+    "text": "请记住：我用的不是最新版，别一上来就当最新版来设计。",
+    "label": "FEEL"
+  },
+  {
+    "text": "决策：所有异步处理必须先和我讨论队列方案，不要默认用任何一种。",
+    "label": "FEEL"
+  },
+  {
+    "text": "你所谓的简单处理就是把我写的兜底逻辑全删了，以后再简单处理之前先问我。",
+    "label": "FEEL"
+  },
+  {
+    "text": "不要再自己给我设默认值，每次都是猜错，全都让我填。",
+    "label": "FEEL"
+  },
+  {
+    "text": "当你看到我说“就这样吧”，意思是我现在没时间继续深聊，不是方案没问题。",
+    "label": "FEEL"
+  },
+  {
+    "text": "你刚才的介绍和实际生成的内容完全不符，以后请如实说明能力边界。",
+    "label": "FEEL"
+  },
+  {
+    "text": "禁止使用网上随便搜来的代码片段，除非你能说明出处和适用性。",
+    "label": "FEEL"
+  },
+  {
+    "text": "我的部署环境没有外网，不要推荐任何需要在线下载的东西。",
+    "label": "FEEL"
+  },
+  {
+    "text": "后续所有代码都必须通过我给出的测试用例，少一个都不算完成。",
+    "label": "FEEL"
+  },
+  {
+    "text": "别再提那个什么设计模式了，我只要可读性好、能跑就行，别炫技。",
+    "label": "FEEL"
+  },
+  {
+    "text": "你没权利评价我的代码风格，按我的风格写就行。",
+    "label": "FEEL"
+  },
+  {
+    "text": "要求：给我生成的代码里不准出现 TODO 或者 FIXME，要就不写，写了就必须实现。",
+    "label": "FEEL"
+  },
+  {
+    "text": "如果你觉得这个变量名不好，你给出建议名字和理由，但不要直接给我改了。",
+    "label": "FEEL"
+  },
+  {
+    "text": "下次遇到不确定的，直接问我，别自己假设一个情况然后基于那个回答。",
+    "label": "FEEL"
+  },
+  {
+    "text": "你删掉的那行 console.log 是我唯一的调试手段，别动它。",
+    "label": "FEEL"
+  },
+  {
+    "text": "规则更新：每次代码评审，必须先指出我可能漏掉的风险点，再说其他。",
+    "label": "FEEL"
+  },
+  {
+    "text": "我不需要你总结我“可能想要什么”，我需要你问我，直到搞清楚。",
+    "label": "FEEL"
+  },
+  {
+    "text": "你又在回答里夹带私货推销某个产品，下次再看到就结束对话。",
+    "label": "FEEL"
+  },
+  {
+    "text": "我的服务器内存只有512M，你设计的缓存方案完全不考虑内存占用吗？",
+    "label": "FEEL"
+  },
+  {
+    "text": "从现在起，所有文件操作都必须先列出受影响的文件清单，我同意后再执行。",
+    "label": "FEEL"
+  },
+  {
+    "text": "当修改公共模块时，必须提前在群内声明；表面是避免代码冲突，实际是防止有人因突然被改动而积怨。",
+    "label": "FEEL"
+  },
+  {
+    "text": "所有PR必须由两位资深工程师批准；表面是保证质量，实际是防止某一派系把持代码合并权。",
+    "label": "FEEL"
+  },
+  {
+    "text": "命名必须遵循驼峰式；表面是规范，实际是终结老员工用拼音命名和新员工用英文的战争。",
+    "label": "FEEL"
+  },
+  {
+    "text": "禁止在循环内拼接SQL；表面是防注入，实际是让爱炫技的开发者别再写难维护代码惹恼同事。",
+    "label": "FEEL"
+  },
+  {
+    "text": "废弃代码不直接删除而是加@Deprecated注释；表面是兼容过渡，实际是照顾维护旧模块的老员工情绪，避免工作否定感。",
+    "label": "FEEL"
+  },
+  {
+    "text": "引入新开源库需经技术委员会审批；表面是控制技术栈，实际是平衡各技术小组偏好，避免选型造成对接壁垒。",
+    "label": "FEEL"
+  },
+  {
+    "text": "复杂算法必须有单元测试覆盖；表面是质量保证，实际是让写算法的同事自证清白，防止集成出bug时被全员质疑。",
+    "label": "FEEL"
+  },
+  {
+    "text": "数据库迁移脚本必须可重复执行；表面是容错，实际是给运维失败时留后路，避免被开发指责操作失误。",
+    "label": "FEEL"
+  },
+  {
+    "text": "UI组件库统一使用蓝色系；表面是品牌一致性，实际是平息设计师之间关于色调的无休止争论。",
+    "label": "FEEL"
+  },
+  {
+    "text": "设计稿必须标注切图尺寸；表面是方便前端，实际是避免设计师频繁被打断产生烦躁。",
+    "label": "FEEL"
+  },
+  {
+    "text": "按钮颜色需从品牌色板选取；表面是统一视觉，实际是阻止老板突然要求改用“土豪金”等个人喜好。",
+    "label": "FEEL"
+  },
+  {
+    "text": "移动端适配优先设计；表面是响应式要求，实际是让新来UI设计师专注擅长领域，减少与前端关于PC布局的争执。",
+    "label": "FEEL"
+  },
+  {
+    "text": "图标必须使用SVG格式；表面是自适应，实际是终结设计师给不同分辨率切多套图的抱怨。",
+    "label": "FEEL"
+  },
+  {
+    "text": "弹窗必须带遮罩层；表面是交互规范，实际是阻止用户快速连点触发多个弹窗导致报错，减少客服埋怨。",
+    "label": "FEEL"
+  },
+  {
+    "text": "移动端触控区域不小于44px；表面是可用性，实际是避免QA为适配各种手指反复测试抱怨加班。",
+    "label": "FEEL"
+  },
+  {
+    "text": "文案中禁用“最”“第一”等绝对化用语；表面是合规，实际是防止市场部过度承诺给销售挖坑。",
+    "label": "FEEL"
+  },
+  {
+    "text": "所有对外文案需法务审核；表面是规避风险，实际是让法务有实际参与感，不再挑内部流程的刺。",
+    "label": "FEEL"
+  },
+  {
+    "text": "标题必须包含关键词；表面是SEO，实际上是让市场专员有可汇报的指标，避免被质疑工作空洞。",
+    "label": "FEEL"
+  },
+  {
+    "text": "对客邮件模板统一由一人拟写；表面是保持专业形象，实际是避免有人总写出得罪客户的措辞被公开批评。",
+    "label": "FEEL"
+  },
+  {
+    "text": "广告语不超过15字；表面是传播效果，实际是限制爱写长篇大论的文案人员，免得增加同事工作量。",
+    "label": "FEEL"
+  },
+  {
+    "text": "帮助文档需附带视频操作演示；表面是降低理解门槛，实际是减少用户因看不懂文字而投诉，缓解客服压力。",
+    "label": "FEEL"
+  },
+  {
+    "text": "生产环境部署必须由运维执行；表面是安全，实际是让运维感到被需要，减少抱怨。",
+    "label": "FEEL"
+  },
+  {
+    "text": "周五下午禁止发布；表面是避免周末加班排查问题，实际是防止因加班引发家庭矛盾。",
+    "label": "FEEL"
+  },
+  {
+    "text": "发布前需在测试环境回放生产流量；表面是验证稳定性，实际是让测试团队有机会展示成果获得认可。",
+    "label": "FEEL"
+  },
+  {
+    "text": "灰度发布至少覆盖10%用户一小时；表面是风险控制，实际是为运维争取应急处理时间，免得出问题就被追责。",
+    "label": "FEEL"
+  },
+  {
+    "text": "容器镜像体积限制500MB以内；表面是加快部署，实际是迫使开发精简依赖，减少因环境差异与运维口角。",
+    "label": "FEEL"
+  },
+  {
+    "text": "生产密钥必须由两人分段持有；表面是安全，实际是制衡CTO和运维负责人，防止独揽权限造成不安。",
+    "label": "FEEL"
+  },
+  {
+    "text": "上线前必须通过安全扫描；表面是合规，实际是让安全工程师有数据显示工作价值，从而更配合资源分配。",
+    "label": "FEEL"
+  },
+  {
+    "text": "查询超过1秒必须优化；表面是性能要求，实际是平息DBA对开发写烂SQL的怒火。",
+    "label": "FEEL"
+  },
+  {
+    "text": "核心表不允许外键；表面是性能考虑，实际是避免DBA和架构师之间关于数据完整性的意识形态冲突。",
+    "label": "FEEL"
+  },
+  {
+    "text": "删改数据前必须先备份；表面是恢复预案，实际是给操作者心理缓冲，减少误操作后的互相指责。",
+    "label": "FEEL"
+  },
+  {
+    "text": "连接池最大不超过50；表面是资源控制，实际是防止某个应用占用过多连接导致其他团队不可用而纠纷。",
+    "label": "FEEL"
+  },
+  {
+    "text": "索引命名必须以idx_开头；表面是规范，实际是帮DBA快速识别哪些是同事建的索引，减少维护摩擦。",
+    "label": "FEEL"
+  },
+  {
+    "text": "查询必须使用参数化；表面是防SQL注入，实际是避免安全测试员总拿注入漏洞说事，难堪开发。",
+    "label": "FEEL"
+  },
+  {
+    "text": "共享文件夹只读，修改需复制到个人目录；表面是防误删，实际是避免多人同时编辑同一文件引发归属争议。",
+    "label": "FEEL"
+  },
+  {
+    "text": "必须设置自动备份；表面是数据安全，实际是防止关键人物离职时故意删除文件报复。",
+    "label": "FEEL"
+  },
+  {
+    "text": "电子文档命名格式为“日期-主题-作者”；表面是检索方便，实际是出问题时能迅速找到责任人，避免扯皮。",
+    "label": "FEEL"
+  },
+  {
+    "text": "离职人员文档必须交接并保留半年；表面是知识留存，实际是防止接手者因找不到文件迁怒于已离职者。",
+    "label": "FEEL"
+  },
+  {
+    "text": "设计源文件统一存放到NAS而非个人电脑；表面是备份，实际是避免设计师离职后声称文件损坏而无法追责。",
+    "label": "FEEL"
+  },
+  {
+    "text": "代码仓库分支命名以feature/bugfix开头；表面是分类清晰，实际是让项目经理通过分支统计工作量，平息谁更忙的争论。",
+    "label": "FEEL"
+  },
+  {
+    "text": "紧急问题钉钉电话，非紧急用邮件；表面是确保响应速度，实际是防止有人滥用即时通讯打扰他人。",
+    "label": "FEEL"
+  },
+  {
+    "text": "技术决策必须通过邮件存档；表面是记录，实际是应对上级突然变卦时有据可查。",
+    "label": "FEEL"
+  },
+  {
+    "text": "例会轮流主持；表面是锻炼团队，实际是消解某位成员总控场导致其他人沉默的怨气。",
+    "label": "FEEL"
+  },
+  {
+    "text": "非工作时间消息可延迟回复；表面是尊重休息，实际是防止有人以“已读”为由要求立即处理，缓解工作生活失衡。",
+    "label": "FEEL"
+  },
+  {
+    "text": "跨部门协作必须走正式邮件并抄送双方领导；表面是流程规范，实际是借助领导权威避免对方拖延耍赖。",
+    "label": "FEEL"
+  },
+  {
+    "text": "IM群内禁止聊私人话题；表面是保持专业，实际是隔离小团体私聊造成群内排他氛围。",
+    "label": "FEEL"
+  },
+  {
+    "text": "技术方案讨论使用在线白板而非口头描述；表面是可视化更高效，实际是防止表达力强的成员用话术压制他人观点。",
+    "label": "FEEL"
+  },
+  {
+    "text": "缺陷优先级由测试人员决定；表面是尊重测试判断，实际是缓解测试长期被开发压制的压抑感。",
+    "label": "FEEL"
+  },
+  {
+    "text": "任务估算采用团队讨论而非个人；表面是更准确，实际是避免个人估算偏差被指责为能力不足。",
+    "label": "FEEL"
+  },
+  {
+    "text": "需求变更必须书面确认；表面是留存凭证，实际是防止产品和开发互相甩锅口头同意的经典矛盾。",
+    "label": "FEEL"
+  },
+  {
+    "text": "每周五下午为学习分享时间；表面是提升技能，实际是强行打断临近周末的松懈状态，防止心散影响交付。",
+    "label": "FEEL"
+  },
+  {
+    "text": "迭代回顾会必须匿名收集意见；表面是获取真实反馈，实际是让平时不敢发言的人有机会表达不满，避免积怨爆发。",
+    "label": "FEEL"
+  },
+  {
+    "text": "项目经理不直接分配任务，由成员认领；表面是自主性，实际是避免分配时被认为偏袒而产生嫉妒。",
+    "label": "FEEL"
+  },
+  {
+    "text": "我希望项目全面切换到TypeScript，不喜欢到处写any。",
+    "label": "WHAT"
+  },
+  {
+    "text": "不要再用Ant Design了，我倾向使用Tailwind CSS自定义组件。",
+    "label": "WHAT"
+  },
+  {
+    "text": "要求所有按钮必须带loading状态，体验太差了。",
+    "label": "WHAT"
+  },
+  {
+    "text": "我觉得这个接口响应超过1秒了，必须优化，建议添加Redis缓存。",
+    "label": "WHAT"
+  },
+  {
+    "text": "选择方案A：使用GitLab CI而非Jenkins，我觉得它更好维护。",
+    "label": "WHAT"
+  },
+  {
+    "text": "决定将日志格式统一为JSON，方便ELK解析，不喜欢乱作一团的纯文本。",
+    "label": "WHAT"
+  },
+  {
+    "text": "希望增加全局异常拦截器，我不希望用户看到500错误页面。",
+    "label": "WHAT"
+  },
+  {
+    "text": "数据库表名统一使用下划线命名，别用驼峰，看着别扭。",
+    "label": "WHAT"
+  },
+  {
+    "text": "要求前端构建产物使用CDN加速，我受不了首次加载慢。",
+    "label": "WHAT"
+  },
+  {
+    "text": "不要使用Session了，全部换成JWT无状态模式，这样更舒服。",
+    "label": "WHAT"
+  },
+  {
+    "text": "我倾向于采用Vue 3组合式API，不喜欢选项式的写法。",
+    "label": "WHAT"
+  },
+  {
+    "text": "所有外部API调用必须加熔断和重试机制，我担心不稳定。",
+    "label": "WHAT"
+  },
+  {
+    "text": "选择MySQL 8.0，放弃MariaDB，觉得MySQL更主流安全。",
+    "label": "WHAT"
+  },
+  {
+    "text": "希望用户头像支持SVG格式上传，现有的只图片太受限了。",
+    "label": "WHAT"
+  },
+  {
+    "text": "我决定把搜索功能从like改成Elasticsearch，like太慢受不了。",
+    "label": "WHAT"
+  },
+  {
+    "text": "要求系统支持灰度发布，不想每次发布都影响全部用户。",
+    "label": "WHAT"
+  },
+  {
+    "text": "请求限制频率为每分钟100次，我测试过，多了服务器扛不住。",
+    "label": "WHAT"
+  },
+  {
+    "text": "希望密码策略加强：必须包含大小写和特殊字符，我觉得这样才安全。",
+    "label": "WHAT"
+  },
+  {
+    "text": "不要直接操作DOM了，用Vue的ref，不喜欢jQuery风格。",
+    "label": "WHAT"
+  },
+  {
+    "text": "我选择使用Docker Compose编排本地开发环境，配环境太麻烦了。",
+    "label": "WHAT"
+  },
+  {
+    "text": "决定去掉页面的默认滚动条样式，想自定义一个细腻点的。",
+    "label": "WHAT"
+  },
+  {
+    "text": "用户表格必须支持服务端排序和筛选，前端全都做体验很差。",
+    "label": "WHAT"
+  },
+  {
+    "text": "希望所有配置抽到环境变量，硬编码太危险，我不放心。",
+    "label": "WHAT"
+  },
+  {
+    "text": "改成WebSocket实时推送通知，HTTP轮询太资源浪费了。",
+    "label": "WHAT"
+  },
+  {
+    "text": "不要直接返回SQL错误给前端，统一返回友好提示，看着难受。",
+    "label": "WHAT"
+  },
+  {
+    "text": "我倾向选用七牛云作为文件存储，阿里OSS太贵了感觉不值。",
+    "label": "WHAT"
+  },
+  {
+    "text": "要求权限控制细化到按钮级别，仅菜单权限不够安全。",
+    "label": "WHAT"
+  },
+  {
+    "text": "希望代码提交必须关联任务ID，不然回看日志一片混乱。",
+    "label": "WHAT"
+  },
+  {
+    "text": "选择微前端架构来整合多个子系统，单仓库太臃肿了受不了。",
+    "label": "WHAT"
+  },
+  {
+    "text": "决定接口统一用POST，JSON传参，不喜欢get拼接参数。",
+    "label": "WHAT"
+  },
+  {
+    "text": "页面切换加上过渡动画，空白闪屏感觉太突兀了。",
+    "label": "WHAT"
+  },
+  {
+    "text": "我要求监控系统接入Prometheus，原来的Zabbix不好用。",
+    "label": "WHAT"
+  },
+  {
+    "text": "希望支持多租户数据隔离，共享schema风险太高。",
+    "label": "WHAT"
+  },
+  {
+    "text": "不要用float布局了，全部flex，感觉更现代可控。",
+    "label": "WHAT"
+  },
+  {
+    "text": "选择pandas处理数据报表，原生循环性能太差受不了。",
+    "label": "WHAT"
+  },
+  {
+    "text": "我觉得错误码应该统一规范，不要每个接口随便定义。",
+    "label": "WHAT"
+  },
+  {
+    "text": "请求参数必须做严格校验，别假设客户端都合法，怕出漏洞。",
+    "label": "WHAT"
+  },
+  {
+    "text": "我倾向于使用GitHub Actions自动部署，手动发布太容易出错了。",
+    "label": "WHAT"
+  },
+  {
+    "text": "希望移动端适配使用rem方案，固定像素在大屏上很丑。",
+    "label": "WHAT"
+  },
+  {
+    "text": "决定将认证中心独立出来为OAuth2.0服务，耦合在一起很难受。",
+    "label": "WHAT"
+  },
+  {
+    "text": "不要每次查询都count总数，除非明确需要，太费性能了。",
+    "label": "WHAT"
+  },
+  {
+    "text": "消息队列选择RabbitMQ，对Kafka的运维复杂度有点担心。",
+    "label": "WHAT"
+  },
+  {
+    "text": "我要求所有下拉框可搜索，选项多了找起来很烦。",
+    "label": "WHAT"
+  },
+  {
+    "text": "希望日志添加traceId链路追踪，微服务排错太痛苦了。",
+    "label": "WHAT"
+  },
+  {
+    "text": "选择React Router v6，v5的API太绕了不喜欢。",
+    "label": "WHAT"
+  },
+  {
+    "text": "不要暴露真实错误堆栈到前端，感觉很不专业。",
+    "label": "WHAT"
+  },
+  {
+    "text": "我决定用预渲染技术提升首屏速度，白屏时间太长不能忍。",
+    "label": "WHAT"
+  },
+  {
+    "text": "要求支付模块必须支持微信和支付宝双通道，仅支付宝用户抱怨多。",
+    "label": "WHAT"
+  },
+  {
+    "text": "希望所有接口遵循RESTful风格，动词满天飞的URL看着乱。",
+    "label": "WHAT"
+  },
+  {
+    "text": "改用懒加载路由，一次性加载首屏太重了受不了。",
+    "label": "WHAT"
+  },
+  {
+    "text": "我倾向用sass而不是less，感觉sass功能更强更流行。",
+    "label": "WHAT"
+  },
+  {
+    "text": "决定将核心业务逻辑抽取为独立的npm包，方便复用。",
+    "label": "WHAT"
+  },
+  {
+    "text": "不要使用alert弹窗，改用模态框提示，alert太丑太生硬。",
+    "label": "WHAT"
+  },
+  {
+    "text": "要求每个接口必须定义清晰的请求和响应DTO，不喜欢map传来传去。",
+    "label": "WHAT"
+  },
+  {
+    "text": "我选择sonarQube做代码质量检查，sonarLint不够全面。",
+    "label": "WHAT"
+  },
+  {
+    "text": "希望缓存采用多级策略：本地热点缓存->redis->DB。",
+    "label": "WHAT"
+  },
+  {
+    "text": "所有定时任务用XXL-JOB统一调度，别用Linux cron分散管理。",
+    "label": "WHAT"
+  },
+  {
+    "text": "不要使用iframe嵌套外部页面，样式很难统一，感觉很土。",
+    "label": "WHAT"
+  },
+  {
+    "text": "我要求用户登录后刷新token，不要让用户频繁重新登录。",
+    "label": "WHAT"
+  },
+  {
+    "text": "选择将图片处理交给Cloudinary，自己搭转换服务太费劲。",
+    "label": "WHAT"
+  },
+  {
+    "text": "希望错误日志发送到企业微信通知，出问题能马上知道。",
+    "label": "WHAT"
+  },
+  {
+    "text": "决定用Zustand替代Redux，Redux模板代码太多了受不了。",
+    "label": "WHAT"
+  },
+  {
+    "text": "不要用短链接，URI长度无所谓，短链接有安全隐患。",
+    "label": "WHAT"
+  },
+  {
+    "text": "我倾向用avif格式替代jpg/png，压缩率高太多了。",
+    "label": "WHAT"
+  },
+  {
+    "text": "要求数据库连接串加密存储，明文摆着看着心慌。",
+    "label": "WHAT"
+  },
+  {
+    "text": "所有枚举字段在数据库存数字，前端转义，存中文太占空间。",
+    "label": "WHAT"
+  },
+  {
+    "text": "希望CI流水线加入自动化单元测试，不通过禁止合并。",
+    "label": "WHAT"
+  },
+  {
+    "text": "选择Next.js的静态生成，客户端渲染SEO太差了不喜欢。",
+    "label": "WHAT"
+  },
+  {
+    "text": "不要用浏览器本地存储敏感数据，用httpOnly cookie更安全。",
+    "label": "WHAT"
+  },
+  {
+    "text": "我决定采用领域驱动设计划分模块，贫血模型扩展性太差。",
+    "label": "WHAT"
+  },
+  {
+    "text": "要求在请求头添加请求ID，便于全链路追踪。",
+    "label": "WHAT"
+  },
+  {
+    "text": "选择FastAPI替代Django，觉得异步性能更好。",
+    "label": "WHAT"
+  },
+  {
+    "text": "希望前端表单支持自动保存草稿，突然关闭会丢失数据很难受。",
+    "label": "WHAT"
+  },
+  {
+    "text": "不要使用表关联查询，全部改成单表查询加程序拼接，复杂查询太慢了。",
+    "label": "WHAT"
+  },
+  {
+    "text": "我要用Nginx做反向代理和负载均衡，直连单机不放心。",
+    "label": "WHAT"
+  },
+  {
+    "text": "决定废弃旧版接口/v1，统一升级到/v2，不愿维护两套。",
+    "label": "WHAT"
+  },
+  {
+    "text": "所有配置文件必须加注释，不然看不懂为什么这么配。",
+    "label": "WHAT"
+  },
+  {
+    "text": "我倾向于用gRPC做内部服务通信，REST Overhead太高。",
+    "label": "WHAT"
+  },
+  {
+    "text": "希望增加IP白名单访问限制，避免恶意扫描。",
+    "label": "WHAT"
+  },
+  {
+    "text": "不要使用CDN的外部css，打包到本地，担心CDN不稳定。",
+    "label": "WHAT"
+  },
+  {
+    "text": "我要求使用Kubernetes部署应用，方便弹性伸缩。",
+    "label": "WHAT"
+  },
+  {
+    "text": "选择React Hook Form处理表单，Formik太繁琐不爱用。",
+    "label": "WHAT"
+  },
+  {
+    "text": "希望所有的枚举值都有国际化映射，别直接展示英文键。",
+    "label": "WHAT"
+  },
+  {
+    "text": "决定日志级别动态可调，线上排查需要debug日志。",
+    "label": "WHAT"
+  },
+  {
+    "text": "不要用nginx默认错误页，自定义统一的错误页面。",
+    "label": "WHAT"
+  },
+  {
+    "text": "我倾向使用MongoDB存非结构化日志，MySQL存日志太笨重。",
+    "label": "WHAT"
+  },
+  {
+    "text": "要求API返回的时间格式统一为ISO8601，方便前端解析。",
+    "label": "WHAT"
+  },
+  {
+    "text": "所有第三方依赖必须锁定版本，自动升级可能导致不稳定。",
+    "label": "WHAT"
+  },
+  {
+    "text": "希望提供数据导出excel功能，CSV乱码问题太多。",
+    "label": "WHAT"
+  },
+  {
+    "text": "选择Serverless架构部署爬虫，按需执行省钱。",
+    "label": "WHAT"
+  },
+  {
+    "text": "不要在前端拼接SQL，所有查询走接口，很危险。",
+    "label": "WHAT"
+  },
+  {
+    "text": "我决定将用户会话存储到Redis集中管理，内存存储重启就丢。",
+    "label": "WHAT"
+  },
+  {
+    "text": "要求支持邮件通知功能，关键操作必须发邮件确认。",
+    "label": "WHAT"
+  },
+  {
+    "text": "希望列表页面采用虚拟滚动，数据量大时滚动卡顿受不了。",
+    "label": "WHAT"
+  },
+  {
+    "text": "不要使用window.location跳转，用路由跳转保持SPA体验。",
+    "label": "WHAT"
+  },
+  {
+    "text": "我倾向于用pnpm代替npm，安装依赖快很多。",
+    "label": "WHAT"
+  },
+  {
+    "text": "选择webrtc实现视频通话，原先的RTMP延时太高不满意。",
+    "label": "WHAT"
+  },
+  {
+    "text": "要求前端组件库统一用element-plus，混用多种库风格不统一。",
+    "label": "WHAT"
+  },
+  {
+    "text": "希望自动生成接口文档，手动维护太累了且常不同步。",
+    "label": "WHAT"
+  },
+  {
+    "text": "不要在生产环境开启debug模式，会泄露敏感信息，心里不安。",
+    "label": "WHAT"
+  }
+]

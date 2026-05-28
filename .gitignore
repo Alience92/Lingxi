@@ -11,3 +11,4 @@ dist/
 tools/two-stage-output/*.onnx
 tools/encoder-output/
 
+tools/clean-model-output/
