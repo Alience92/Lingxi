@@ -253,7 +253,7 @@ async function main() {
 
         for (const frag of recentFrags) {
           try {
-            const slm = await classifyChannel(frag.summary);
+            const slm = await classifyChannel(frag.summary, fragmentationKey, fragmentationBaseURL);
             recordComparison(frag.summary, slm, { channel: frag.llm_channel });
             const match = slm.channel === frag.llm_channel ? 1 : 0;
             if (match) batchMatches++;

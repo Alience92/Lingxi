@@ -1,6 +1,6 @@
 // Fragment channel classifier: two-stage (encoder → LLM fallback) with shadow mode
-import { classify } from "./index.js";
 import { classify as encoderClassify } from "./encoder.js";
+import { classifyFallback } from "./fallback.js";
 
 const VALID_CHANNELS = new Set(["WHAT", "FEEL", "WHO", "WHERE"]);
 
@@ -25,41 +25,19 @@ const MAX_COMPARISONS = 500;
 
 const LOW_CONFIDENCE_THRESHOLD = 0.6;
 
-// Boundary samples for FEEL vs WHAT disambiguation (few-shot prompt)
-const BOUNDARY_SAMPLES = [
-  { text: "这个方案还需要细化一下", label: "WHAT" },
-  { text: "你说的不对，我之前不是这个意思", label: "FEEL" },
-  { text: "帮我给这个函数加个重试逻辑", label: "WHAT" },
-  { text: "你理解错了我的需求", label: "FEEL" },
-  { text: "上次你改的那个bug又出现了", label: "FEEL" },
-];
-
-function buildFallbackPrompt(text: string): string {
-  const examples = BOUNDARY_SAMPLES.map(
-    (e) => `"${e.text}" → ${e.label}`
-  ).join("\n");
-
-  return `分类通道(只输出WHAT/FEEL/WHO/WHERE中的一个):
-WHAT=实质决策/方案/需求 FEEL=用户对AI的情绪反馈 WHO=涉及人物/角色 WHERE=文件/项目/工具
-
-示例:
-${examples}
-
-"${text.slice(0, 300)}"
-通道:`;
-}
-
 export async function classifyChannel(
   text: string,
+  fallbackApiKey?: string,
+  fallbackBaseURL?: string,
 ): Promise<ClassificationResult> {
   const t0 = Date.now();
 
-  // Stage 1: Try ONNX encoder first (fast)
+  // Stage 1: ONNX encoder (fast, always available)
   let encoderResult: { label: string; confidence: number; stage: string } | null = null;
   try {
     encoderResult = await encoderClassify(text);
   } catch {
-    // Encoder unavailable — fall through to LLM
+    // Encoder unavailable — fall through
   }
 
   if (encoderResult && encoderResult.confidence >= LOW_CONFIDENCE_THRESHOLD) {
@@ -74,23 +52,30 @@ export async function classifyChannel(
     };
   }
 
-  // Stage 2: Low confidence — fall back to LLM few-shot
+  // Stage 2: Low confidence — LLM few-shot fallback (GPT-reviewed prompt)
   const encoderChannel = encoderResult?.label ?? "WHAT";
   const encoderConfidence = encoderResult?.confidence ?? 0;
-  let llmChannel = encoderChannel;
+  let finalChannel = encoderChannel;
+  let finalConfidence = encoderConfidence;
+  let source: ClassificationResult["source"] = encoderResult?.stage === "s1" ? "encoder+s1" : "encoder+s2";
 
-  try {
-    const prompt = buildFallbackPrompt(text);
-    const llmRaw = await classify(prompt, { temperature: 0.1, maxTokens: 8 });
-    llmChannel = VALID_CHANNELS.has(llmRaw) ? llmRaw : encoderChannel;
-  } catch {
-    // LLM failed — keep encoder result
+  if (fallbackApiKey && fallbackApiKey.length > 10) {
+    try {
+      const fbResult = await classifyFallback(text, fallbackApiKey, fallbackBaseURL);
+      if (VALID_CHANNELS.has(fbResult.label)) {
+        finalChannel = fbResult.label;
+        finalConfidence = fbResult.confidence;
+        source = "llm-fallback";
+      }
+    } catch {
+      // LLM fallback failed — keep encoder result
+    }
   }
 
   const latencyMs = Date.now() - t0;
 
-  // Record disagreement to DB shadow_comparisons
-  if (encoderResult && llmChannel !== encoderChannel) {
+  // Record disagreement to DB shadow_comparisons for later analysis
+  if (encoderResult && finalChannel !== encoderChannel) {
     try {
       const { getDb } = await import("../db/connection.js");
       const db = getDb();
@@ -102,7 +87,7 @@ export async function classifyChannel(
         `fallback-${Date.now()}`,
         text.slice(0, 200),
         encoderChannel,
-        llmChannel,
+        finalChannel,
         "macbert-2stage+fallback",
         0,
         latencyMs,
@@ -113,15 +98,12 @@ export async function classifyChannel(
     }
   }
 
-  const isFromFallback = encoderResult === null || encoderResult.confidence < LOW_CONFIDENCE_THRESHOLD;
-  const confidence = isFromFallback ? 0.65 : encoderConfidence;
-
   return {
-    channel: llmChannel,
-    confidence,
-    modelRaw: llmChannel,
+    channel: finalChannel,
+    confidence: finalConfidence,
+    modelRaw: finalChannel,
     latencyMs,
-    source: isFromFallback ? "llm-fallback" : "encoder+s2",
+    source,
   };
 }
 
