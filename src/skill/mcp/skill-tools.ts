@@ -155,6 +155,21 @@ export function buildToolHandlers(engine: MemoryEngine) {
       };
     },
 
+    relationship_profile_get(params: { projectId: string; userId?: string }) {
+      const profile = engine.getRelationshipProfile(params.projectId, params.userId || "default") as Record<string, unknown>;
+      const levelLabels: Record<string, string> = { L1: "初识", L2: "熟悉", L3: "默契" };
+      return {
+        trustLevel: profile.trustLevel,
+        trustLabel: levelLabels[profile.trustLevel as string] || "未知",
+        frictionScore: profile.frictionScore,
+        autonomyBudget: profile.autonomyBudget,
+        repairNeeded: profile.repairNeeded,
+        signals7d: profile.signals7d,
+        windowStats: profile.windowStats,
+        updatedAt: profile.updatedAt,
+      };
+    },
+
     async memory_recall_event(params: { fragmentId: string }) {
       const event = buildMemoryEvent(params.fragmentId);
       if (!event) return { error: "Fragment not found" };

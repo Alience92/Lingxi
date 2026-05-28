@@ -212,6 +212,19 @@ async function main() {
     }
   }
 
+  // Step 3.5: Relationship profile maintenance — decay signals + re-evaluate trust
+  let relationshipChanged = false;
+  try {
+    engine.decayRelationshipSignals(projectId);
+    const trustResult = engine.evaluateTrustLevel(projectId);
+    if (trustResult.changed) {
+      relationshipChanged = true;
+      console.error(`[AgentMemory] dreaming: trust level ${trustResult.oldLevel} → ${trustResult.newLevel}`);
+    }
+  } catch (e) {
+    console.error(`[AgentMemory] dreaming: relationship profile failed:`, (e as Error).message?.slice(0, 80));
+  }
+
   // Step 4: Update last dreaming timestamp
   db.prepare("UPDATE projects SET last_dreaming_at = ? WHERE id = ?").run(Date.now(), projectId);
 
@@ -219,6 +232,7 @@ async function main() {
   if (stats.archived + stats.cooled > 0) parts.push(`清理 ${stats.archived + stats.cooled} 条过期记忆`);
   if (distilled > 0) parts.push(`蒸馏 ${distilled} 条 L0 规则`);
   if (criteriaRows.length > 0) parts.push(`蒸馏 ${criteriaRows.length} 条决策判据`);
+  if (relationshipChanged) parts.push("关系档案已更新");
   if (parts.length === 0) parts.push("记忆库状态良好");
   console.error(`[AgentMemory] 后台 Dreaming 完成: ${parts.join("，")}。`);
 }

@@ -163,6 +163,18 @@ const TOOL_DEFINITIONS = [
     },
   },
   {
+    name: "relationship_profile_get",
+    description: "Get the current relationship profile between user and agent — friction score, autonomy budget, trust level, and recent signal counters.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        projectId: { type: "string", description: "Project identifier" },
+        userId: { type: "string", description: "Optional user identifier (default: 'default')" },
+      },
+      required: ["projectId"],
+    },
+  },
+  {
     name: "memory_bootstrap",
     description: "First-run setup: scan existing memory files, estimate token cost, and optionally batch-import all memories as searchable fragments. Call without confirm to preview, then call with confirm='Y' to execute.",
     inputSchema: {

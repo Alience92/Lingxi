@@ -308,6 +308,29 @@ async function main() {
     }
   }
 
+  // Feed FEEL-channel fragments into relationship profile
+  if (totalFragments > 0 && engine) {
+    try {
+      const feelFrags = db.prepare(`
+        SELECT fa.label, fa.weight FROM fragment_anchors fa
+        JOIN fragments f ON f.id = fa.fragment_id
+        WHERE f.project_id = ? AND fa.channel = 'FEEL'
+          AND f.created_at > ? AND fa.weight >= 30
+        ORDER BY fa.weight DESC LIMIT 10
+      `).all(projectId, Date.now() - 60 * 60 * 1000) as Array<{ label: string; weight: number }>;
+
+      for (const ff of feelFrags) {
+        try {
+          engine.recordFeelEvent(projectId, ff.label, ff.weight);
+        } catch {}
+      }
+      if (feelFrags.length > 0) {
+        const profile = engine.getRelationshipProfile(projectId);
+        console.error(`[AgentMemory] 关系档案: friction=${profile.frictionScore} autonomy=${profile.autonomyBudget} level=${profile.trustLevel}`);
+      }
+    } catch {}
+  }
+
   // Chain dreaming if threshold met
   const newFragments = db.prepare(
     "SELECT COUNT(*) as cnt FROM fragments WHERE project_id = ? AND created_at > ? AND retrieval_state IN ('active','warm') AND asset_state != 'user_deleted'"

@@ -179,6 +179,7 @@ CREATE TABLE IF NOT EXISTS relationship_profiles (
   friction_score REAL NOT NULL DEFAULT 0.0,
   repair_needed INTEGER NOT NULL DEFAULT 0,
   autonomy_budget REAL NOT NULL DEFAULT 0.0,
+  profile_data TEXT,
   updated_at INTEGER NOT NULL,
   PRIMARY KEY (user_id, project_id)
 );

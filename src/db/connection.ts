@@ -239,10 +239,17 @@ function ensureSchemaMigrations(database: Database.Database): void {
         friction_score REAL NOT NULL DEFAULT 0.0,
         repair_needed INTEGER NOT NULL DEFAULT 0,
         autonomy_budget REAL NOT NULL DEFAULT 0.0,
+        profile_data TEXT,
         updated_at INTEGER NOT NULL,
         PRIMARY KEY (user_id, project_id)
       )
     `);
+  }
+
+  // Migration 16b: profile_data column for storing signals7d + windowStats JSON
+  const rpCols = database.prepare(`PRAGMA table_info(relationship_profiles)`).all() as Array<{ name: string }>;
+  if (!rpCols.some((col) => col.name === "profile_data")) {
+    database.exec(`ALTER TABLE relationship_profiles ADD COLUMN profile_data TEXT`);
   }
 
   // Migration 17: memory_repair_jobs table

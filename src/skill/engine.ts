@@ -300,6 +300,232 @@ export class MemoryEngine {
     return result;
   }
 
+  // ── Relationship Profile (P1) ─────────────────────
+
+  private defaultProfileData(): Record<string, unknown> {
+    return {
+      signals7d: { correction: 0, frustration: 0, urgency: 0, confirmation: 0 },
+      windowStats: { totalInteractions: 0, acceptedAutonomy: 0, correctionCount: 0, highSeverityErrors: 0 },
+      lastUpgradeAt: 0,
+      repairStartedAt: 0,
+    };
+  }
+
+  getRelationshipProfile(projectId: string, userId: string = "default"): Record<string, unknown> {
+    const db = getDb();
+    const row = db.prepare(
+      "SELECT * FROM relationship_profiles WHERE user_id = ? AND project_id = ?"
+    ).get(userId, projectId) as Record<string, unknown> | undefined;
+
+    if (!row) {
+      const now = Date.now();
+      const data = this.defaultProfileData();
+      db.prepare(
+        "INSERT INTO relationship_profiles (user_id, project_id, trust_level, friction_score, repair_needed, autonomy_budget, profile_data, updated_at) VALUES (?, ?, 'L1', 0, 0, 0, ?, ?)"
+      ).run(userId, projectId, JSON.stringify(data), now);
+      return {
+        userId, projectId, trustLevel: "L1", frictionScore: 0,
+        repairNeeded: false, autonomyBudget: 0, ...data, updatedAt: now,
+      };
+    }
+
+    const data = JSON.parse((row.profile_data as string) || "{}");
+    return {
+      userId: row.user_id, projectId: row.project_id,
+      trustLevel: row.trust_level, frictionScore: row.friction_score,
+      repairNeeded: !!(row.repair_needed), autonomyBudget: row.autonomy_budget,
+      ...data, updatedAt: row.updated_at,
+    };
+  }
+
+  /** Called on every FEEL classification — updates friction & autonomy counters */
+  recordFeelEvent(
+    projectId: string,
+    label: string,
+    weight: number,
+    userId: string = "default",
+  ): Record<string, unknown> {
+    const db = getDb();
+    const profile = this.getRelationshipProfile(projectId, userId) as Record<string, unknown>;
+    const signals = (profile.signals7d as Record<string, number>) || { correction: 0, frustration: 0, urgency: 0, confirmation: 0 };
+    const window = (profile.windowStats as Record<string, number>) || { totalInteractions: 0, acceptedAutonomy: 0, correctionCount: 0, highSeverityErrors: 0 };
+    let frictionDelta = 0;
+    let autonomyDelta = 0;
+
+    window.totalInteractions = (window.totalInteractions || 0) + 1;
+
+    // Detect FEEL sub-type from label text
+    const lbl = (label || "").toLowerCase();
+    const isCorrection = /纠正|不对|错了|错误|删了|改|不要|不行|不好|不该|重做|撤销|回滚/i.test(lbl);
+    const isFrustration = /又|总是|一直|每次|老是|永远|从来|服了|烦|够了/i.test(lbl);
+    const isConfirmation = /对|好|行|可以|正确|没错|是的|好的|ok|确认|认可|同意|继续/i.test(lbl);
+    const isUrgency = /快|赶紧|马上|立刻|急|紧急|现在/i.test(lbl);
+    const isHighSeverity = weight >= 80;
+
+    if (isConfirmation) {
+      signals.confirmation = (signals.confirmation || 0) + 1;
+      frictionDelta = -1;
+      autonomyDelta = +1;
+      window.acceptedAutonomy = (window.acceptedAutonomy || 0) + 1;
+    } else if (isCorrection || isFrustration) {
+      if (isFrustration) {
+        signals.frustration = (signals.frustration || 0) + 1;
+        frictionDelta = +4;
+        autonomyDelta = -2;
+      } else {
+        signals.correction = (signals.correction || 0) + 1;
+        frictionDelta = +2;
+        autonomyDelta = -2;
+      }
+      window.correctionCount = (window.correctionCount || 0) + 1;
+      if (isHighSeverity) {
+        frictionDelta = +6;
+        autonomyDelta = -4;
+        window.highSeverityErrors = (window.highSeverityErrors || 0) + 1;
+      }
+    } else if (isUrgency) {
+      signals.urgency = (signals.urgency || 0) + 1;
+    } else {
+      // Generic FEEL — slight negative pressure (unclear feedback = mild friction)
+      frictionDelta = +1;
+    }
+
+    // Apply deltas with clamping
+    let newFriction = Math.max(0, Math.min(10, (profile.frictionScore as number) + frictionDelta));
+    let newAutonomy = Math.max(0, Math.min(10, (profile.autonomyBudget as number) + autonomyDelta));
+
+    // Autonomy cap when friction is high
+    if (newFriction >= 6) {
+      newAutonomy = Math.min(newAutonomy, 10 - newFriction / 2);
+    }
+
+    // Check repairNeeded
+    let repairNeeded = !!(profile.repairNeeded);
+    const repairStartedAt = (profile.repairStartedAt as number) || 0;
+    if (newFriction >= 8 && !repairNeeded) {
+      repairNeeded = true;
+      profile.repairStartedAt = Date.now();
+    } else if (newFriction < 4 && repairNeeded) {
+      repairNeeded = false;
+      profile.repairStartedAt = 0;
+    }
+
+    // Persist
+    const now = Date.now();
+    const profileData = JSON.stringify({
+      signals7d: signals,
+      windowStats: window,
+      lastUpgradeAt: profile.lastUpgradeAt || 0,
+      repairStartedAt: repairNeeded ? (repairStartedAt || now) : 0,
+    });
+
+    db.prepare(`
+      UPDATE relationship_profiles SET
+        trust_level = ?, friction_score = ?, repair_needed = ?,
+        autonomy_budget = ?, profile_data = ?, updated_at = ?
+      WHERE user_id = ? AND project_id = ?
+    `).run(
+      profile.trustLevel, newFriction, repairNeeded ? 1 : 0,
+      newAutonomy, profileData, now, userId, projectId,
+    );
+
+    return this.getRelationshipProfile(projectId, userId);
+  }
+
+  /** Daily signal decay: ×0.85 on all 7d counters */
+  decayRelationshipSignals(projectId: string): number {
+    const db = getDb();
+    const rows = db.prepare(
+      "SELECT user_id, project_id, profile_data FROM relationship_profiles WHERE project_id = ?"
+    ).all(projectId) as Array<{ user_id: string; project_id: string; profile_data: string }>;
+
+    let updated = 0;
+    for (const row of rows) {
+      const data = JSON.parse(row.profile_data || "{}");
+      const signals = data.signals7d || {};
+      for (const k of ["correction", "frustration", "urgency", "confirmation"]) {
+        signals[k] = Math.round((signals[k] || 0) * 0.85 * 100) / 100;
+      }
+      data.signals7d = signals;
+      db.prepare(
+        "UPDATE relationship_profiles SET profile_data = ?, updated_at = ? WHERE user_id = ? AND project_id = ?"
+      ).run(JSON.stringify(data), Date.now(), row.user_id, row.project_id);
+      updated++;
+    }
+    return updated;
+  }
+
+  /** Evaluate trustLevel upgrade/downgrade based on sliding window */
+  evaluateTrustLevel(projectId: string, userId: string = "default"): { oldLevel: string; newLevel: string; changed: boolean } {
+    const db = getDb();
+    const profile = this.getRelationshipProfile(projectId, userId) as Record<string, unknown>;
+    const oldLevel = profile.trustLevel as string;
+    const window = (profile.windowStats as Record<string, number>) || {};
+    const friction = profile.frictionScore as number;
+    const repairNeeded = !!(profile.repairNeeded);
+    const lastUpgradeAt = (profile.lastUpgradeAt as number) || 0;
+    const now = Date.now();
+
+    // Downgrade checks (highest priority)
+    if (repairNeeded && (now - ((profile.repairStartedAt as number) || now)) > 48 * 60 * 60 * 1000) {
+      const newLevel = oldLevel === "L3" ? "L2" : "L1";
+      if (newLevel !== oldLevel) {
+        db.prepare("UPDATE relationship_profiles SET trust_level = ?, updated_at = ? WHERE user_id = ? AND project_id = ?").run(newLevel, now, userId, projectId);
+        return { oldLevel, newLevel, changed: true };
+      }
+    }
+
+    // High-severity errors → immediate L1
+    if ((window.highSeverityErrors || 0) > 0 && oldLevel !== "L1") {
+      db.prepare("UPDATE relationship_profiles SET trust_level = 'L1', updated_at = ? WHERE user_id = ? AND project_id = ?").run(now, userId, projectId);
+      return { oldLevel, newLevel: "L1", changed: true };
+    }
+
+    // 2 consecutive high-severity corrections in window → drop one level
+    if ((window.highSeverityErrors || 0) >= 2 && oldLevel !== "L1") {
+      const newLevel = oldLevel === "L3" ? "L2" : "L1";
+      db.prepare("UPDATE relationship_profiles SET trust_level = ?, updated_at = ? WHERE user_id = ? AND project_id = ?").run(newLevel, now, userId, projectId);
+      return { oldLevel, newLevel, changed: true };
+    }
+
+    // Upgrade cooldown: 7 days
+    if (now - lastUpgradeAt < 7 * 24 * 60 * 60 * 1000) {
+      return { oldLevel, newLevel: oldLevel, changed: false };
+    }
+
+    const total = window.totalInteractions || 0;
+    const accepted = window.acceptedAutonomy || 0;
+    const corrections = window.correctionCount || 0;
+    const correctionRate = total > 0 ? corrections / total : 1;
+
+    // L1 → L2 (14-day window criteria simplified: since we don't track per-day,
+    // we rely on the accumulated window stats which get reset on upgrade)
+    if (oldLevel === "L1" && accepted >= 5 && correctionRate < 0.2 && friction < 6 && !repairNeeded) {
+      db.prepare("UPDATE relationship_profiles SET trust_level = 'L2', updated_at = ? WHERE user_id = ? AND project_id = ?").run(now, userId, projectId);
+      this._resetWindowStats(projectId, userId);
+      return { oldLevel, newLevel: "L2", changed: true };
+    }
+
+    // L2 → L3
+    if (oldLevel === "L2" && accepted >= 15 && correctionRate < 0.1 && (window.highSeverityErrors || 0) === 0 && !repairNeeded) {
+      db.prepare("UPDATE relationship_profiles SET trust_level = 'L3', updated_at = ? WHERE user_id = ? AND project_id = ?").run(now, userId, projectId);
+      this._resetWindowStats(projectId, userId);
+      return { oldLevel, newLevel: "L3", changed: true };
+    }
+
+    return { oldLevel, newLevel: oldLevel, changed: false };
+  }
+
+  private _resetWindowStats(projectId: string, userId: string): void {
+    const db = getDb();
+    const row = db.prepare("SELECT profile_data FROM relationship_profiles WHERE user_id = ? AND project_id = ?").get(userId, projectId) as { profile_data: string } | undefined;
+    if (!row) return;
+    const data = JSON.parse(row.profile_data || "{}");
+    data.windowStats = { totalInteractions: 0, acceptedAutonomy: 0, correctionCount: 0, highSeverityErrors: 0 };
+    data.lastUpgradeAt = Date.now();
+    db.prepare("UPDATE relationship_profiles SET profile_data = ? WHERE user_id = ? AND project_id = ?").run(JSON.stringify(data), userId, projectId);
+  }
+
   getConstitutionalFragments(projectId: string): Array<{ fragmentId: string; label: string; weight: number }> {
     const db = getDb();
     return db.prepare(`
