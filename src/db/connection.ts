@@ -321,7 +321,7 @@ function ensureSchemaMigrations(database: Database.Database): void {
     database.exec(`CREATE INDEX IF NOT EXISTS idx_interaction_stream_topic ON interaction_stream(topic_id)`);
   }
 
-  // Migration 22: shadow_comparisons table for SLM vs LLM classification benchmarking
+  // Migration 22: shadow_comparisons table for encoder vs LLM classification benchmarking
   const hasShadowComparisons = database.prepare(`SELECT name FROM sqlite_master WHERE type='table' AND name='shadow_comparisons'`).get();
   if (!hasShadowComparisons) {
     database.exec(`
@@ -339,6 +339,14 @@ function ensureSchemaMigrations(database: Database.Database): void {
       )
     `);
     database.exec(`CREATE INDEX IF NOT EXISTS idx_shadow_comparisons_project ON shadow_comparisons(project_id, created_at)`);
+  }
+
+  // Migration 22b: encoder_label + encoder_confidence columns for separating encoder vs final result
+  const shadowCols = database.prepare(`PRAGMA table_info(shadow_comparisons)`).all() as Array<{ name: string }>;
+  if (!shadowCols.some((col) => col.name === "encoder_label")) {
+    database.exec(`ALTER TABLE shadow_comparisons ADD COLUMN encoder_label TEXT`);
+    database.exec(`ALTER TABLE shadow_comparisons ADD COLUMN encoder_confidence REAL`);
+    database.exec(`ALTER TABLE shadow_comparisons ADD COLUMN fallback_used INTEGER NOT NULL DEFAULT 0`);
   }
 
   // Migration 23: query_events table for accurate zero-hit rate tracking

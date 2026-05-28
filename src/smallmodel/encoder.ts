@@ -6,7 +6,8 @@ import * as fs from "fs";
 import * as path from "path";
 
 const MAX_LEN = 128;
-const MODEL_DIR = path.join(import.meta.dirname, "../../tools/two-stage-output");
+const MODEL_DIR = process.env.AGENTMEMORY_MODEL_DIR
+  || path.join(import.meta.dirname, "../../tools/two-stage-output");
 
 // ── WordPiece Tokenizer ──────────────────────────────────────
 let _vocab: Map<string, number> | null = null;

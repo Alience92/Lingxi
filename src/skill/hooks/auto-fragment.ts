@@ -242,12 +242,15 @@ async function main() {
         for (const frag of recentFrags) {
           try {
             const t0 = Date.now();
-            let result = await classify(frag.summary);
-            let lat = Date.now() - t0;
+            const encoderResult = await classify(frag.summary);
+            const encoderLabel = encoderResult.label;
+            const encoderConf = encoderResult.confidence;
+            let finalLabel = encoderLabel;
             let modelName = "macbert-2stage";
+            let fallbackUsedFlag = 0;
 
             // Low-confidence fallback → LLM few-shot
-            if (result.confidence < 0.6 && fragmentationKey && fragmentationKey.length > 10) {
+            if (encoderResult.confidence < 0.6 && fragmentationKey && fragmentationKey.length > 10) {
               if (!classifyFallback) {
                 const fb = await import("../../smallmodel/fallback.js");
                 classifyFallback = (text: string) =>
@@ -256,27 +259,30 @@ async function main() {
               try {
                 const fbResult = await classifyFallback(frag.summary);
                 const fbLabel = fbResult.label as "WHAT" | "FEEL" | "WHERE" | "WHO";
-                result = { label: fbLabel, confidence: fbResult.confidence, stage: "s2" as const };
+                finalLabel = fbLabel;
                 modelName = "macbert-2stage+fallback";
-                lat = Date.now() - t0;
+                fallbackUsedFlag = 1;
                 fallbackUsed++;
               } catch {}
             }
 
+            const lat = Date.now() - t0;
             encLatency += lat;
-            const match = result.label === frag.llm_channel ? 1 : 0;
+            const match = finalLabel === frag.llm_channel ? 1 : 0;
             if (match) encMatches++;
             encCompared++;
 
             db.prepare(`
               INSERT OR REPLACE INTO shadow_comparisons
-              (id, project_id, fragment_id, summary_preview, slm_channel, llm_channel, slm_model, match_result, latency_ms, created_at)
-              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+              (id, project_id, fragment_id, summary_preview, slm_channel, llm_channel, slm_model, match_result, latency_ms, encoder_label, encoder_confidence, fallback_used, created_at)
+              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             `).run(
               `enc-${encNow}-${encCompared}`,
               projectId, frag.id, frag.summary.slice(0, 200),
-              result.label, frag.llm_channel,
-              modelName, match, lat, encNow,
+              finalLabel, frag.llm_channel,
+              modelName, match, lat,
+              encoderLabel, encoderConf, fallbackUsedFlag,
+              encNow,
             );
           } catch {}
         }

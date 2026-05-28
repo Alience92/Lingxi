@@ -241,6 +241,9 @@ CREATE TABLE IF NOT EXISTS shadow_comparisons (
   slm_model TEXT NOT NULL,
   match_result INTEGER NOT NULL,
   latency_ms INTEGER NOT NULL,
+  encoder_label TEXT,
+  encoder_confidence REAL,
+  fallback_used INTEGER NOT NULL DEFAULT 0,
   created_at INTEGER NOT NULL
 );
 

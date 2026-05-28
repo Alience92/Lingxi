@@ -1,5 +1,6 @@
-// Few-shot channel classification benchmark
+// Few-shot channel classification benchmark (dev tool — requires Ollama)
 // Retrieves similar labeled examples from training set, injects into prompt
+// Not part of production path; used for offline comparison against encoder
 import * as fs from "node:fs";
 import { openDb, getDb } from "../dist/db/connection.js";
 

@@ -52,6 +52,15 @@ function getClient(apiKey: string, baseURL: string): OpenAI {
   return _clientCache.get(key)!;
 }
 
+// Sanitize and wrap user text for prompt injection prevention
+function sanitizeText(text: string): string {
+  return text
+    .replace(/[{}]/g, "")
+    .replace(/```/g, "")
+    .replace(/\\/g, "\\\\")
+    .slice(0, 300);
+}
+
 export async function classifyFallback(
   text: string,
   apiKey: string,
@@ -60,34 +69,41 @@ export async function classifyFallback(
   const normalizedURL = baseURL.endsWith("/v1") ? baseURL : `${baseURL}/v1`;
   const client = getClient(apiKey, normalizedURL);
 
-  const response = await client.chat.completions.create({
-    model: "deepseek-chat",
-    max_tokens: 80,
-    temperature: 0,
-    messages: [{ role: "user", content: FALLBACK_PROMPT.replace("{text}", text.replace(/[{}]/g, "").slice(0, 300)) }],
-  });
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 10_000);
 
-  const content = (response.choices[0]?.message?.content ?? "").trim();
-
-  // Parse JSON response
   try {
-    const json = JSON.parse(content.replace(/```json|```/g, "").trim());
-    const label = json.label?.toUpperCase();
-    if (["WHAT", "FEEL", "WHERE", "WHO"].includes(label)) {
-      return {
-        label: label as "WHAT" | "FEEL" | "WHERE" | "WHO",
-        confidence: typeof json.confidence === "number" ? json.confidence : 0.8,
-        source: "llm-fallback",
-      };
-    }
-  } catch {}
+    const response = await client.chat.completions.create({
+      model: "deepseek-chat",
+      max_tokens: 80,
+      temperature: 0,
+      messages: [{ role: "user", content: FALLBACK_PROMPT.replace("{text}", sanitizeText(text)) }],
+    }, { signal: controller.signal });
 
-  // Fallback: extract label from text (find last channel word in response)
-  const matches = content.match(/WHAT|FEEL|WHERE|WHO/g);
-  const bestMatch = matches ? matches[matches.length - 1] : null;
-  return {
-    label: (bestMatch ?? "WHAT") as "WHAT" | "FEEL" | "WHERE" | "WHO",
-    confidence: 0.3,
-    source: "llm-fallback",
-  };
+    const content = (response.choices[0]?.message?.content ?? "").trim();
+
+    // Parse JSON response
+    try {
+      const json = JSON.parse(content.replace(/```json|```/g, "").trim());
+      const label = json.label?.toUpperCase();
+      if (["WHAT", "FEEL", "WHERE", "WHO"].includes(label)) {
+        return {
+          label: label as "WHAT" | "FEEL" | "WHERE" | "WHO",
+          confidence: typeof json.confidence === "number" ? json.confidence : 0.8,
+          source: "llm-fallback",
+        };
+      }
+    } catch {}
+
+    // Fallback: extract label from text (find last channel word in response)
+    const matches = content.match(/WHAT|FEEL|WHERE|WHO/g);
+    const bestMatch = matches ? matches[matches.length - 1] : null;
+    return {
+      label: (bestMatch ?? "WHAT") as "WHAT" | "FEEL" | "WHERE" | "WHO",
+      confidence: 0.3,
+      source: "llm-fallback",
+    };
+  } finally {
+    clearTimeout(timer);
+  }
 }

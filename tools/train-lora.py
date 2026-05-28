@@ -195,4 +195,4 @@ with open(os.path.join(OUTPUT_DIR, "metrics.json"), "w") as f:
 print("\nDone! Next steps:")
 print("  1. Merge LoRA: python tools/merge-lora.py")
 print("  2. Convert to GGUF")
-print("  3. Import to Ollama")
+print("  3. Use for local inference (legacy LoRA path — encoder ONNX is production)")

@@ -10,9 +10,26 @@ export interface ClassificationResult {
   modelRaw: string;
   latencyMs: number;
   source: "encoder" | "encoder+s1" | "encoder+s2" | "llm-fallback";
+  /** True when an error forced fallback to defaults (model broken, API down, etc.) */
+  degraded?: boolean;
+  /** Raw encoder label — preserved even when fallback overrides it, for observability */
+  encoderLabel?: string;
+  encoderConfidence?: number;
 }
 
 const LOW_CONFIDENCE_THRESHOLD = 0.6;
+
+// Rate-limit degraded-path logging to once per 5 minutes per error type
+const _degradedLogThrottle = new Map<string, number>();
+
+function warnDegraded(key: string, msg: string): void {
+  const now = Date.now();
+  const last = _degradedLogThrottle.get(key) ?? 0;
+  if (now - last > 300_000) {
+    console.error(`[Classifier] degraded: ${msg}`);
+    _degradedLogThrottle.set(key, now);
+  }
+}
 
 export async function classifyChannel(
   text: string,
@@ -23,10 +40,12 @@ export async function classifyChannel(
 
   // Stage 1: ONNX encoder (fast, always available)
   let encoderResult: { label: string; confidence: number; stage: string } | null = null;
+  let encoderFailed = false;
   try {
     encoderResult = await encoderClassify(text);
   } catch {
-    // Encoder unavailable — fall through
+    encoderFailed = true;
+    warnDegraded("encoder", "ONNX inference failed, using fallback");
   }
 
   if (encoderResult && encoderResult.confidence >= LOW_CONFIDENCE_THRESHOLD) {
@@ -38,15 +57,19 @@ export async function classifyChannel(
       modelRaw: encoderResult.label,
       latencyMs,
       source: encoderResult.stage === "s1" ? "encoder+s1" : "encoder+s2",
+      degraded: encoderFailed,
+      encoderLabel: encoderResult.label,
+      encoderConfidence: encoderResult.confidence,
     };
   }
 
-  // Stage 2: Low confidence — LLM few-shot fallback (GPT-reviewed prompt)
+  // Stage 2: Low confidence — LLM few-shot fallback
   const encoderChannel = encoderResult?.label ?? "WHAT";
   const encoderConfidence = encoderResult?.confidence ?? 0;
   let finalChannel = encoderChannel;
   let finalConfidence = encoderConfidence;
   let source: ClassificationResult["source"] = encoderResult?.stage === "s1" ? "encoder+s1" : "encoder+s2";
+  let fallbackFailed = false;
 
   if (fallbackApiKey && fallbackApiKey.length > 10) {
     try {
@@ -57,7 +80,8 @@ export async function classifyChannel(
         source = "llm-fallback";
       }
     } catch {
-      // LLM fallback failed — keep encoder result
+      fallbackFailed = true;
+      warnDegraded("fallback", "LLM fallback API failed, using encoder result");
     }
   }
 
@@ -69,5 +93,8 @@ export async function classifyChannel(
     modelRaw: finalChannel,
     latencyMs,
     source,
+    degraded: encoderFailed || fallbackFailed,
+    encoderLabel: encoderChannel,
+    encoderConfidence,
   };
 }
