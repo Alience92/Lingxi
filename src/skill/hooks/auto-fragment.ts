@@ -301,6 +301,73 @@ async function main() {
     }
   }
 
+  // Encoder shadow mode: two-stage macbert classifier vs LLM
+  if (totalFragments > 0) {
+    try {
+      const { ensureReady, classify } = await import("../../smallmodel/encoder.js");
+      const encoderReady = await ensureReady();
+
+      if (encoderReady) {
+        const chunkClauses = sessionIds.map(() => "(f.session_id = ? OR f.session_id LIKE ? || '__chunk%')").join(" OR ");
+        const chunkParams: string[] = [];
+        for (const sid of sessionIds) { chunkParams.push(sid, sid); }
+
+        const recentFrags = db.prepare(`
+          SELECT f.id, f.summary,
+            (SELECT fa2.channel FROM fragment_anchors fa2 WHERE fa2.fragment_id = f.id ORDER BY fa2.weight DESC LIMIT 1) as llm_channel
+          FROM fragments f
+          WHERE f.project_id = ? AND (${chunkClauses})
+          LIMIT 50
+        `).all(projectId, ...chunkParams) as Array<{ id: string; summary: string; llm_channel: string }>;
+
+        let encCompared = 0;
+        let encMatches = 0;
+        let encLatency = 0;
+        const encNow = Date.now();
+
+        for (const frag of recentFrags) {
+          try {
+            const t0 = Date.now();
+            const result = await classify(frag.summary);
+            const lat = Date.now() - t0;
+            encLatency += lat;
+            const match = result.label === frag.llm_channel ? 1 : 0;
+            if (match) encMatches++;
+            encCompared++;
+
+            db.prepare(`
+              INSERT OR REPLACE INTO shadow_comparisons
+              (id, project_id, fragment_id, summary_preview, slm_channel, llm_channel, slm_model, match_result, latency_ms, created_at)
+              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            `).run(
+              `enc-${encNow}-${encCompared}`,
+              projectId, frag.id, frag.summary.slice(0, 200),
+              result.label, frag.llm_channel,
+              "macbert-2stage", match, lat, encNow,
+            );
+          } catch {}
+        }
+
+        if (encCompared > 0) {
+          const encMatchRate = (encMatches / encCompared * 100);
+          const encAvgLatency = (encLatency / encCompared);
+
+          const cumStats = db.prepare(`
+            SELECT COUNT(*) as total,
+                   SUM(CASE WHEN match_result = 1 THEN 1 ELSE 0 END) as matches,
+                   AVG(latency_ms) as avgLatency
+            FROM shadow_comparisons WHERE project_id = ? AND slm_model = 'macbert-2stage'
+          `).get(projectId) as { total: number; matches: number; avgLatency: number };
+
+          const cumRate = cumStats.total > 0 ? (cumStats.matches / cumStats.total * 100) : 0;
+          console.error(`[AgentMemory] Encoder影子对比: 本批 ${encCompared} 条 匹配率 ${encMatchRate.toFixed(0)}% 延时 ${encAvgLatency.toFixed(0)}ms | 累计 ${cumStats.total} 条 匹配率 ${cumRate.toFixed(0)}%`);
+        }
+      }
+    } catch (e) {
+      console.error(`[AgentMemory] Encoder影子对比失败:`, (e as Error).message?.slice(0, 80));
+    }
+  }
+
   // Chain dreaming if threshold met
   const newFragments = db.prepare(
     "SELECT COUNT(*) as cnt FROM fragments WHERE project_id = ? AND created_at > ? AND status = 'active'"
