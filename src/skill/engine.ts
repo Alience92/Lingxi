@@ -368,20 +368,23 @@ export class MemoryEngine {
       autonomyDelta = +1;
       window.acceptedAutonomy = (window.acceptedAutonomy || 0) + 1;
     } else if (isCorrection || isFrustration) {
-      if (isFrustration) {
-        signals.frustration = (signals.frustration || 0) + 1;
-        frictionDelta = +4;
-        autonomyDelta = -2;
-      } else {
-        signals.correction = (signals.correction || 0) + 1;
-        frictionDelta = +2;
-        autonomyDelta = -2;
-      }
-      window.correctionCount = (window.correctionCount || 0) + 1;
+      // Constitutional fragments (weight ≥ 80) represent distilled rules,
+      // not user emotional feedback. Skip friction penalties for them.
       if (isHighSeverity) {
-        frictionDelta = +6;
-        autonomyDelta = -4;
-        window.highSeverityErrors = (window.highSeverityErrors || 0) + 1;
+        signals.confirmation = (signals.confirmation || 0) + 1;
+        frictionDelta = 0;
+        autonomyDelta = 0;
+      } else {
+        if (isFrustration) {
+          signals.frustration = (signals.frustration || 0) + 1;
+          frictionDelta = +4;
+          autonomyDelta = -2;
+        } else {
+          signals.correction = (signals.correction || 0) + 1;
+          frictionDelta = +2;
+          autonomyDelta = -2;
+        }
+        window.correctionCount = (window.correctionCount || 0) + 1;
       }
     } else if (isUrgency) {
       signals.urgency = (signals.urgency || 0) + 1;
@@ -432,13 +435,15 @@ export class MemoryEngine {
     return this.getRelationshipProfile(projectId, userId);
   }
 
-  /** Daily signal decay: ×0.85 on all 7d counters */
+  /** Daily signal decay: ×0.85 on signals, ×0.9 on friction, + repair auto-resolution */
   decayRelationshipSignals(projectId: string): number {
     const db = getDb();
     const rows = db.prepare(
-      "SELECT user_id, project_id, profile_data FROM relationship_profiles WHERE project_id = ?"
-    ).all(projectId) as Array<{ user_id: string; project_id: string; profile_data: string }>;
+      "SELECT user_id, project_id, friction_score, repair_needed, profile_data FROM relationship_profiles WHERE project_id = ?"
+    ).all(projectId) as Array<{ user_id: string; project_id: string; friction_score: number; repair_needed: number; profile_data: string }>;
 
+    const now = Date.now();
+    const SEVEN_DAYS = 7 * 24 * 60 * 60 * 1000;
     let updated = 0;
     for (const row of rows) {
       const data = JSON.parse(row.profile_data || "{}");
@@ -447,9 +452,21 @@ export class MemoryEngine {
         signals[k] = Math.round((signals[k] || 0) * 0.85 * 100) / 100;
       }
       data.signals7d = signals;
+
+      // FrictionScore natural decay: ×0.9 per dreaming cycle
+      const newFriction = Math.max(0, Math.round(row.friction_score * 0.9 * 10) / 10);
+
+      // Repair auto-resolution: clear after 7 days without new high-severity errors
+      let newRepairNeeded = !!(row.repair_needed);
+      const repairStartedAt = (data.repairStartedAt as number) || 0;
+      if (newRepairNeeded && repairStartedAt > 0 && (now - repairStartedAt) > SEVEN_DAYS) {
+        newRepairNeeded = false;
+        data.repairStartedAt = 0;
+      }
+
       db.prepare(
-        "UPDATE relationship_profiles SET profile_data = ?, updated_at = ? WHERE user_id = ? AND project_id = ?"
-      ).run(JSON.stringify(data), Date.now(), row.user_id, row.project_id);
+        "UPDATE relationship_profiles SET friction_score = ?, repair_needed = ?, profile_data = ?, updated_at = ? WHERE user_id = ? AND project_id = ?"
+      ).run(newFriction, newRepairNeeded ? 1 : 0, JSON.stringify(data), now, row.user_id, row.project_id);
       updated++;
     }
     return updated;
@@ -775,6 +792,293 @@ export class MemoryEngine {
     }
 
     return { zeroHitAliases, downweighted, jobsCreated };
+  }
+
+  // ── P0 Active Cycle ─────────────────────────────
+
+  /** Detect contradictory fragments: semantically similar but with opposing stances */
+  async detectContradictions(projectId: string): Promise<Array<{
+    fragmentA: { id: string; summary: string; feelLabel: string };
+    fragmentB: { id: string; summary: string; feelLabel: string };
+    similarity: number;
+    sharedTopics: string[];
+    conflictingTerms: { assertive: string[]; cautious: string[] };
+    riskLevel: "low" | "medium" | "high";
+  }>> {
+    const db = getDb();
+    const ninetyDaysAgo = Date.now() - 90 * 24 * 60 * 60 * 1000;
+    const fragments = db.prepare(`
+      SELECT f.id, f.summary, f.vector,
+        (SELECT fa.label FROM fragment_anchors fa WHERE fa.fragment_id = f.id AND fa.channel = 'FEEL' ORDER BY fa.weight DESC LIMIT 1) as feelLabel
+      FROM fragments f
+      WHERE f.project_id = ? AND f.retrieval_state IN ('active','warm') AND f.asset_state != 'user_deleted'
+        AND f.created_at > ? AND f.vector IS NOT NULL
+      LIMIT 500
+    `).all(projectId, ninetyDaysAgo) as Array<{ id: string; summary: string; vector: Buffer; feelLabel: string | null }>;
+
+    const withFeel = fragments.filter(f => f.feelLabel);
+    if (withFeel.length < 20) return [];
+
+    const ASSERTIVE_KW = /直接|动手|自己做|不确认|自动|立刻|主动|自行|不用|不要问/;
+    const CAUTIOUS_KW = /讨论|确认|先问|等待|审查|谨慎|商量|征求|先讨论|不要直接/;
+
+    const assertive = withFeel.filter(f => ASSERTIVE_KW.test(f.feelLabel!));
+    const cautious = withFeel.filter(f => CAUTIOUS_KW.test(f.feelLabel!));
+    if (assertive.length === 0 || cautious.length === 0) return [];
+
+    const results: Array<{
+      fragmentA: { id: string; summary: string; feelLabel: string };
+      fragmentB: { id: string; summary: string; feelLabel: string };
+      similarity: number;
+      sharedTopics: string[];
+      conflictingTerms: { assertive: string[]; cautious: string[] };
+      riskLevel: "low" | "medium" | "high";
+    }> = [];
+
+    // Extract topic bigrams that are NOT stance keywords
+    const ALL_STANCE = /直接|动手|自己做|不确认|自动|立刻|主动|自行|不用|不要问|讨论|确认|先问|等待|审查|谨慎|商量|征求|先讨论|不要直接/;
+    function getTopics(text: string): Set<string> {
+      const bigrams = new Set<string>();
+      for (let i = 0; i < text.length - 1; i++) {
+        const bg = text.slice(i, i + 2);
+        if (/[一-鿿]/.test(bg[0]!) && /[一-鿿]/.test(bg[1]!) && !ALL_STANCE.test(bg)) {
+          bigrams.add(bg);
+        }
+      }
+      return bigrams;
+    }
+
+    for (const a of assertive.slice(0, 30)) {
+      if (!a.vector || a.vector.length < 4) continue;
+      const aVec = Array.from(new Float32Array(a.vector.buffer, a.vector.byteOffset, a.vector.length / 4));
+      const aTopics = getTopics(a.summary);
+
+      for (const c of cautious.slice(0, 30)) {
+        if (a.id === c.id) continue;
+        if (!c.vector || c.vector.length < 4) continue;
+        const cVec = Array.from(new Float32Array(c.vector.buffer, c.vector.byteOffset, c.vector.length / 4));
+        const sim = cosineSimilarity(aVec, cVec);
+        if (sim < 0.70) continue;
+
+        const cTopics = getTopics(c.summary);
+        const shared = [...aTopics].filter(t => cTopics.has(t));
+        if (shared.length < 2) continue;
+
+        const aTerms = (a.feelLabel || "").match(ASSERTIVE_KW) || [];
+        const cTerms = (c.feelLabel || "").match(CAUTIOUS_KW) || [];
+
+        let riskLevel: "low" | "medium" | "high" = "low";
+        if (sim > 0.85 && [...aTerms, ...cTerms].length >= 3) riskLevel = "high";
+        else if (sim > 0.75 && [...aTerms, ...cTerms].length >= 2) riskLevel = "medium";
+
+        results.push({
+          fragmentA: { id: a.id, summary: a.summary.slice(0, 80), feelLabel: a.feelLabel! },
+          fragmentB: { id: c.id, summary: c.summary.slice(0, 80), feelLabel: c.feelLabel! },
+          similarity: Math.round(sim * 100) / 100,
+          sharedTopics: shared.slice(0, 5),
+          conflictingTerms: { assertive: [...new Set(aTerms)], cautious: [...new Set(cTerms)] },
+          riskLevel,
+        });
+
+        if (results.length >= 20) break;
+      }
+      if (results.length >= 20) break;
+    }
+
+    return results.sort((a, b) => (b.riskLevel === "high" ? 3 : b.riskLevel === "medium" ? 2 : 1) - (a.riskLevel === "high" ? 3 : a.riskLevel === "medium" ? 2 : 1));
+  }
+
+  /** Pattern insight: topic clusters and trend detection across 14-day windows */
+  detectPatterns(projectId: string): {
+    topClusters: Array<{ label: string; channel: string; count: number; avgWeight: number }>;
+    risingTrends: Array<{ label: string; channel: string; currentCount: number; previousCount: number; growthRate: number }>;
+    channelShift: Array<{ channel: string; currentPct: number; previousPct: number; delta: number }> | null;
+  } {
+    const db = getDb();
+    const now = Date.now();
+    const windowMs = 14 * 24 * 60 * 60 * 1000;
+
+    function clusterWindow(since: number): Map<string, { channel: string; count: number; totalWeight: number }> {
+      const rows = db.prepare(`
+        SELECT MIN(fa.label) as label, MIN(fa.channel) as channel, COUNT(*) as cnt, SUM(fa.weight) as totalWeight
+        FROM fragments f
+        JOIN fragment_anchors fa ON fa.fragment_id = f.id
+        WHERE f.project_id = ? AND f.created_at > ? AND f.asset_state != 'user_deleted'
+        GROUP BY fa.channel, SUBSTR(fa.label, 1, 15)
+        ORDER BY cnt DESC
+      `).all(projectId, since) as Array<{ label: string; channel: string; cnt: number; totalWeight: number }>;
+      const map = new Map<string, { channel: string; count: number; totalWeight: number }>();
+      for (const r of rows) {
+        map.set(`${r.channel}:${r.label}`, { channel: r.channel, count: r.cnt, totalWeight: r.totalWeight });
+      }
+      return map;
+    }
+
+    const current = clusterWindow(now - windowMs);
+    const previous = clusterWindow(now - 2 * windowMs);
+
+    const topClusters = [...current.entries()]
+      .sort((a, b) => b[1].count - a[1].count)
+      .slice(0, 10)
+      .map(([key, v]) => ({ label: key.split(":").slice(1).join(":"), channel: v.channel, count: v.count, avgWeight: Math.round(v.totalWeight / v.count) }));
+
+    const risingTrends: Array<{ label: string; channel: string; currentCount: number; previousCount: number; growthRate: number }> = [];
+    for (const [key, v] of current) {
+      const prev = previous.get(key);
+      const prevCount = prev?.count ?? 0;
+      if (v.count >= 3 && prevCount > 0 && v.count / prevCount >= 2.0) {
+        risingTrends.push({ label: key.split(":").slice(1).join(":"), channel: v.channel, currentCount: v.count, previousCount: prevCount, growthRate: Math.round(v.count / prevCount * 10) / 10 });
+      }
+    }
+
+    // Channel distribution shift
+    function channelPct(map: Map<string, { channel: string; count: number }>) {
+      const totals: Record<string, number> = {};
+      for (const [, v] of map) totals[v.channel] = (totals[v.channel] || 0) + v.count;
+      const sum = Object.values(totals).reduce((a, b) => a + b, 0) || 1;
+      return { totals, sum };
+    }
+    const currDist = channelPct(current);
+    const prevDist = channelPct(previous);
+    const shift: Array<{ channel: string; currentPct: number; previousPct: number; delta: number }> = [];
+    for (const ch of ["WHAT", "FEEL", "WHO", "WHERE"]) {
+      const cp = Math.round((currDist.totals[ch] || 0) / currDist.sum * 100);
+      const pp = Math.round((prevDist.totals[ch] || 0) / prevDist.sum * 100);
+      if (Math.abs(cp - pp) > 20) shift.push({ channel: ch, currentPct: cp, previousPct: pp, delta: cp - pp });
+    }
+
+    return { topClusters, risingTrends, channelShift: shift.length > 0 ? shift : null };
+  }
+
+  /** Memory self-check: fragment health, channel balance, zero-hit ratio */
+  runSelfCheck(projectId: string): {
+    fragmentCounts: { total: number; active: number; archived: number; cold: number };
+    channelDistribution: Record<string, number>;
+    zeroHitFragments: number;
+    coldFragmentRatio: number;
+    pendingFragmentation: number;
+    lastDreamingAt: number | null;
+    alerts: Array<{ type: string; severity: "warning" | "critical"; message: string }>;
+  } {
+    const db = getDb();
+
+    const counts = db.prepare(`
+      SELECT retrieval_state, COUNT(*) as cnt FROM fragments
+      WHERE project_id = ? AND asset_state != 'user_deleted'
+      GROUP BY retrieval_state
+    `).all(projectId) as Array<{ retrieval_state: string; cnt: number }>;
+    const countMap: Record<string, number> = {};
+    for (const c of counts) countMap[c.retrieval_state] = c.cnt;
+    const total = Object.values(countMap).reduce((a, b) => a + b, 0);
+    const active = (countMap.active || 0) + (countMap.warm || 0);
+
+    // Channel distribution
+    const channels = db.prepare(`
+      SELECT fa.channel, COUNT(DISTINCT f.id) as cnt
+      FROM fragments f
+      JOIN fragment_anchors fa ON fa.fragment_id = f.id
+      WHERE f.project_id = ? AND f.asset_state != 'user_deleted'
+      GROUP BY fa.channel
+    `).all(projectId) as Array<{ channel: string; cnt: number }>;
+    const chDist: Record<string, number> = {};
+    let chTotal = 0;
+    for (const ch of channels) { chDist[ch.channel] = ch.cnt; chTotal += ch.cnt; }
+    for (const k of Object.keys(chDist)) chDist[k] = Math.round(chDist[k]! / chTotal * 100);
+
+    // Zero-hit: fragments never recalled, > 30 days old
+    const zeroHit = db.prepare(`
+      SELECT COUNT(*) as cnt FROM fragments
+      WHERE project_id = ? AND recalled_count = 0 AND created_at < ? AND asset_state != 'user_deleted'
+    `).get(projectId, Date.now() - 30 * 24 * 60 * 60 * 1000) as { cnt: number };
+
+    const coldRatio = active > 0 ? zeroHit.cnt / active : 0;
+
+    const pending = db.prepare(
+      "SELECT COUNT(*) as cnt FROM sessions WHERE project_id = ? AND pending_fragmentation > 0"
+    ).get(projectId) as { cnt: number };
+
+    const project = db.prepare("SELECT last_dreaming_at FROM projects WHERE id = ?").get(projectId) as { last_dreaming_at: number | null } | undefined;
+    const lastDreamingAt = project?.last_dreaming_at ?? null;
+
+    const alerts: Array<{ type: string; severity: "warning" | "critical"; message: string }> = [];
+    if (coldRatio > 0.3) alerts.push({ type: "cold_ratio", severity: "critical", message: `${Math.round(coldRatio * 100)}% 的碎片从未被召回，记忆库可能是单向存储` });
+    for (const ch of ["FEEL", "WHO", "WHERE"]) {
+      if ((chDist[ch] || 0) < 10) alerts.push({ type: "channel_imbalance", severity: "warning", message: `${ch} 通道占比低于 10%，碎片化可能偏向单一维度` });
+    }
+    if (pending.cnt > 10) alerts.push({ type: "pending_backlog", severity: "warning", message: `${pending.cnt} 个 session 待碎片化` });
+    if (lastDreamingAt && (Date.now() - lastDreamingAt) > 48 * 60 * 60 * 1000) {
+      alerts.push({ type: "dreaming_stale", severity: "warning", message: "Dreaming 超过 48 小时未运行" });
+    }
+
+    return {
+      fragmentCounts: { total, active, archived: countMap.archived || 0, cold: countMap.cold || 0 },
+      channelDistribution: chDist,
+      zeroHitFragments: zeroHit.cnt,
+      coldFragmentRatio: Math.round(coldRatio * 1000) / 1000,
+      pendingFragmentation: pending.cnt,
+      lastDreamingAt,
+      alerts,
+    };
+  }
+
+  /** Proactive care: composite check using friction gate + time + recent signals */
+  generateProactiveCare(projectId: string): {
+    message: string;
+    level: "suggestion" | "gentle_nudge" | "active_concern";
+    triggers: string[];
+    at: number;
+  } | null {
+    const db = getDb();
+
+    const profile = db.prepare("SELECT * FROM trust_profile WHERE project_id = ?").get(projectId) as Record<string, unknown> | undefined;
+    if (!profile) return null;
+    const correct = (profile.correct_count as number) || 0;
+    const wrong = (profile.wrong_count as number) || 0;
+    if (correct + wrong < 5) return null;
+
+    const relProfile = db.prepare("SELECT friction_score, trust_level FROM relationship_profiles WHERE project_id = ?").get(projectId) as { friction_score: number; trust_level: string } | undefined;
+    const friction = relProfile?.friction_score ?? 0;
+    if (friction >= 6) return null; // too tense — don't add noise
+
+    const oneDayAgo = Date.now() - 24 * 60 * 60 * 1000;
+    const recentFeel = db.prepare(`
+      SELECT fa.label, fa.weight FROM fragment_anchors fa
+      JOIN fragments f ON f.id = fa.fragment_id
+      WHERE f.project_id = ? AND fa.channel = 'FEEL' AND fa.weight >= 30 AND f.created_at > ?
+      ORDER BY fa.weight DESC LIMIT 5
+    `).all(projectId, oneDayAgo) as Array<{ label: string; weight: number }>;
+
+    const hour = new Date().getHours();
+    const isLateNight = hour >= 1 && hour <= 5;
+    const negativeCount = recentFeel.filter(f => /纠正|不对|错了|错误|不要|不行|不好|不该|又|总是|一直|服了|烦/.test(f.label)).length;
+
+    const frictionRate = correct + wrong > 0 ? wrong / (correct + wrong) : 0;
+    const triggers: string[] = [];
+    let level: "suggestion" | "gentle_nudge" | "active_concern" = "suggestion";
+
+    if (isLateNight && frictionRate > 0.3) {
+      triggers.push("late_night", "high_friction");
+      level = "active_concern";
+    } else if (frictionRate > 0.4 && negativeCount > 0) {
+      triggers.push("high_friction", "negative_feel");
+      level = "gentle_nudge";
+    } else if (isLateNight) {
+      triggers.push("late_night");
+      level = "suggestion";
+    } else {
+      return null;
+    }
+
+    let message = "";
+    if (level === "active_concern") {
+      message = `凌晨 ${hour} 点了，今天已经纠正了我 ${wrong} 次。也许该停下来休息，明天再继续？`;
+    } else if (level === "gentle_nudge") {
+      message = `今天纠正频率偏高（${Math.round(frictionRate * 100)}%），需要我调整工作方式吗？`;
+    } else {
+      message = `已经是凌晨 ${hour} 点了，不早了。`;
+    }
+
+    return { message, level, triggers, at: Date.now() };
   }
 
   private async callFragmenter(input: FragmentationInput): Promise<FragmentResult> {

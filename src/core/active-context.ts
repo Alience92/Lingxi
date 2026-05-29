@@ -14,6 +14,8 @@ interface ActiveContext {
   decisions: ActiveContextEntry[];
   todos: ActiveContextEntry[];
   preferences: ActiveContextEntry[];
+  care?: { message: string; level: string; at: number; triggers: string[] };
+  alerts?: Array<{ type: string; severity: string; message: string; at: number }>;
 }
 
 const MAX_CONTEXT_CHARS = 3000;
@@ -31,6 +33,8 @@ export function updateActiveContext(projectId: string): void {
       ctx.decisions = parsed.decisions ?? [];
       ctx.todos = parsed.todos ?? [];
       ctx.preferences = parsed.preferences ?? [];
+      ctx.care = parsed.care;
+      ctx.alerts = parsed.alerts;
     } catch {
       // Corrupt JSON — start fresh
     }
@@ -122,4 +126,30 @@ export function updateActiveContext(projectId: string): void {
 
   // 6. Persist
   db.prepare("UPDATE projects SET active_context = ? WHERE id = ?").run(serialized, projectId);
+}
+
+/** Inject a proactive care message into active_context (called from dreaming worker) */
+export function injectCareMessage(projectId: string, care: { message: string; level: string; triggers: string[] }): void {
+  const db = getDb();
+  let ctx: ActiveContext = { decisions: [], todos: [], preferences: [] };
+  const row = db.prepare("SELECT active_context FROM projects WHERE id = ?").get(projectId) as { active_context: string | null } | undefined;
+  if (row?.active_context) {
+    try { const parsed = JSON.parse(row.active_context); ctx = { ...ctx, ...parsed }; } catch {}
+  }
+  ctx.care = { ...care, at: Date.now() };
+  // Skip stale care: older than 7 days
+  if (ctx.care.at < Date.now() - 7 * 24 * 60 * 60 * 1000) return;
+  db.prepare("UPDATE projects SET active_context = ? WHERE id = ?").run(JSON.stringify(ctx), projectId);
+}
+
+/** Inject alerts into active_context (called from dreaming worker) */
+export function injectAlerts(projectId: string, alerts: Array<{ type: string; severity: string; message: string }>): void {
+  const db = getDb();
+  let ctx: ActiveContext = { decisions: [], todos: [], preferences: [] };
+  const row = db.prepare("SELECT active_context FROM projects WHERE id = ?").get(projectId) as { active_context: string | null } | undefined;
+  if (row?.active_context) {
+    try { const parsed = JSON.parse(row.active_context); ctx = { ...ctx, ...parsed }; } catch {}
+  }
+  ctx.alerts = alerts.map(a => ({ ...a, at: Date.now() }));
+  db.prepare("UPDATE projects SET active_context = ? WHERE id = ?").run(JSON.stringify(ctx), projectId);
 }

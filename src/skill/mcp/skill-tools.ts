@@ -421,5 +421,28 @@ export function buildToolHandlers(engine: MemoryEngine) {
     memory_health(params: { projectId: string }) {
       return getMemoryHealth(params.projectId);
     },
+
+    async memory_active_report(params: { projectId: string }) {
+      const db = getDb();
+      const selfCheck = engine.runSelfCheck(params.projectId);
+      const patterns = engine.detectPatterns(params.projectId);
+      const contradictions = await engine.detectContradictions(params.projectId);
+      const care = engine.generateProactiveCare(params.projectId);
+
+      const recentRepairs = db.prepare(`
+        SELECT * FROM memory_repair_jobs
+        WHERE project_id = ? AND created_at > ?
+        ORDER BY created_at DESC LIMIT 20
+      `).all(params.projectId, Date.now() - 7 * 24 * 60 * 60 * 1000);
+
+      return {
+        health: selfCheck,
+        patterns: { topClusters: patterns.topClusters, risingTrends: patterns.risingTrends },
+        contradictions: contradictions.slice(0, 10),
+        care,
+        recentRepairJobs: recentRepairs,
+        generatedAt: Date.now(),
+      };
+    },
   };
 }

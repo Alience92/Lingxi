@@ -90,12 +90,26 @@ async function main() {
   const ac = db.prepare("SELECT active_context FROM projects WHERE id = ?").get(projectId) as { active_context: string | null } | undefined;
   if (ac?.active_context) {
     try {
-      const ctx = JSON.parse(ac.active_context) as { decisions?: Array<{ text: string }>; todos?: Array<{ text: string }>; preferences?: Array<{ text: string }> };
+      const ctx = JSON.parse(ac.active_context) as {
+        decisions?: Array<{ text: string }>; todos?: Array<{ text: string }>; preferences?: Array<{ text: string }>;
+        care?: { message: string; level: string; at: number; triggers: string[] };
+        alerts?: Array<{ type: string; severity: string; message: string; at: number }>;
+      };
       const lines: string[] = [];
       if (ctx.decisions?.length) lines.push(`  决策: ${ctx.decisions.map(d => d.text).join("; ")}`);
       if (ctx.todos?.length) lines.push(`  待办: ${ctx.todos.map(t => t.text).join("; ")}`);
       if (ctx.preferences?.length) lines.push(`  偏好: ${ctx.preferences.map(p => p.text).join("; ")}`);
       if (lines.length > 0) console.log(`[AgentMemory] 活跃上下文:\n${lines.join("\n")}`);
+
+      // Proactive care from dreaming (skip if > 7 days stale)
+      if (ctx.care?.message && ctx.care.at > Date.now() - 7 * 24 * 60 * 60 * 1000) {
+        console.log(`[AgentMemory] 关怀提醒:\n${ctx.care.message}`);
+      }
+      // Active alerts from self-check
+      if (ctx.alerts?.length) {
+        const alertLines = ctx.alerts.map((a: { message: string }) => `- ${a.message}`);
+        console.log(`[AgentMemory] 记忆库提醒:\n${alertLines.join("\n")}`);
+      }
     } catch {}
   }
 }

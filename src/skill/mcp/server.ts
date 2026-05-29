@@ -250,6 +250,17 @@ const TOOL_DEFINITIONS = [
       required: ["projectId", "action"],
     },
   },
+  {
+    name: "memory_active_report",
+    description: "Get the full P0 Active Cycle report: health check, pattern insights, contradictions, and proactive care recommendation. Aggregates all four active cycle modules plus recent repair job history.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        projectId: { type: "string", description: "Project identifier" },
+      },
+      required: ["projectId"],
+    },
+  },
 ];
 
 export async function startServer(apiKey: string, dbPath?: string) {

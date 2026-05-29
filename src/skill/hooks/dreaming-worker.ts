@@ -6,6 +6,7 @@ import { openDb, getDb } from "../../db/connection.js";
 import * as fs from "node:fs";
 import { cosineSimilarity } from "../../core/embedder.js";
 import { loadSettingsEnv } from "./settings.js";
+import { injectCareMessage, injectAlerts } from "../../core/active-context.js";
 import type { MemoryEngine } from "../engine.js";
 
 async function main() {
@@ -225,6 +226,95 @@ async function main() {
     console.error(`[AgentMemory] dreaming: relationship profile failed:`, (e as Error).message?.slice(0, 80));
   }
 
+  // ── P0 Active Cycle ───────────────────────────────
+
+  // Step 3.1: Contradiction Detection
+  let contradictionCount = 0;
+  try {
+    const contradictions = await engine.detectContradictions(projectId);
+    if (contradictions.length > 0) {
+      for (const c of contradictions.slice(0, 10)) {
+        db.prepare(`
+          INSERT INTO memory_repair_jobs (id, project_id, job_type, trigger, fragments_affected, action_taken, created_at)
+          VALUES (?, ?, 'auto_alias', ?, ?, ?, ?)
+        `).run(
+          `cr-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+          projectId,
+          `contradiction: ${c.fragmentA.feelLabel} vs ${c.fragmentB.feelLabel} (sim=${c.similarity})`,
+          JSON.stringify([c.fragmentA.id, c.fragmentB.id]),
+          `${c.riskLevel} risk: ${c.sharedTopics.slice(0, 3).join(", ")}`,
+          Date.now(),
+        );
+      }
+      contradictionCount = contradictions.length;
+      console.error(`[AgentMemory] P0 矛盾检测: ${contradictions.length} 个潜在冲突 (${contradictions.filter(c => c.riskLevel === "high").length} 高风险)`);
+    }
+  } catch (e) {
+    console.error(`[AgentMemory] P0 矛盾检测失败:`, (e as Error).message?.slice(0, 80));
+  }
+
+  // Step 3.2: Pattern Insight
+  let patternCount = 0;
+  try {
+    const patterns = engine.detectPatterns(projectId);
+    if (patterns.topClusters.length > 0) {
+      db.prepare(`
+        INSERT INTO memory_repair_jobs (id, project_id, job_type, trigger, fragments_affected, action_taken, created_at)
+        VALUES (?, ?, 'auto_alias', ?, ?, ?, ?)
+      `).run(
+        `pi-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+        projectId,
+        `pattern: top clusters + trends`,
+        "[]",
+        JSON.stringify({ topClusters: patterns.topClusters.slice(0, 5), risingTrends: patterns.risingTrends, channelShift: patterns.channelShift }),
+        Date.now(),
+      );
+      patternCount = patterns.topClusters.length;
+    }
+    if (patterns.risingTrends.length > 0) {
+      console.error(`[AgentMemory] P0 模式洞察: ${patterns.risingTrends.length} 个上升趋势`);
+    }
+  } catch (e) {
+    console.error(`[AgentMemory] P0 模式洞察失败:`, (e as Error).message?.slice(0, 80));
+  }
+
+  // Step 3.3: Memory Self-Check
+  let alertCount = 0;
+  try {
+    const health = engine.runSelfCheck(projectId);
+    if (health.alerts.length > 0) {
+      injectAlerts(projectId, health.alerts);
+      alertCount = health.alerts.length;
+      console.error(`[AgentMemory] P0 自检: ${health.alerts.map(a => a.message).join("; ")}`);
+    }
+  } catch (e) {
+    console.error(`[AgentMemory] P0 自检失败:`, (e as Error).message?.slice(0, 80));
+  }
+
+  // Step 3.4: Proactive Care
+  let careMessage = "";
+  try {
+    const care = engine.generateProactiveCare(projectId);
+    if (care) {
+      injectCareMessage(projectId, care);
+      careMessage = care.message;
+      db.prepare(`
+        INSERT INTO memory_repair_jobs (id, project_id, job_type, trigger, fragments_affected, action_taken, created_at)
+        VALUES (?, ?, 'auto_alias', ?, ?, ?, ?)
+      `).run(
+        `care-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+        projectId,
+        `care: ${care.level}`,
+        "[]",
+        JSON.stringify(care),
+        Date.now(),
+      );
+      console.error(`[AgentMemory] P0 关怀: ${care.message}`);
+    }
+  } catch (e) {
+    console.error(`[AgentMemory] P0 关怀失败:`, (e as Error).message?.slice(0, 80));
+  }
+
   // Step 4: Update last dreaming timestamp
   db.prepare("UPDATE projects SET last_dreaming_at = ? WHERE id = ?").run(Date.now(), projectId);
 
@@ -233,6 +323,10 @@ async function main() {
   if (distilled > 0) parts.push(`蒸馏 ${distilled} 条 L0 规则`);
   if (criteriaRows.length > 0) parts.push(`蒸馏 ${criteriaRows.length} 条决策判据`);
   if (relationshipChanged) parts.push("关系档案已更新");
+  if (contradictionCount > 0) parts.push(`发现 ${contradictionCount} 个潜在矛盾`);
+  if (patternCount > 0) parts.push(`洞察 ${patternCount} 个主题簇`);
+  if (alertCount > 0) parts.push(`${alertCount} 项自检告警`);
+  if (careMessage) parts.push("已生成关怀提醒");
   if (parts.length === 0) parts.push("记忆库状态良好");
   console.error(`[AgentMemory] 后台 Dreaming 完成: ${parts.join("，")}。`);
 }
