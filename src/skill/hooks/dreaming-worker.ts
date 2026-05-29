@@ -8,6 +8,7 @@ import { cosineSimilarity } from "../../core/embedder.js";
 import { loadSettingsEnv } from "./settings.js";
 import { injectCareMessage, injectAlerts } from "../../core/active-context.js";
 import { consumeLightweightSignals } from "../../core/dreaming-trigger.js";
+import { noveltyFactor, calcSystemAgeDays } from "../../core/decay.js";
 import type { MemoryEngine } from "../engine.js";
 
 async function main() {
@@ -61,7 +62,7 @@ async function main() {
   // Step 1: Decay with constitutional protection
   let stats = { warmed: 0, archived: 0, cooled: 0 };
   try {
-    stats = engine.runDecay({ protectConstitutional: true });
+    stats = engine.runDecay({ protectConstitutional: true, projectId });
     console.error(`[AgentMemory] dreaming: decay done — ${stats.archived} archived, ${stats.cooled} cooled`);
   } catch (e) {
     console.error(`[AgentMemory] dreaming: decay failed:`, (e as Error).message?.slice(0, 80));
@@ -78,9 +79,15 @@ async function main() {
 
   // Step 2.5: Auto-alias detection — map abandoned terminology to current canonical terms
   const NOW = Date.now();
-  const THIRTY_DAYS = 30 * 24 * 60 * 60 * 1000;
-  const SEVEN_DAYS = 7 * 24 * 60 * 60 * 1000;
   const ALIAS_SIM_THRESHOLD = 0.85;
+
+  // Novelty-adjusted: mature 30d/7d → brand-new ~3d/~1d
+  const firstRow2 = db.prepare(
+    "SELECT MIN(created_at) as first FROM fragments WHERE project_id = ?"
+  ).get(projectId) as { first: number | null } | undefined;
+  const nfAlias = noveltyFactor(calcSystemAgeDays(firstRow2?.first ?? null));
+  const THIRTY_DAYS = (30 * 24 * 60 * 60 * 1000) * (1 - nfAlias * 0.9);
+  const SEVEN_DAYS = (7 * 24 * 60 * 60 * 1000) * (1 - nfAlias * 0.85);
 
   const abandonedFrags = db.prepare(`
     SELECT id, summary, vector FROM fragments

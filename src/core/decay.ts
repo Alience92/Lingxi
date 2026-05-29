@@ -5,6 +5,40 @@ const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
 const SIXTY_DAYS_MS = 60 * 24 * 60 * 60 * 1000;
 const ONE_EIGHTY_DAYS_MS = 180 * 24 * 60 * 60 * 1000;
 
+/**
+ * Novelty factor: 1.0 (brand new) → 0.0 (mature, 30+ days).
+ * All learning thresholds scale with this factor so the system learns
+ * aggressively in the first few days (when user churn risk is highest)
+ * and gradually settles to a maintenance cadence.
+ *
+ * Retention logic:
+ *   Day 1-3   → nf=0.8-1.0   "用户最敏感，3天没提升就卸载"
+ *   Day 4-7   → nf=0.5       "一周内期望看到变化"
+ *   Day 8-14  → nf=0.3       "两周后感知减弱"
+ *   Day 15-30 → nf=0.1       "月后进入稳态"
+ *   Day 30+   → nf=0.0       "成熟系统，标准阈值"
+ */
+export function noveltyFactor(systemAgeDays: number): number {
+  if (systemAgeDays <= 0) return 1.0;
+  if (systemAgeDays <= 1) return 1.0;
+  if (systemAgeDays <= 3) return 0.8;
+  if (systemAgeDays <= 7) return 0.5;
+  if (systemAgeDays <= 14) return 0.3;
+  if (systemAgeDays <= 30) return 0.1;
+  return 0;
+}
+
+/** Compute system age in days from the timestamp of the oldest fragment. */
+export function calcSystemAgeDays(firstFragmentAt: number | null): number {
+  if (!firstFragmentAt) return 0;
+  return (Date.now() - firstFragmentAt) / 86_400_000;
+}
+
+/** Apply novelty factor to a threshold: mature value when nf=0, accelerated when nf=1. */
+export function applyNovelty(matureValue: number, nf: number, acceleration: number = 0.8): number {
+  return Math.max(1, Math.round(matureValue * (1 - nf * acceleration)));
+}
+
 export interface DecayResult {
   score: number;
   retrievalState: "active" | "warm" | "archived" | "cold";
@@ -25,7 +59,8 @@ export function computeDecayScore(
   createdAt: number,
   lastRecalledAt: number | null,
   recalledCount: number,
-  anchorWeight: number = 10
+  anchorWeight: number = 10,
+  noveltyFactor: number = 0,
 ): DecayResult {
   const now = Date.now();
 
@@ -37,7 +72,11 @@ export function computeDecayScore(
   const age = now - createdAt;
   const wm = weightMultiplier(anchorWeight);
 
-  if (age < SEVEN_DAYS_MS) return { score: 1.0, retrievalState: "active" };
+  // Novelty-adjusted decay window: brand-new systems (nf=1) decay at ~1 day,
+  // mature systems (nf=0) use the standard 7-day window.
+  const effectiveDecayMs = SEVEN_DAYS_MS * (1 - noveltyFactor * 0.85);
+
+  if (age < effectiveDecayMs) return { score: 1.0, retrievalState: "active" };
 
   const recalledMultiplier = recalledCount === 0 ? 0.8 : 1.0;
 

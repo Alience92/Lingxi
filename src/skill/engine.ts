@@ -2,7 +2,7 @@ import type { FragmentationInput, Fragment, AliasEntry } from "../types.js";
 import { getDb } from "../db/connection.js";
 import { persistFragments, deleteFragment } from "../db/repository.js";
 import { fragmentTranscript, type FragmentResult } from "../core/fragmenter.js";
-import { computeDecayScore, CONSTITUTIONAL_WEIGHT_THRESHOLD } from "../core/decay.js";
+import { computeDecayScore, CONSTITUTIONAL_WEIGHT_THRESHOLD, noveltyFactor, calcSystemAgeDays, applyNovelty } from "../core/decay.js";
 import { updateActiveContext as updateActiveContextImpl } from "../core/active-context.js";
 import { Embedder, setCurrentEmbedder, cosineSimilarity } from "../core/embedder.js";
 
@@ -102,9 +102,20 @@ export class MemoryEngine {
     };
   }
 
-  runDecay(options?: { protectConstitutional?: boolean }): { warmed: number; archived: number; cooled: number } {
+  runDecay(options?: { protectConstitutional?: boolean; projectId?: string }): { warmed: number; archived: number; cooled: number } {
     const protectConstitutional = options?.protectConstitutional ?? false;
+    const projectId = options?.projectId;
     const db = getDb();
+
+    // Compute novelty-adjusted decay thresholds
+    let nf = 0;
+    if (projectId) {
+      const firstRow = db.prepare(
+        "SELECT MIN(created_at) as first FROM fragments WHERE project_id = ?"
+      ).get(projectId) as { first: number | null } | undefined;
+      const ageDays = calcSystemAgeDays(firstRow?.first ?? null);
+      nf = noveltyFactor(ageDays);
+    }
 
     let rows: Array<Record<string, unknown>>;
     let protectedIds: Set<string> = new Set();
@@ -143,7 +154,7 @@ export class MemoryEngine {
         const currentRetrieval = r.retrieval_state as string;
         const anchorWeight = weightMap.get(id) ?? 10;
 
-        const decay = computeDecayScore(createdAt, lastRecalledAt, recalledCount, anchorWeight);
+        const decay = computeDecayScore(createdAt, lastRecalledAt, recalledCount, anchorWeight, nf);
         // Always write the computed decay_score, not just on state transitions
         db.prepare(`UPDATE fragments SET retrieval_state = ?, decay_score = ? WHERE id = ?`).run(decay.retrievalState, decay.score, id);
         if (decay.retrievalState !== currentRetrieval) {
@@ -159,10 +170,19 @@ export class MemoryEngine {
   }
 
   runDistillation(projectId: string, options?: { minFeelScore?: number; minMembers?: number; minSessions?: number }): number {
-    const minFeelScore = options?.minFeelScore ?? 60;
-    const minMembers = options?.minMembers ?? 5;
-    const minSessions = options?.minSessions ?? 2;
     const db = getDb();
+
+    // Novelty-adjusted thresholds: young systems are more aggressive
+    let nf = 0;
+    const firstRow = db.prepare(
+      "SELECT MIN(created_at) as first FROM fragments WHERE project_id = ?"
+    ).get(projectId) as { first: number | null } | undefined;
+    const ageDays = calcSystemAgeDays(firstRow?.first ?? null);
+    nf = noveltyFactor(ageDays);
+
+    const minFeelScore = options?.minFeelScore ?? (nf > 0 ? Math.round(60 * (1 - nf * 0.7)) : 60);
+    const minMembers = options?.minMembers ?? applyNovelty(5, nf, 0.8);
+    const minSessions = options?.minSessions ?? (nf > 0.5 ? 1 : 2);
 
     // Load fragments with their max FEEL weight for quality gating.
     // Includes archived — their content may form useful L0 rules even though
@@ -195,10 +215,14 @@ export class MemoryEngine {
       const distinctSessions = new Set(members.map(m => m.sessionId).filter(Boolean));
       if (distinctSessions.size < minSessions) continue;
 
-      // Quality gate: average FEEL score across group must meet threshold
+      // Quality gate: if any member has FEEL signal, average must meet threshold.
+      // Groups with no FEEL anchors are judged by member count & cross-session spread alone.
       const feelScores = members.map(m => m.maxFeel).filter((s): s is number => s !== null);
-      const avgFeel = feelScores.length > 0 ? feelScores.reduce((a, b) => a + b, 0) / feelScores.length : 0;
-      if (avgFeel < minFeelScore) continue;
+      let avgFeel = 50; // neutral default for groups without FEEL signals
+      if (feelScores.length > 0) {
+        avgFeel = feelScores.reduce((a, b) => a + b, 0) / feelScores.length;
+        if (avgFeel < minFeelScore) continue;
+      }
 
       const exemplar = members[0];
       const labelBase = groupKey.split(":").slice(1).join(":");

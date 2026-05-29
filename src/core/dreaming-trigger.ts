@@ -2,6 +2,7 @@
 // Three trigger conditions, any one met → dreaming should run.
 
 import { getDb } from "../db/connection.js";
+import { noveltyFactor, calcSystemAgeDays, applyNovelty } from "./decay.js";
 
 export interface TriggerCheck {
   shouldTrigger: boolean;
@@ -9,41 +10,55 @@ export interface TriggerCheck {
   signalCount: number;
 }
 
-const DREAMING_THRESHOLD = 100; // fragments
-const SIGNAL_THRESHOLD = 50;    // lightweight signals (condition A)
-const TIME_THRESHOLD_MS = 12 * 60 * 60 * 1000; // 12 hours (condition B)
+const DREAMING_THRESHOLD = 100; // fragments (mature)
+const SIGNAL_THRESHOLD = 50;    // lightweight signals (mature)
+const TIME_THRESHOLD_MS = 12 * 60 * 60 * 1000; // 12 hours (mature)
 const MIN_SIGNALS_FOR_TIME = 10; // minimum signals for time-based trigger
 
 /** Check all dreaming trigger conditions. Returns the first satisfied condition. */
 export function checkDreamingTrigger(projectId: string): TriggerCheck {
   const db = getDb();
 
+  // Compute novelty-adjusted thresholds
+  const firstRow = db.prepare(
+    "SELECT MIN(created_at) as first FROM fragments WHERE project_id = ?"
+  ).get(projectId) as { first: number | null } | undefined;
+  const ageDays = calcSystemAgeDays(firstRow?.first ?? null);
+  const nf = noveltyFactor(ageDays);
+
+  const signalThreshold = applyNovelty(SIGNAL_THRESHOLD, nf, 0.8);
+  const fragmentThreshold = applyNovelty(DREAMING_THRESHOLD, nf, 0.8);
+  // Time threshold: 12h mature → ~2.5h for brand-new systems
+  const timeThresholdMs = TIME_THRESHOLD_MS * (1 - nf * 0.8);
+  const minSignals = applyNovelty(MIN_SIGNALS_FOR_TIME, nf, 0.7);
+
   const lastDreaming = db.prepare("SELECT last_dreaming_at FROM projects WHERE id = ?").get(projectId) as { last_dreaming_at: number | null } | undefined;
   const lastAt = lastDreaming?.last_dreaming_at ?? 0;
   const now = Date.now();
   const hoursSince = lastAt > 0 ? Math.round((now - lastAt) / 3600000 * 10) / 10 : Infinity;
 
-  // Condition A: Signal count — ≥ 50 unconsumed lightweight signals
+  // Condition A: Signal count
   const sigCount = db.prepare(
     "SELECT COUNT(*) as cnt FROM lightweight_signals WHERE project_id = ? AND consumed = 0"
   ).get(projectId) as { cnt: number };
 
-  if (sigCount.cnt >= SIGNAL_THRESHOLD) {
-    return { shouldTrigger: true, reason: `轻量信号积累 ${sigCount.cnt} 条 (阈值 ${SIGNAL_THRESHOLD})`, signalCount: sigCount.cnt };
+  if (sigCount.cnt >= signalThreshold) {
+    return { shouldTrigger: true, reason: `轻量信号积累 ${sigCount.cnt} 条 (nf=${nf.toFixed(1)} 阈值 ${signalThreshold})`, signalCount: sigCount.cnt };
   }
 
-  // Condition B: Time-based — ≥ 12h since last dreaming AND ≥ 10 signals
-  if (now - lastAt >= TIME_THRESHOLD_MS && sigCount.cnt >= MIN_SIGNALS_FOR_TIME) {
-    return { shouldTrigger: true, reason: `距上次 dreaming ${hoursSince}h (阈值 12h) + ${sigCount.cnt} 条信号`, signalCount: sigCount.cnt };
+  // Condition B: Time-based
+  if (now - lastAt >= timeThresholdMs && sigCount.cnt >= minSignals) {
+    const thresholdH = Math.round(timeThresholdMs / 3600000 * 10) / 10;
+    return { shouldTrigger: true, reason: `距上次 dreaming ${hoursSince}h (nf=${nf.toFixed(1)} 阈值 ${thresholdH}h) + ${sigCount.cnt} 条信号`, signalCount: sigCount.cnt };
   }
 
-  // Condition C: Fragment-based (original) — ≥ 100 new fragments
+  // Condition C: Fragment-based
   const fragCount = db.prepare(
     "SELECT COUNT(*) as cnt FROM fragments WHERE project_id = ? AND created_at > ? AND retrieval_state IN ('active','warm') AND asset_state != 'user_deleted'"
   ).get(projectId, lastAt) as { cnt: number };
 
-  if (fragCount.cnt >= DREAMING_THRESHOLD) {
-    return { shouldTrigger: true, reason: `新碎片 ${fragCount.cnt} 条 (阈值 ${DREAMING_THRESHOLD})`, signalCount: sigCount.cnt };
+  if (fragCount.cnt >= fragmentThreshold) {
+    return { shouldTrigger: true, reason: `新碎片 ${fragCount.cnt} 条 (nf=${nf.toFixed(1)} 阈值 ${fragmentThreshold})`, signalCount: sigCount.cnt };
   }
 
   return { shouldTrigger: false, reason: null, signalCount: sigCount.cnt };
