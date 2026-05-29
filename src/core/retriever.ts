@@ -303,19 +303,40 @@ async function vectorSearch(
     const bestCjk = [...idfRankedCjk, ...novelCjk].slice(0, 12 - alphaTokens.length);
     const uniqueTerms = [...alphaTokens.slice(0, 12), ...bestCjk].slice(0, 12);
 
-    if (uniqueTerms.length > 0) {
-      const likeClauses = uniqueTerms.map(() => "summary LIKE ?").join(" OR ");
-      const likeParams = uniqueTerms.map(t => `%${t}%`);
-      rawRows = db.prepare(`
-        SELECT * FROM fragments
-        WHERE project_id = ? AND retrieval_state IN ('active','warm') AND asset_state != 'user_deleted' AND decay_score > 0
-          AND (${likeClauses})
-        LIMIT 500
-      `).all(projectId, ...likeParams) as Array<Record<string, unknown>>;
-    } else {
-      rawRows = db.prepare(`
-        SELECT * FROM fragments WHERE project_id = ? AND retrieval_state IN ('active','warm') AND asset_state != 'user_deleted' AND decay_score > 0
-      `).all(projectId) as Array<Record<string, unknown>>;
+    // Try FTS5 full-text match first for alpha tokens (best tokenization).
+    // CJK bigrams fall back to LIKE (FTS5 unicode61 tokenizer can't handle bigram matching).
+    rawRows = [];
+    let ftsAttempted = false;
+    if (alphaTokens.length > 0) {
+      const ftsQuery = alphaTokens.map(t => `"${t}"`).join(" OR ");
+      try {
+        rawRows = db.prepare(`
+          SELECT f.* FROM fragments f
+          JOIN fragments_fts fts ON fts.rowid = f.rowid
+          WHERE f.project_id = ? AND f.retrieval_state IN ('active','warm') AND f.asset_state != 'user_deleted' AND f.decay_score > 0
+            AND fragments_fts MATCH ?
+          LIMIT 500
+        `).all(projectId, ftsQuery) as Array<Record<string, unknown>>;
+        ftsAttempted = true;
+      } catch {
+        // FTS5 parse error (special chars) — fall through to LIKE
+      }
+    }
+    if (!ftsAttempted) {
+      if (uniqueTerms.length > 0) {
+        const likeClauses = uniqueTerms.map(() => "summary LIKE ?").join(" OR ");
+        const likeParams = uniqueTerms.map(t => `%${t}%`);
+        rawRows = db.prepare(`
+          SELECT * FROM fragments
+          WHERE project_id = ? AND retrieval_state IN ('active','warm') AND asset_state != 'user_deleted' AND decay_score > 0
+            AND (${likeClauses})
+          LIMIT 500
+        `).all(projectId, ...likeParams) as Array<Record<string, unknown>>;
+      } else {
+        rawRows = db.prepare(`
+          SELECT * FROM fragments WHERE project_id = ? AND retrieval_state IN ('active','warm') AND asset_state != 'user_deleted' AND decay_score > 0
+        `).all(projectId) as Array<Record<string, unknown>>;
+      }
     }
   } else {
     rawRows = db.prepare(`
