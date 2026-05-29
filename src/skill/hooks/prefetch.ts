@@ -7,6 +7,38 @@ import { extractSignals, persistLightweightSignals } from "../../core/lightweigh
 
 const HOOK_TIMING = process.env.AGENTMEMORY_PERF_TIMING === "1";
 
+/** Search distilled L0 rules for keywords matching the user query. */
+function searchDistilledRules(db: ReturnType<typeof getDb>, query: string, projectId: string): string[] {
+  const tokens = query.split(/[\s,，。！？、]+/).filter(t => t.length >= 2);
+  if (tokens.length === 0) return [];
+
+  const results: Array<{ text: string; weight: number }> = [];
+  const seen = new Set<string>();
+
+  for (const token of tokens.slice(0, 8)) {
+    const rows = db.prepare(`
+      SELECT DISTINCT dr.text, dr.weight FROM distilled_rules dr
+      JOIN rule_sources rs ON rs.rule_id = dr.id
+      WHERE rs.project_id = ? AND dr.text LIKE ?
+      ORDER BY dr.weight DESC LIMIT 3
+    `).all(projectId, `%${token}%`) as Array<{ text: string; weight: number }>;
+
+    for (const r of rows) {
+      if (!seen.has(r.text)) {
+        seen.add(r.text);
+        results.push(r);
+      }
+    }
+  }
+
+  // Only return rules with weight ≥ 0.25 — filter out low-quality noise
+  return results
+    .filter(r => r.weight >= 0.25)
+    .sort((a, b) => b.weight - a.weight)
+    .slice(0, 4)
+    .map(r => `${r.text} (权重${r.weight.toFixed(2)})`);
+}
+
 async function main() {
   // Read hook input from stdin
   const chunks: Buffer[] = [];
@@ -84,8 +116,20 @@ async function main() {
 
   const tHookTotal = Date.now() - tHookStart;
 
-  // Lightweight signal extraction — runs per user message, < 50ms
+  // L0 distilled rules lookup — keyword match against high-weight rules
   const mainProject = process.env.AGENTMEMORY_PROJECT || projectIds[0] || "claude-auto-memory";
+  let ruleLines: string[] = [];
+  try {
+    ruleLines = searchDistilledRules(db, userMessage, mainProject);
+    if (ruleLines.length > 0 && bestBlock) {
+      bestBlock = bestBlock + "\n**相关规则（蒸馏知识）:**\n" + ruleLines.map(l => `- ${l}`).join("\n");
+    } else if (ruleLines.length > 0) {
+      bestBlock = "**相关规则（蒸馏知识）:**\n" + ruleLines.map(l => `- ${l}`).join("\n");
+      bestConfidence = Math.max(bestConfidence, 0.3);
+    }
+  } catch {}
+
+  // Lightweight signal extraction — runs per user message, < 50ms
   try {
     const signals = extractSignals(userMessage);
     if (signals.length > 0) {

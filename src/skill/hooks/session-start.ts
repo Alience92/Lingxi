@@ -113,6 +113,41 @@ async function main() {
 
   // active_context
   const ac = db.prepare("SELECT active_context FROM projects WHERE id = ?").get(projectId) as { active_context: string | null } | undefined;
+
+  // ── Behavior layer: transform stored knowledge into behavioral directives ──
+
+  // 1. Trust profile → decision autonomy
+  const trust = db.prepare(
+    "SELECT autonomy_level FROM trust_profile WHERE project_id = ?"
+  ).get(projectId) as { autonomy_level: number } | undefined;
+
+  // 2. WHO identity → communication style
+  const whoRules = db.prepare(`
+    SELECT dr.text FROM distilled_rules dr
+    JOIN rule_sources rs ON rs.rule_id = dr.id
+    WHERE rs.project_id = ? AND dr.fingerprint LIKE '%::WHO::%'
+    ORDER BY dr.weight DESC LIMIT 3
+  `).all(projectId) as Array<{ text: string }>;
+
+  // 3. Behavioral constraints from preferences + WHO identity
+  const behavioralLines: string[] = [];
+
+  // Trust-based autonomy
+  if (trust && trust.autonomy_level >= 3) {
+    behavioralLines.push("- 信任等级L3：常规操作直接执行，仅在不可逆操作（git push --force、删除文件/数据、修改生产配置）前确认");
+  }
+
+  // User type → communication style
+  const isNonProgrammer = whoRules.some(r => /不是程序员|不懂代码|非程序员|非技术/.test(r.text));
+  const isEngineer = whoRules.some(r => /工程师|程序员|开发者|全栈|后端|前端/.test(r.text) && !/不是|不懂/.test(r.text));
+
+  if (isNonProgrammer) {
+    behavioralLines.push("- 用户不是程序员，用自然语言描述项目和技术方案，解释时用平实语言而非术语堆砌");
+    behavioralLines.push("- 展现价值的方式是降低理解门槛，不是展示技术深度");
+  } else if (isEngineer) {
+    behavioralLines.push("- 用户有编程背景，可以深入技术细节，用精确术语而非通俗化包装");
+  }
+
   if (ac?.active_context) {
     try {
       const ctx = JSON.parse(ac.active_context) as {
@@ -120,10 +155,43 @@ async function main() {
         care?: { message: string; level: string; at: number; triggers: string[] };
         alerts?: Array<{ type: string; severity: string; message: string; at: number }>;
       };
+
+      // Preferences → behavioral directives (not FYI)
+      if (ctx.preferences?.length) {
+        for (const p of ctx.preferences) {
+          // Convert preference text into an actionable constraint
+          const t = p.text;
+          if (/直接|不要.*问|不要.*确认|直接动手|自行/.test(t)) {
+            behavioralLines.push(`- 用户偏好直接行动：${t}`);
+          } else if (/批评|直接.*说|绕弯|不绕/.test(t)) {
+            behavioralLines.push(`- 用户要求直接反馈：${t}`);
+          } else if (/非.*程序员|不懂.*代码|不是.*程序/.test(t)) {
+            // Already handled by WHO rules above, skip
+          } else if (/AI|SVG|手绘|设计素材/.test(t)) {
+            behavioralLines.push(`- 设计约束：${t}`);
+          } else {
+            behavioralLines.push(`- ${t}`);
+          }
+        }
+      }
+
+      // Deduplicate
+      const seen = new Set<string>();
+      const unique = behavioralLines.filter(l => {
+        const key = l.slice(0, 40);
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      });
+
+      if (unique.length > 0) {
+        console.log(`[AgentMemory] 行为约束 — 以下约束必须严格遵守，不是参考建议:\n${unique.join("\n")}`);
+      }
+
+      // Active context as reference (decisions + todos remain FYI)
       const lines: string[] = [];
       if (ctx.decisions?.length) lines.push(`  决策: ${ctx.decisions.map(d => d.text).join("; ")}`);
       if (ctx.todos?.length) lines.push(`  待办: ${ctx.todos.map(t => t.text).join("; ")}`);
-      if (ctx.preferences?.length) lines.push(`  偏好: ${ctx.preferences.map(p => p.text).join("; ")}`);
       if (lines.length > 0) console.log(`[AgentMemory] 活跃上下文:\n${lines.join("\n")}`);
 
       // Proactive care from dreaming (skip if > 7 days stale)
@@ -131,8 +199,6 @@ async function main() {
         console.log(`[AgentMemory] 关怀提醒:\n${ctx.care.message}`);
       }
       // Alerts are stored in active_context for MCP tool queries only.
-      // They are NOT output to stdout — system health data should not
-      // influence the LLM's behavior or be exposed in user-facing messages.
     } catch {}
   }
 }
