@@ -424,10 +424,12 @@ export function buildToolHandlers(engine: MemoryEngine) {
 
     async memory_active_report(params: { projectId: string }) {
       const db = getDb();
-      const selfCheck = engine.runSelfCheck(params.projectId);
-      const patterns = engine.detectPatterns(params.projectId);
-      const contradictions = await engine.detectContradictions(params.projectId);
-      const care = engine.generateProactiveCare(params.projectId);
+      const [selfCheck, patterns, contradictions, care] = await Promise.all([
+        engine.runSelfCheck(params.projectId),
+        engine.detectPatterns(params.projectId),
+        engine.detectContradictions(params.projectId),
+        engine.generateProactiveCare(params.projectId),
+      ]);
 
       const recentRepairs = db.prepare(`
         SELECT * FROM memory_repair_jobs

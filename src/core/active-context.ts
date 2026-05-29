@@ -136,9 +136,12 @@ export function injectCareMessage(projectId: string, care: { message: string; le
   if (row?.active_context) {
     try { const parsed = JSON.parse(row.active_context); ctx = { ...ctx, ...parsed }; } catch {}
   }
+  // Priority gate: don't overwrite a higher-level care that's still fresh (< 24h)
+  if (ctx.care && ctx.care.at > Date.now() - 24 * 60 * 60 * 1000) {
+    const levelRank: Record<string, number> = { suggestion: 1, gentle_nudge: 2, active_concern: 3 };
+    if ((levelRank[care.level] || 0) < (levelRank[ctx.care.level] || 0)) return;
+  }
   ctx.care = { ...care, at: Date.now() };
-  // Skip stale care: older than 7 days
-  if (ctx.care.at < Date.now() - 7 * 24 * 60 * 60 * 1000) return;
   db.prepare("UPDATE projects SET active_context = ? WHERE id = ?").run(JSON.stringify(ctx), projectId);
 }
 

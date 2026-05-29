@@ -369,11 +369,13 @@ export class MemoryEngine {
       window.acceptedAutonomy = (window.acceptedAutonomy || 0) + 1;
     } else if (isCorrection || isFrustration) {
       // Constitutional fragments (weight ≥ 80) represent distilled rules,
-      // not user emotional feedback. Skip friction penalties for them.
+      // not user emotional feedback. Skip friction penalties but still track
+      // for rule deprecation counting.
       if (isHighSeverity) {
-        signals.confirmation = (signals.confirmation || 0) + 1;
+        signals.constitutional_correction = (signals.constitutional_correction || 0) + 1;
         frictionDelta = 0;
         autonomyDelta = 0;
+        window.correctionCount = (window.correctionCount || 0) + 1;
       } else {
         if (isFrustration) {
           signals.frustration = (signals.frustration || 0) + 1;
@@ -454,7 +456,7 @@ export class MemoryEngine {
       data.signals7d = signals;
 
       // FrictionScore natural decay: ×0.9 per dreaming cycle
-      const newFriction = Math.max(0, Math.round(row.friction_score * 0.9 * 10) / 10);
+      const newFriction = Math.max(0, Math.round(row.friction_score * 0.9 * 100) / 100);
 
       // Repair auto-resolution: clear after 7 days without new high-severity errors
       let newRepairNeeded = !!(row.repair_needed);
@@ -822,8 +824,8 @@ export class MemoryEngine {
     const ASSERTIVE_KW = /直接|动手|自己做|不确认|自动|立刻|主动|自行|不用|不要问/;
     const CAUTIOUS_KW = /讨论|确认|先问|等待|审查|谨慎|商量|征求|先讨论|不要直接/;
 
-    const assertive = withFeel.filter(f => ASSERTIVE_KW.test(f.feelLabel!));
-    const cautious = withFeel.filter(f => CAUTIOUS_KW.test(f.feelLabel!));
+    const assertive = withFeel.filter(f => ASSERTIVE_KW.test(f.summary));
+    const cautious = withFeel.filter(f => CAUTIOUS_KW.test(f.summary));
     if (assertive.length === 0 || cautious.length === 0) return [];
 
     const results: Array<{
@@ -904,7 +906,7 @@ export class MemoryEngine {
         FROM fragments f
         JOIN fragment_anchors fa ON fa.fragment_id = f.id
         WHERE f.project_id = ? AND f.created_at > ? AND f.asset_state != 'user_deleted'
-        GROUP BY fa.channel, SUBSTR(fa.label, 1, 15)
+        GROUP BY fa.channel, SUBSTR(fa.label, 1, 30)
         ORDER BY cnt DESC
       `).all(projectId, since) as Array<{ label: string; channel: string; cnt: number; totalWeight: number }>;
       const map = new Map<string, { channel: string; count: number; totalWeight: number }>();
@@ -1038,7 +1040,7 @@ export class MemoryEngine {
 
     const relProfile = db.prepare("SELECT friction_score, trust_level FROM relationship_profiles WHERE project_id = ?").get(projectId) as { friction_score: number; trust_level: string } | undefined;
     const friction = relProfile?.friction_score ?? 0;
-    if (friction >= 6) return null; // too tense — don't add noise
+    if (friction >= 8) return null; // too tense — don't add noise
 
     const oneDayAgo = Date.now() - 24 * 60 * 60 * 1000;
     const recentFeel = db.prepare(`

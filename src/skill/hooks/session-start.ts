@@ -105,11 +105,9 @@ async function main() {
       if (ctx.care?.message && ctx.care.at > Date.now() - 7 * 24 * 60 * 60 * 1000) {
         console.log(`[AgentMemory] 关怀提醒:\n${ctx.care.message}`);
       }
-      // Active alerts from self-check
-      if (ctx.alerts?.length) {
-        const alertLines = ctx.alerts.map((a: { message: string }) => `- ${a.message}`);
-        console.log(`[AgentMemory] 记忆库提醒:\n${alertLines.join("\n")}`);
-      }
+      // Alerts are stored in active_context for MCP tool queries only.
+      // They are NOT output to stdout — system health data should not
+      // influence the LLM's behavior or be exposed in user-facing messages.
     } catch {}
   }
 }

@@ -236,7 +236,7 @@ async function main() {
       for (const c of contradictions.slice(0, 10)) {
         db.prepare(`
           INSERT INTO memory_repair_jobs (id, project_id, job_type, trigger, fragments_affected, action_taken, created_at)
-          VALUES (?, ?, 'auto_alias', ?, ?, ?, ?)
+          VALUES (?, ?, 'contradiction_detect', ?, ?, ?, ?)
         `).run(
           `cr-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
           projectId,
@@ -260,7 +260,7 @@ async function main() {
     if (patterns.topClusters.length > 0) {
       db.prepare(`
         INSERT INTO memory_repair_jobs (id, project_id, job_type, trigger, fragments_affected, action_taken, created_at)
-        VALUES (?, ?, 'auto_alias', ?, ?, ?, ?)
+        VALUES (?, ?, 'pattern_insight', ?, ?, ?, ?)
       `).run(
         `pi-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
         projectId,
@@ -300,7 +300,7 @@ async function main() {
       careMessage = care.message;
       db.prepare(`
         INSERT INTO memory_repair_jobs (id, project_id, job_type, trigger, fragments_affected, action_taken, created_at)
-        VALUES (?, ?, 'auto_alias', ?, ?, ?, ?)
+        VALUES (?, ?, 'proactive_care', ?, ?, ?, ?)
       `).run(
         `care-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
         projectId,
