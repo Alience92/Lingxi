@@ -184,26 +184,25 @@ export class MemoryEngine {
     const minMembers = options?.minMembers ?? applyNovelty(5, nf, 0.8);
     const minSessions = options?.minSessions ?? (nf > 0.5 ? 1 : 2);
 
-    // Load fragments with their max FEEL weight for quality gating.
-    // Includes archived — their content may form useful L0 rules even though
-    // the fragments themselves are no longer in active retrieval. status and retrieval_state are independent axes.
+    // Load fragments with their max FEEL weight + all channels for diversity scoring.
     const fragments = db.prepare(`
       SELECT f.id, f.summary, f.session_id, MIN(fa.label) AS label, MIN(fa.channel) AS channel,
+             GROUP_CONCAT(DISTINCT fa.channel) as all_channels,
              MAX(CASE WHEN fa.channel = 'FEEL' THEN fa.weight ELSE NULL END) as max_feel,
              MAX(CASE WHEN fa.channel = 'FEEL' AND fa.weight >= 80 THEN 1 ELSE 0 END) as is_constitutional
       FROM fragments f
       JOIN fragment_anchors fa ON fa.fragment_id = f.id
       WHERE f.project_id = ? AND f.retrieval_state IN ('active', 'warm', 'archived') AND f.asset_state != 'user_deleted'
       GROUP BY f.id, f.summary
-    `).all(projectId) as Array<{ id: string; summary: string; session_id: string; label: string; channel: string; max_feel: number | null; is_constitutional: number }>;
+    `).all(projectId) as Array<{ id: string; summary: string; session_id: string; label: string; channel: string; all_channels: string; max_feel: number | null; is_constitutional: number }>;
 
-    const groups = new Map<string, Array<{ id: string; summary: string; sessionId: string; label: string; channel: string; maxFeel: number | null; isConstitutional: boolean }>>();
+    const groups = new Map<string, Array<{ id: string; summary: string; sessionId: string; label: string; channel: string; allChannels: string; maxFeel: number | null; isConstitutional: boolean }>>();
     for (const f of fragments) {
-      const key = `${f.channel}:${(f.label || f.summary).slice(0, 50)}`;
+      const key = `${f.channel}:${(f.label || f.summary).slice(0, 40)}`;
       if (!groups.has(key)) groups.set(key, []);
       groups.get(key)!.push({
         id: f.id, summary: f.summary, sessionId: f.session_id, label: f.label, channel: f.channel,
-        maxFeel: f.max_feel, isConstitutional: f.is_constitutional === 1,
+        allChannels: f.all_channels, maxFeel: f.max_feel, isConstitutional: f.is_constitutional === 1,
       });
     }
 
@@ -242,15 +241,59 @@ export class MemoryEngine {
         continue;
       }
 
-      // Rule text: use the most representative summary (longest with highest FEEL)
+      // Rule text: pick the most representative summary — highest FEEL, then longest.
+      // Skip system noise (raw command output that ends up in fragment summaries).
       const best = members.reduce((a, b) =>
         ((a.maxFeel ?? 0) + a.summary.length * 0.01) > ((b.maxFeel ?? 0) + b.summary.length * 0.01) ? a : b
       );
-      const ruleText = best!.summary.slice(0, 100);
+      let ruleText = best!.summary.slice(0, 120);
+      if (/^User:\s*<local-command|^<local-command|^Assistant:.*hook|^\[AgentMemory\]/.test(ruleText)) {
+        // Fall back to a cleaner member summary
+        const clean = members.find(m => !/<local-command|hook|\[AgentMemory\]/.test(m.summary));
+        if (clean) ruleText = clean.summary.slice(0, 120);
+      }
 
-      // Constitutional gate: rule weight based on source fragment FEEL scores
+      // Multi-factor weight scoring.
       const hasConstitutional = members.some(m => m.isConstitutional);
-      const ruleWeight = hasConstitutional ? 2.0 : (avgFeel / 100);
+      const uniqueChannels = new Set<string>();
+      let hasWhoChannel = false;
+      for (const m of members) {
+        for (const ch of m.allChannels.split(",")) {
+          if (ch) uniqueChannels.add(ch);
+        }
+        if (m.allChannels.includes("WHO")) hasWhoChannel = true;
+      }
+
+      let ruleWeight = 0.18; // base — low enough that single-session file refs stay marginal
+
+      // Session spread — diminishing returns (cap 1.5x to avoid over-weighting repetitive Q&A)
+      if (distinctSessions.size >= 5) ruleWeight *= 1.5;
+      else if (distinctSessions.size >= 3) ruleWeight *= 1.3;
+      else if (distinctSessions.size >= 2) ruleWeight *= 1.15;
+
+      // Group size — more evidence (max 1.4x)
+      if (members.length >= 10) ruleWeight *= 1.4;
+      else if (members.length >= 8) ruleWeight *= 1.25;
+      else if (members.length >= 5) ruleWeight *= 1.1;
+
+      // Channel diversity — cross-channel patterns are richer (max 1.4x)
+      if (uniqueChannels.size >= 3) ruleWeight *= 1.4;
+      else if (uniqueChannels.size >= 2) ruleWeight *= 1.2;
+
+      // WHO bonus — identity insights are inherently valuable, rare, and hard to recover
+      if (hasWhoChannel) ruleWeight *= 1.4;
+
+      // Constitutional bonus
+      if (hasConstitutional) ruleWeight *= 1.5;
+
+      // FEEL intensity
+      if (feelScores.length > 0) {
+        const af = feelScores.reduce((a, b) => a + b, 0) / feelScores.length;
+        if (af >= 70) ruleWeight *= 1.3;
+        else if (af >= 50) ruleWeight *= 1.1;
+      }
+
+      ruleWeight = Math.min(2.0, Math.round(ruleWeight * 100) / 100);
 
       const ruleId = `rule-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
       db.prepare(`INSERT OR IGNORE INTO distilled_rules (id, fingerprint, text, weight, created_at) VALUES (?, ?, ?, ?, ?)`).run(
