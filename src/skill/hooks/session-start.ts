@@ -48,9 +48,14 @@ async function main() {
 
     if (claimed.changes > 0) {
       const workerPath = path.join(__dirname, "auto-fragment.js");
+      // Resolve workspace dir for log file
+      const wsRow = db.prepare("SELECT workspace_dir FROM projects WHERE id = ?").get(projectId) as { workspace_dir: string } | undefined;
+      const wsDir = wsRow?.workspace_dir || path.join(process.env.HOME || process.env.USERPROFILE || homedir(), ".claude", "projects", projectId);
+      try { fs.mkdirSync(wsDir, { recursive: true }); } catch {}
+      const fragLogFd = fs.openSync(path.join(wsDir, "auto-fragment.log"), "a");
       spawn("node", [workerPath, `--project=${projectId}`, `--sessions=${pending.id}`], {
         detached: true,
-        stdio: "ignore",
+        stdio: ["ignore", fragLogFd, fragLogFd],
         windowsHide: true,
       }).unref();
       console.error(`[AgentMemory] 后台碎片化补触发: ${pending.id.slice(0, 8)}`);

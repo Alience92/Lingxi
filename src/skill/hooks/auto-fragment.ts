@@ -12,6 +12,8 @@ import { fileURLToPath } from "node:url";
 const PER_SESSION_TIMEOUT_MS = 30_000;
 const MAX_TRANSCRIPT_CHARS = 30_000;
 const DREAMING_THRESHOLD = 100;
+const MAX_CHUNKS_PER_RUN = 15;       // hard cap — never process more than this many chunks
+const MAX_CHUNKS_INCREMENTAL = 5;    // for already-fragmented sessions, only process last N chunks
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -71,7 +73,8 @@ async function fragmentOneSession(
   engine: any,
   sessionId: string,
   projectId: string,
-  filePath: string
+  filePath: string,
+  maxChunks: number = MAX_CHUNKS_PER_RUN,
 ): Promise<number> {
   const conversation = extractConversation(filePath);
   if (conversation.length === 0) return 0;
@@ -79,7 +82,14 @@ async function fragmentOneSession(
   const fullTranscript = conversation.join("\n");
   if (fullTranscript.length < 200) return 0;
 
-  const chunks = chunkConversation(conversation, MAX_TRANSCRIPT_CHARS);
+  let chunks = chunkConversation(conversation, MAX_TRANSCRIPT_CHARS);
+
+  // Only process the last N chunks when maxChunks < total — keeps recent content
+  // without re-processing the entire session.
+  if (chunks.length > maxChunks) {
+    chunks = chunks.slice(-maxChunks);
+  }
+
   let totalFragments = 0;
   let anyChunkFailed = false;
 
@@ -186,7 +196,15 @@ async function main() {
         continue;
       }
 
-      const count = await fragmentOneSession(engine, sessionId, projectId, jsonlPath);
+      // If session was already fragmented, only process newest content
+      const sess = db.prepare("SELECT fragmented_at FROM sessions WHERE id = ?").get(sessionId) as { fragmented_at: number | null } | undefined;
+      const alreadyFragmented = !!(sess?.fragmented_at);
+      const maxChunks = alreadyFragmented ? MAX_CHUNKS_INCREMENTAL : MAX_CHUNKS_PER_RUN;
+      if (alreadyFragmented) {
+        console.error(`[AgentMemory] 会话已碎片化，仅处理最近 ${MAX_CHUNKS_INCREMENTAL} 个chunk`);
+      }
+
+      const count = await fragmentOneSession(engine, sessionId, projectId, jsonlPath, maxChunks);
       if (count > 0) {
         totalFragments += count;
         processed++;

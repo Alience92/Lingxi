@@ -187,7 +187,7 @@ CREATE TABLE IF NOT EXISTS relationship_profiles (
 CREATE TABLE IF NOT EXISTS memory_repair_jobs (
   id TEXT PRIMARY KEY,
   project_id TEXT NOT NULL,
-  job_type TEXT NOT NULL CHECK(job_type IN ('auto_alias','re_embed','re_group','weight_adjust','deprecate_rule')),
+  job_type TEXT NOT NULL CHECK(job_type IN ('auto_alias','re_embed','re_group','weight_adjust','deprecate_rule','contradiction_detect','pattern_insight','self_check','proactive_care')),
   trigger TEXT NOT NULL,
   fragments_affected TEXT NOT NULL,
   action_taken TEXT NOT NULL,
