@@ -1,11 +1,17 @@
 // PostCompact: mark session for fragmentation + spawn background worker
 import { openDb, getDb } from "../../db/connection.js";
 import * as path from "node:path";
+import * as fs from "node:fs";
 import { spawn } from "node:child_process";
 import { fileURLToPath } from "node:url";
+import { homedir } from "node:os";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
+function homeDir(): string {
+  return process.env.HOME || process.env.USERPROFILE || homedir();
+}
 
 async function main() {
   const chunks: Buffer[] = [];
@@ -54,9 +60,13 @@ async function main() {
 
   if (claimed.changes > 0) {
     const workerPath = path.join(__dirname, "auto-fragment.js");
+    const logDir = path.join(homeDir(), ".claude", "projects", projectId);
+    fs.mkdirSync(logDir, { recursive: true });
+    const logFile = path.join(logDir, "auto-fragment.log");
+    const logFd = fs.openSync(logFile, "a");
     spawn("node", [workerPath, `--project=${projectId}`, `--sessions=${sessionId}`], {
       detached: true,
-      stdio: "ignore",
+      stdio: ["ignore", logFd, logFd],
       windowsHide: true,
     }).unref();
     console.error(`[AgentMemory] 后台碎片化已启动: ${sessionId.slice(0, 8)}`);

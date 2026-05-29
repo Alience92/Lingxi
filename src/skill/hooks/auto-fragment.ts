@@ -338,9 +338,11 @@ async function main() {
 
   if (newFragments.cnt >= DREAMING_THRESHOLD) {
     const workerPath = path.join(__dirname, "dreaming-worker.js");
+    const logFile = path.join(workspaceDir, "dreaming.log");
+    const logFd = fs.openSync(logFile, "a");
     spawn("node", [workerPath, `--project=${projectId}`, `--threshold=${DREAMING_THRESHOLD}`], {
       detached: true,
-      stdio: "ignore",
+      stdio: ["ignore", logFd, logFd],
       windowsHide: true,
       env: { ...process.env, ...settingsEnv },
     }).unref();
