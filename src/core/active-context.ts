@@ -103,23 +103,32 @@ export function updateActiveContext(projectId: string): void {
     }
   }
 
-  // 5. Global char truncation
+  // 5. Global char truncation — preference-weighted removal order:
+  //    todos first (stale fastest), then decisions, preferences last (user identity)
+  const REMOVAL_ORDER: Array<"decisions" | "todos" | "preferences"> = ["todos", "decisions", "preferences"];
   let serialized = JSON.stringify(ctx);
   let safety = 50;
   while (serialized.length > MAX_CONTEXT_CHARS && safety > 0) {
-    // Find and remove the oldest entry across all categories
-    let oldestCat: "decisions" | "todos" | "preferences" = "decisions";
-    let oldestAt = Infinity;
-    for (const cat of ["decisions", "todos", "preferences"] as const) {
-      for (const entry of ctx[cat]) {
-        if (entry.at < oldestAt) {
-          oldestAt = entry.at;
-          oldestCat = cat;
+    let removed = false;
+    // Try each category in removal-priority order
+    for (const cat of REMOVAL_ORDER) {
+      if (ctx[cat].length === 0) continue;
+      // Remove the oldest entry in this category
+      let oldestAt = Infinity;
+      let oldestIdx = -1;
+      for (let i = 0; i < ctx[cat].length; i++) {
+        if (ctx[cat][i]!.at < oldestAt) {
+          oldestAt = ctx[cat][i]!.at;
+          oldestIdx = i;
         }
       }
+      if (oldestIdx >= 0) {
+        ctx[cat].splice(oldestIdx, 1);
+        removed = true;
+        break; // One removal per iteration, re-check size
+      }
     }
-    if (oldestAt === Infinity) break;
-    ctx[oldestCat] = ctx[oldestCat].filter(e => e.at !== oldestAt);
+    if (!removed) break; // All categories empty
     serialized = JSON.stringify(ctx);
     safety--;
   }
