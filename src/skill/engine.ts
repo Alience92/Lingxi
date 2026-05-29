@@ -184,9 +184,15 @@ export class MemoryEngine {
     const minMembers = options?.minMembers ?? applyNovelty(5, nf, 0.8);
     const minSessions = options?.minSessions ?? (nf > 0.5 ? 1 : 2);
 
-    // Load fragments with their max FEEL weight + all channels for diversity scoring.
+    // Load fragments with primary channel = highest-weight anchor (not lexicographic MIN).
     const fragments = db.prepare(`
-      SELECT f.id, f.summary, f.session_id, MIN(fa.label) AS label, MIN(fa.channel) AS channel,
+      SELECT f.id, f.summary, f.session_id,
+             (SELECT fa2.channel FROM fragment_anchors fa2
+              WHERE fa2.fragment_id = f.id
+              ORDER BY fa2.weight DESC, fa2.channel LIMIT 1) as channel,
+             (SELECT fa2.label FROM fragment_anchors fa2
+              WHERE fa2.fragment_id = f.id
+              ORDER BY fa2.weight DESC, fa2.label LIMIT 1) as label,
              GROUP_CONCAT(DISTINCT fa.channel) as all_channels,
              MAX(CASE WHEN fa.channel = 'FEEL' THEN fa.weight ELSE NULL END) as max_feel,
              MAX(CASE WHEN fa.channel = 'FEEL' AND fa.weight >= 80 THEN 1 ELSE 0 END) as is_constitutional
@@ -198,7 +204,7 @@ export class MemoryEngine {
 
     const groups = new Map<string, Array<{ id: string; summary: string; sessionId: string; label: string; channel: string; allChannels: string; maxFeel: number | null; isConstitutional: boolean }>>();
     for (const f of fragments) {
-      const key = `${f.channel}:${(f.label || f.summary).slice(0, 40)}`;
+      const key = `${f.channel}:${(f.label || f.summary).slice(0, 50)}`;
       if (!groups.has(key)) groups.set(key, []);
       groups.get(key)!.push({
         id: f.id, summary: f.summary, sessionId: f.session_id, label: f.label, channel: f.channel,
@@ -215,15 +221,20 @@ export class MemoryEngine {
       if (distinctSessions.size < minSessions) continue;
 
       // Quality gate: if any member has FEEL signal, average must meet threshold.
-      // Groups with no FEEL anchors are judged by member count & cross-session spread alone.
       const feelScores = members.map(m => m.maxFeel).filter((s): s is number => s !== null);
-      let avgFeel = 50; // neutral default for groups without FEEL signals
+      let avgFeel = 50;
       if (feelScores.length > 0) {
         avgFeel = feelScores.reduce((a, b) => a + b, 0) / feelScores.length;
         if (avgFeel < minFeelScore) continue;
       }
 
-      const exemplar = members[0];
+      // Filter system noise before scoring — prevents noise fragments from inflating
+      // group size, session spread, and channel diversity factors.
+      const NOISE_RE = /<local-command|\[AgentMemory\]|hook failed|spawn.*ENOENT/;
+      const cleanMembers = members.filter(m => !NOISE_RE.test(m.summary) && !NOISE_RE.test(m.label));
+      const effectiveMembers = cleanMembers.length >= minMembers ? cleanMembers : members;
+
+      const exemplar = effectiveMembers[0] ?? members[0];
       const labelBase = groupKey.split(":").slice(1).join(":");
       const channel = exemplar?.channel ?? "WHAT";
       const fingerprint = `${projectId}::${channel}::${labelBase.trim().toLowerCase()}`;
@@ -241,47 +252,44 @@ export class MemoryEngine {
         continue;
       }
 
-      // Rule text: pick the most representative summary — highest FEEL, then longest.
-      // Skip system noise (raw command output that ends up in fragment summaries).
-      const best = members.reduce((a, b) =>
+      // Rule text from cleanest, most representative member
+      const best = effectiveMembers.reduce((a, b) =>
         ((a.maxFeel ?? 0) + a.summary.length * 0.01) > ((b.maxFeel ?? 0) + b.summary.length * 0.01) ? a : b
       );
       let ruleText = best!.summary.slice(0, 120);
-      if (/^User:\s*<local-command|^<local-command|^Assistant:.*hook|^\[AgentMemory\]/.test(ruleText)) {
-        // Fall back to a cleaner member summary
-        const clean = members.find(m => !/<local-command|hook|\[AgentMemory\]/.test(m.summary));
-        if (clean) ruleText = clean.summary.slice(0, 120);
-      }
 
       // Multi-factor weight scoring.
-      const hasConstitutional = members.some(m => m.isConstitutional);
+      const hasConstitutional = effectiveMembers.some(m => m.isConstitutional);
       const uniqueChannels = new Set<string>();
-      let hasWhoChannel = false;
-      for (const m of members) {
+      for (const m of effectiveMembers) {
         for (const ch of m.allChannels.split(",")) {
           if (ch) uniqueChannels.add(ch);
         }
-        if (m.allChannels.includes("WHO")) hasWhoChannel = true;
       }
+      const effectiveSessions = new Set(effectiveMembers.map(m => m.sessionId).filter(Boolean));
+
+      // WHO bonus — only when the group's primary channel is WHO (identity-centric).
+      // "Mixed" groups that happen to mention a person don't qualify.
+      const isWhoGroup = exemplar?.channel === "WHO";
 
       let ruleWeight = 0.18; // base — low enough that single-session file refs stay marginal
 
-      // Session spread — diminishing returns (cap 1.5x to avoid over-weighting repetitive Q&A)
-      if (distinctSessions.size >= 5) ruleWeight *= 1.5;
-      else if (distinctSessions.size >= 3) ruleWeight *= 1.3;
-      else if (distinctSessions.size >= 2) ruleWeight *= 1.15;
+      // Session spread — diminishing returns (cap 1.5x)
+      if (effectiveSessions.size >= 5) ruleWeight *= 1.5;
+      else if (effectiveSessions.size >= 3) ruleWeight *= 1.3;
+      else if (effectiveSessions.size >= 2) ruleWeight *= 1.15;
 
       // Group size — more evidence (max 1.4x)
-      if (members.length >= 10) ruleWeight *= 1.4;
-      else if (members.length >= 8) ruleWeight *= 1.25;
-      else if (members.length >= 5) ruleWeight *= 1.1;
+      if (effectiveMembers.length >= 10) ruleWeight *= 1.4;
+      else if (effectiveMembers.length >= 8) ruleWeight *= 1.25;
+      else if (effectiveMembers.length >= 5) ruleWeight *= 1.1;
 
       // Channel diversity — cross-channel patterns are richer (max 1.4x)
       if (uniqueChannels.size >= 3) ruleWeight *= 1.4;
       else if (uniqueChannels.size >= 2) ruleWeight *= 1.2;
 
-      // WHO bonus — identity insights are inherently valuable, rare, and hard to recover
-      if (hasWhoChannel) ruleWeight *= 1.4;
+      // WHO bonus — identity rules are inherently valuable, rare, and hard to recover
+      if (isWhoGroup) ruleWeight *= 1.4;
 
       // Constitutional bonus
       if (hasConstitutional) ruleWeight *= 1.5;
