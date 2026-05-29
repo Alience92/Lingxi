@@ -57,27 +57,22 @@ async function main() {
     }
   }
 
-  // Independent dreaming trigger: check if enough new fragments since last dreaming.
-  // We check here (not just in auto-fragment) because compact is manual and rare.
-  const DREAMING_THRESHOLD = 100;
-  const lastDreaming = db.prepare("SELECT last_dreaming_at FROM projects WHERE id = ?").get(projectId) as { last_dreaming_at: number | null } | undefined;
-  const lastDreamingAt = lastDreaming?.last_dreaming_at ?? 0;
-  const newFragsSince = db.prepare(
-    "SELECT COUNT(*) as cnt FROM fragments WHERE project_id = ? AND created_at > ? AND retrieval_state IN ('active','warm') AND asset_state != 'user_deleted'"
-  ).get(projectId, lastDreamingAt) as { cnt: number };
-
-  if (newFragsSince.cnt >= DREAMING_THRESHOLD) {
+  // Independent dreaming trigger — multi-signal (not just compact-dependent).
+  // Uses lightweight signal count + time-based + fragment count conditions.
+  const { checkDreamingTrigger } = await import("../../core/dreaming-trigger.js");
+  const trigger = checkDreamingTrigger(projectId);
+  if (trigger.shouldTrigger) {
     const dreamingWorkerPath = path.join(__dirname, "dreaming-worker.js");
     const workspaceDir = db.prepare("SELECT workspace_dir FROM projects WHERE id = ?").get(projectId) as { workspace_dir: string } | undefined;
     const wsDir = workspaceDir?.workspace_dir || path.join(process.env.HOME || process.env.USERPROFILE || homedir(), ".claude", "projects", projectId);
     try { fs.mkdirSync(wsDir, { recursive: true }); } catch {}
     const logFd = fs.openSync(path.join(wsDir, "dreaming.log"), "a");
-    spawn("node", [dreamingWorkerPath, `--project=${projectId}`, `--threshold=${DREAMING_THRESHOLD}`], {
+    spawn("node", [dreamingWorkerPath, `--project=${projectId}`, `--threshold=1`], {
       detached: true,
       stdio: ["ignore", logFd, logFd],
       windowsHide: true,
     }).unref();
-    console.error(`[AgentMemory] 后台 Dreaming 自动触发: ${newFragsSince.cnt} 条新碎片 (阈值 ${DREAMING_THRESHOLD})`);
+    console.error(`[AgentMemory] 后台 Dreaming 自动触发: ${trigger.reason}`);
   }
 
   // L0 distilled rules

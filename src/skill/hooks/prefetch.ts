@@ -3,6 +3,7 @@
 
 import { openDb, getDb } from "../../db/connection.js";
 import { prefetch, getLastPrefetchTiming } from "../../core/retriever.js";
+import { extractSignals, persistLightweightSignals } from "../../core/lightweight-extractor.js";
 
 const HOOK_TIMING = process.env.AGENTMEMORY_PERF_TIMING === "1";
 
@@ -82,6 +83,15 @@ async function main() {
   }
 
   const tHookTotal = Date.now() - tHookStart;
+
+  // Lightweight signal extraction — runs per user message, < 50ms
+  const mainProject = process.env.AGENTMEMORY_PROJECT || projectIds[0] || "claude-auto-memory";
+  try {
+    const signals = extractSignals(userMessage);
+    if (signals.length > 0) {
+      persistLightweightSignals(mainProject, sessionId, signals);
+    }
+  } catch {}
 
   if (HOOK_TIMING) {
     const t = getLastPrefetchTiming();

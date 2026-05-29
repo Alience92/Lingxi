@@ -7,6 +7,7 @@ import * as fs from "node:fs";
 import { cosineSimilarity } from "../../core/embedder.js";
 import { loadSettingsEnv } from "./settings.js";
 import { injectCareMessage, injectAlerts } from "../../core/active-context.js";
+import { consumeLightweightSignals } from "../../core/dreaming-trigger.js";
 import type { MemoryEngine } from "../engine.js";
 
 async function main() {
@@ -314,6 +315,10 @@ async function main() {
   } catch (e) {
     console.error(`[AgentMemory] P0 关怀失败:`, (e as Error).message?.slice(0, 80));
   }
+
+  // Mark lightweight signals as consumed
+  const consumed = consumeLightweightSignals(projectId);
+  if (consumed > 0) console.error(`[AgentMemory] dreaming: 标记 ${consumed} 条轻量信号为已处理`);
 
   // Step 4: Update last dreaming timestamp
   db.prepare("UPDATE projects SET last_dreaming_at = ? WHERE id = ?").run(Date.now(), projectId);

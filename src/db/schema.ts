@@ -267,6 +267,22 @@ CREATE INDEX IF NOT EXISTS idx_recall_log_fragment ON recall_log(fragment_id);
 CREATE INDEX IF NOT EXISTS idx_sessions_project_pending ON sessions(project_id, pending_fragmentation);
 CREATE INDEX IF NOT EXISTS idx_query_events_project_result ON query_events(project_id, result_count, searched_at);
 
+-- Lightweight signals: real-time extraction without LLM, per-interaction cost < 50ms.
+-- Feeds dreaming triggers and relationship profile between full fragmentation cycles.
+CREATE TABLE IF NOT EXISTS lightweight_signals (
+  id TEXT PRIMARY KEY,
+  project_id TEXT NOT NULL REFERENCES projects(id),
+  session_id TEXT NOT NULL,
+  signal_type TEXT NOT NULL CHECK(signal_type IN ('decision','correction','confirmation','frustration','urgency','file_ref','person_ref','topic')),
+  label TEXT NOT NULL,
+  weight INTEGER NOT NULL DEFAULT 10,
+  consumed INTEGER NOT NULL DEFAULT 0,
+  created_at INTEGER NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_lw_signals_project ON lightweight_signals(project_id, created_at);
+CREATE INDEX IF NOT EXISTS idx_lw_signals_consumed ON lightweight_signals(project_id, consumed, created_at);
+
 `;
 
 export const VECTOR_DIMENSIONS = 1536;
