@@ -158,30 +158,31 @@ export class MemoryEngine {
     return { warmed, archived, cooled };
   }
 
-  runDistillation(projectId: string, options?: { minFeelScore?: number; minMembers?: number }): number {
+  runDistillation(projectId: string, options?: { minFeelScore?: number; minMembers?: number; minSessions?: number }): number {
     const minFeelScore = options?.minFeelScore ?? 60;
-    const minMembers = options?.minMembers ?? 3;
+    const minMembers = options?.minMembers ?? 5;
+    const minSessions = options?.minSessions ?? 2;
     const db = getDb();
 
     // Load fragments with their max FEEL weight for quality gating.
     // Includes archived — their content may form useful L0 rules even though
     // the fragments themselves are no longer in active retrieval. status and retrieval_state are independent axes.
     const fragments = db.prepare(`
-      SELECT f.id, f.summary, MIN(fa.label) AS label, MIN(fa.channel) AS channel,
+      SELECT f.id, f.summary, f.session_id, MIN(fa.label) AS label, MIN(fa.channel) AS channel,
              MAX(CASE WHEN fa.channel = 'FEEL' THEN fa.weight ELSE NULL END) as max_feel,
              MAX(CASE WHEN fa.channel = 'FEEL' AND fa.weight >= 80 THEN 1 ELSE 0 END) as is_constitutional
       FROM fragments f
       JOIN fragment_anchors fa ON fa.fragment_id = f.id
       WHERE f.project_id = ? AND f.retrieval_state IN ('active', 'warm', 'archived') AND f.asset_state != 'user_deleted'
       GROUP BY f.id, f.summary
-    `).all(projectId) as Array<{ id: string; summary: string; label: string; channel: string; max_feel: number | null; is_constitutional: number }>;
+    `).all(projectId) as Array<{ id: string; summary: string; session_id: string; label: string; channel: string; max_feel: number | null; is_constitutional: number }>;
 
-    const groups = new Map<string, Array<{ id: string; summary: string; label: string; channel: string; maxFeel: number | null; isConstitutional: boolean }>>();
+    const groups = new Map<string, Array<{ id: string; summary: string; sessionId: string; label: string; channel: string; maxFeel: number | null; isConstitutional: boolean }>>();
     for (const f of fragments) {
       const key = `${f.channel}:${(f.label || f.summary).slice(0, 50)}`;
       if (!groups.has(key)) groups.set(key, []);
       groups.get(key)!.push({
-        id: f.id, summary: f.summary, label: f.label, channel: f.channel,
+        id: f.id, summary: f.summary, sessionId: f.session_id, label: f.label, channel: f.channel,
         maxFeel: f.max_feel, isConstitutional: f.is_constitutional === 1,
       });
     }
@@ -189,6 +190,10 @@ export class MemoryEngine {
     let distilled = 0;
     for (const [groupKey, members] of groups) {
       if (members.length < minMembers) continue;
+
+      // Cross-session gate: rules must span ≥2 distinct sessions to be general
+      const distinctSessions = new Set(members.map(m => m.sessionId).filter(Boolean));
+      if (distinctSessions.size < minSessions) continue;
 
       // Quality gate: average FEEL score across group must meet threshold
       const feelScores = members.map(m => m.maxFeel).filter((s): s is number => s !== null);
