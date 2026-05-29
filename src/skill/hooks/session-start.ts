@@ -156,36 +156,65 @@ async function main() {
         alerts?: Array<{ type: string; severity: string; message: string; at: number }>;
       };
 
-      // Preferences → behavioral directives (not FYI)
+      // Classify preferences into three categories
       if (ctx.preferences?.length) {
+        const profileLines: string[] = [];  // 用户画像 — values, personality
+        const productLines: string[] = [];  // 产品方向 — long-term goals
+
         for (const p of ctx.preferences) {
-          // Convert preference text into an actionable constraint
           const t = p.text;
-          if (/直接|不要.*问|不要.*确认|直接动手|自行/.test(t)) {
-            behavioralLines.push(`- 用户偏好直接行动：${t}`);
-          } else if (/批评|直接.*说|绕弯|不绕/.test(t)) {
-            behavioralLines.push(`- 用户要求直接反馈：${t}`);
-          } else if (/非.*程序员|不懂.*代码|不是.*程序/.test(t)) {
-            // Already handled by WHO rules above, skip
-          } else if (/AI|SVG|手绘|设计素材/.test(t)) {
+
+          // --- Behavioral constraints: directly actionable rules ---
+          if (/直接行动|直接.*做|自行.*决策|不要.*确认|不要.*问|直接动手/.test(t)) {
+            behavioralLines.push(`- 自主执行：${t}`);
+          } else if (/批评|直接.*说|直接.*反馈|绕弯|不绕/.test(t)) {
+            behavioralLines.push(`- 直接反馈：${t}`);
+          } else if (/SVG|手绘|设计素材|不要.*AI.*画/.test(t)) {
             behavioralLines.push(`- 设计约束：${t}`);
-          } else {
-            behavioralLines.push(`- ${t}`);
+          } else if (/安全.*首要|信任.*首要|防.*泄露|防.*劫持|安全.*考量/.test(t) && !/未来|将|配备|小模型/.test(t)) {
+            behavioralLines.push(`- 安全优先：${t}`);
+
+          // --- User profile: values, personality, how to understand this person ---
+          } else if (/认可|主张|始终.*认为|核心价值|不是.*效率|认识.*用户|关系.*链接/.test(t)) {
+            profileLines.push(t);
+          } else if (/不跟随|独立.*判断|自己.*逻辑|主动预测|不用.*多说|认识.*不用/.test(t)) {
+            profileLines.push(t);
+          } else if (/记住.*闪光|糖.*不甜|阈值.*高|频率.*低/.test(t)) {
+            profileLines.push(t);
+          } else if (/普通.*用户|重视直觉|非.*学术|换声音|加案例/.test(t)) {
+            profileLines.push(t);
+          } else if (/判断.*被复现|deepfake/.test(t)) {
+            profileLines.push(t);
+
+          // --- Product direction: long-term goals, architecture ---
+          } else if (/session.*限制.*失效|session.*完全/.test(t)) {
+            productLines.push(t);
+          } else if (/未来.*配备|小模型.*副本|生物级.*鉴别|路线|长期/.test(t)) {
+            productLines.push(t);
+          } else if (/基座模型|中间件|架构|Agent.*路线/.test(t)) {
+            productLines.push(t);
+
+          // --- Fallback: ambiguous entries go to profile (informational) ---
+          } else if (!/不是.*程序|不懂.*代码/.test(t)) {
+            profileLines.push(t);
           }
         }
-      }
 
-      // Deduplicate
-      const seen = new Set<string>();
-      const unique = behavioralLines.filter(l => {
-        const key = l.slice(0, 40);
-        if (seen.has(key)) return false;
-        seen.add(key);
-        return true;
-      });
+        // Output behavioral constraints — keep it short (≤ 6)
+        const deduped = [...new Set(behavioralLines)];
+        if (deduped.length > 0) {
+          console.log(`[AgentMemory] 行为约束 — 必须遵守，不是建议:\n${deduped.slice(0, 6).join("\n")}`);
+        }
 
-      if (unique.length > 0) {
-        console.log(`[AgentMemory] 行为约束 — 以下约束必须严格遵守，不是参考建议:\n${unique.join("\n")}`);
+        // Output user profile — values and personality
+        if (profileLines.length > 0) {
+          console.log(`[AgentMemory] 用户画像:\n${profileLines.map(l => `  · ${l}`).join("\n")}`);
+        }
+
+        // Output product direction
+        if (productLines.length > 0) {
+          console.log(`[AgentMemory] 产品方向:\n${productLines.map(l => `  · ${l}`).join("\n")}`);
+        }
       }
 
       // Active context as reference (decisions + todos remain FYI)
