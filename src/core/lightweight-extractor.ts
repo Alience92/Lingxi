@@ -71,12 +71,6 @@ export function extractSignals(text: string): LightweightSignal[] {
     signals.push({ signalType: "person_ref", label: text.slice(0, 40), weight: 10 });
   }
 
-  // Topic bigrams as light signals
-  const topics = extractTopics(text);
-  for (const t of topics.slice(0, 3)) {
-    signals.push({ signalType: "topic", label: t, weight: 5 });
-  }
-
   return signals;
 }
 

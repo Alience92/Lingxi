@@ -67,7 +67,7 @@ async function main() {
     const wsDir = workspaceDir?.workspace_dir || path.join(process.env.HOME || process.env.USERPROFILE || homedir(), ".claude", "projects", projectId);
     try { fs.mkdirSync(wsDir, { recursive: true }); } catch {}
     const logFd = fs.openSync(path.join(wsDir, "dreaming.log"), "a");
-    spawn("node", [dreamingWorkerPath, `--project=${projectId}`, `--threshold=1`], {
+    spawn("node", [dreamingWorkerPath, `--project=${projectId}`, `--threshold=0`, `--force`], {
       detached: true,
       stdio: ["ignore", logFd, logFd],
       windowsHide: true,

@@ -15,6 +15,7 @@ async function main() {
   const projectId = args.find(a => a.startsWith("--project="))?.split("=")[1] || "claude-auto-memory";
   const thresholdStr = args.find(a => a.startsWith("--threshold="))?.split("=")[1] || "100";
   const threshold = parseInt(thresholdStr, 10);
+  const forceMode = args.includes("--force");
 
   openDb();
   const db = getDb();
@@ -27,7 +28,7 @@ async function main() {
     "SELECT COUNT(*) as cnt FROM fragments WHERE project_id = ? AND created_at > ? AND retrieval_state IN ('active','warm') AND asset_state != 'user_deleted'"
   ).get(projectId, lastDreamingAt) as { cnt: number };
 
-  if (newFragments.cnt < threshold) {
+  if (!forceMode && newFragments.cnt < threshold) {
     // Below threshold — nothing to do
     process.exit(0);
   }
@@ -316,12 +317,23 @@ async function main() {
     console.error(`[AgentMemory] P0 关怀失败:`, (e as Error).message?.slice(0, 80));
   }
 
-  // Mark lightweight signals as consumed
-  const consumed = consumeLightweightSignals(projectId);
-  if (consumed > 0) console.error(`[AgentMemory] dreaming: 标记 ${consumed} 条轻量信号为已处理`);
+  // Mark lightweight signals as consumed and update timestamp.
+  // Only update if all steps succeeded — wrapped in try-catch for safety.
+  try {
+    const consumed = consumeLightweightSignals(projectId);
+    if (consumed > 0) console.error(`[AgentMemory] dreaming: 标记 ${consumed} 条轻量信号为已处理`);
 
-  // Step 4: Update last dreaming timestamp
-  db.prepare("UPDATE projects SET last_dreaming_at = ? WHERE id = ?").run(Date.now(), projectId);
+    // Cleanup old consumed signals (30+ days)
+    const cleaned = db.prepare(
+      "DELETE FROM lightweight_signals WHERE consumed = 1 AND created_at < ?"
+    ).run(Date.now() - 30 * 24 * 60 * 60 * 1000);
+    if (cleaned.changes > 0) console.error(`[AgentMemory] dreaming: 清理 ${cleaned.changes} 条旧轻量信号`);
+
+    // Step 4: Update last dreaming timestamp
+    db.prepare("UPDATE projects SET last_dreaming_at = ? WHERE id = ?").run(Date.now(), projectId);
+  } catch (e) {
+    console.error(`[AgentMemory] dreaming: consume/cleanup failed, signals preserved:`, (e as Error).message?.slice(0, 80));
+  }
 
   const parts: string[] = [];
   if (stats.archived + stats.cooled > 0) parts.push(`清理 ${stats.archived + stats.cooled} 条过期记忆`);
