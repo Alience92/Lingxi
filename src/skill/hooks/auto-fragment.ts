@@ -291,11 +291,19 @@ async function main() {
             if (match) encMatches++;
             encCompared++;
 
-            // Production override: update fragment_anchors with encoder-assigned channel
+            // Production override: encoder-assigned channel replaces LLM channel.
+            // Also normalize weight (FEEL→non-FEEL drops to default) and update
+            // label to reflect encoder source, preventing channel/label mismatch.
             const VALID_CH = ["WHAT", "FEEL", "WHERE", "WHO"];
             if (frag.anchor_id && finalLabel !== frag.llm_channel && VALID_CH.includes(finalLabel)) {
               const ch = finalLabel as typeof VALID_CH[number];
-              db.prepare(`UPDATE fragment_anchors SET channel = ? WHERE id = ?`).run(ch, frag.anchor_id);
+              const isFeelSwitch = frag.llm_channel === "FEEL" && ch !== "FEEL";
+              if (isFeelSwitch) {
+                // FEEL→non-FEEL: drop weight to default and note encoder override
+                db.prepare(`UPDATE fragment_anchors SET channel = ?, weight = 10, source = 'clustering' WHERE id = ?`).run(ch, frag.anchor_id);
+              } else {
+                db.prepare(`UPDATE fragment_anchors SET channel = ? WHERE id = ?`).run(ch, frag.anchor_id);
+              }
               encOverrides++;
             }
 

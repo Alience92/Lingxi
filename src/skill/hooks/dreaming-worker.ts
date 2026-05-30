@@ -71,7 +71,7 @@ async function main() {
   // Step 2: Distillation — cluster similar labels, merge ≥3 into L0 rules
   let distilled = 0;
   try {
-    distilled = engine.runDistillation(projectId);
+    distilled = await engine.runDistillation(projectId);
     console.error(`[AgentMemory] dreaming: distillation done — ${distilled} rules`);
   } catch (e) {
     console.error(`[AgentMemory] dreaming: distillation failed:`, (e as Error).message?.slice(0, 80));
@@ -290,10 +290,10 @@ async function main() {
           if (ruleA && ruleB) {
             if (ruleA.weight >= ruleB.weight && ruleA.id !== ruleB.id) {
               // ruleA is stronger → ruleB is superseded by ruleA
-              db.prepare(`UPDATE distilled_rules SET superseded_by = ? WHERE id = ?`).run(ruleB.id, ruleA.id);
+              db.prepare(`UPDATE distilled_rules SET superseded_by = ? WHERE id = ?`).run(ruleA.id, ruleB.id);
             } else if (ruleB.id !== ruleA.id) {
               // ruleB is stronger → ruleA is superseded by ruleB
-              db.prepare(`UPDATE distilled_rules SET superseded_by = ? WHERE id = ?`).run(ruleA.id, ruleB.id);
+              db.prepare(`UPDATE distilled_rules SET superseded_by = ? WHERE id = ?`).run(ruleB.id, ruleA.id);
             }
             resolved++;
           }

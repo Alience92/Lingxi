@@ -169,7 +169,7 @@ export class MemoryEngine {
     return { warmed, archived, cooled };
   }
 
-  runDistillation(projectId: string, options?: { minFeelScore?: number; minMembers?: number; minSessions?: number }): number {
+  async runDistillation(projectId: string, options?: { minFeelScore?: number; minMembers?: number; minSessions?: number }): Promise<number> {
     const db = getDb();
 
     // Novelty-adjusted thresholds: young systems are more aggressive
@@ -304,8 +304,11 @@ export class MemoryEngine {
       ruleWeight = Math.min(2.0, Math.round(ruleWeight * 100) / 100);
 
       const ruleId = `rule-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
-      db.prepare(`INSERT OR IGNORE INTO distilled_rules (id, fingerprint, text, weight, created_at) VALUES (?, ?, ?, ?, ?)`).run(
-        ruleId, fingerprint, ruleText, ruleWeight, Date.now()
+      // Embed rule text for future vector-based dedup
+      let ruleVec: Buffer | null = null;
+      try { const v = await this.embedder.embed(ruleText, "store"); ruleVec = Buffer.from(new Float32Array(v).buffer); } catch {}
+      db.prepare(`INSERT OR IGNORE INTO distilled_rules (id, fingerprint, text, weight, priority, vector, created_at) VALUES (?, ?, ?, ?, 50, ?, ?)`).run(
+        ruleId, fingerprint, ruleText, ruleWeight, ruleVec, Date.now()
       );
       for (const m of members) {
         db.prepare(`INSERT OR IGNORE INTO rule_sources (rule_id, fragment_id, project_id) VALUES (?, ?, ?)`).run(
@@ -419,14 +422,16 @@ export class MemoryEngine {
         // Boost weight slightly
         db.prepare(`UPDATE distilled_rules SET weight = MIN(2.0, weight * 1.1) WHERE id = ?`).run(existingRuleId);
       } else {
-        // New lesson rule
-        const ruleId = `rule-${NOW}-${Math.random().toString(36).slice(2, 6)}`;
+        // New lesson rule — embed for future vector dedup
+        const ruleId = `rl-${NOW}-${Math.random().toString(36).slice(2, 6)}`;
         const ruleWeight = Math.min(1.5, 0.5 + sig.weight * 0.01);
+        let ruleVec: Buffer | null = null;
+        try { const v = await this.embedder.embed(exemplarText, "store"); ruleVec = Buffer.from(new Float32Array(v).buffer); } catch {}
 
         db.prepare(`
-          INSERT OR IGNORE INTO distilled_rules (id, fingerprint, text, weight, priority, created_at)
-          VALUES (?, ?, ?, ?, 25, ?)
-        `).run(ruleId, fingerprint, exemplarText.slice(0, 120), ruleWeight, NOW);
+          INSERT OR IGNORE INTO distilled_rules (id, fingerprint, text, weight, priority, vector, created_at)
+          VALUES (?, ?, ?, ?, 25, ?, ?)
+        `).run(ruleId, fingerprint, exemplarText.slice(0, 120), ruleWeight, ruleVec, NOW);
 
         for (const f of frags) {
           db.prepare(`INSERT OR IGNORE INTO rule_sources (rule_id, fragment_id, project_id) VALUES (?, ?, ?)`).run(

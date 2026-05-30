@@ -424,6 +424,13 @@ function ensureSchemaMigrations(database: Database.Database): void {
     database.exec(`ALTER TABLE distilled_rules ADD COLUMN superseded_by TEXT`);
   }
 
+  // Migration 28b: vector column on distilled_rules for dedup in distillSingleEventRules
+  const drCols3 = database.prepare(`PRAGMA table_info(distilled_rules)`).all() as Array<{ name: string }>;
+  const hasRuleVector = drCols3.some((col) => col.name === "vector");
+  if (!hasRuleVector) {
+    database.exec(`ALTER TABLE distilled_rules ADD COLUMN vector BLOB`);
+  }
+
   // Migration 29: memory_repair_jobs CHECK constraint — add P0 active cycle job types.
   // SQLite can't alter CHECK, so rebuild the table.
   const mrjCheck = database.prepare(`SELECT sql FROM sqlite_master WHERE type='table' AND name='memory_repair_jobs'`).get() as { sql: string } | undefined;

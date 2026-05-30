@@ -52,6 +52,7 @@ CREATE TABLE IF NOT EXISTS distilled_rules (
   weight REAL NOT NULL DEFAULT 1.0,
   priority INTEGER NOT NULL DEFAULT 50,
   superseded_by TEXT,
+  vector BLOB,
   created_at INTEGER NOT NULL
 );
 

@@ -120,7 +120,7 @@ export function buildToolHandlers(engine: MemoryEngine) {
       const stats = engine.runDecay({ protectConstitutional: true });
 
       // Step 2: Distillation — cluster similar labels, merge ≥3 into L0 rules
-      const distilled = engine.runDistillation(params.projectId);
+      const distilled = await engine.runDistillation(params.projectId);
 
       const parts: string[] = [];
       if (stats.archived + stats.cooled > 0) parts.push(`已清理 ${stats.archived + stats.cooled} 条过期记忆`);
