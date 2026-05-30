@@ -80,30 +80,44 @@ async function main() {
     console.error(`[AgentMemory] 后台 Dreaming 自动触发: ${trigger.reason}`);
   }
 
-  // L0 distilled rules — ordered by priority (constitutional=0 first), then weight
+  // L0 distilled rules — ordered by priority (constitutional=0 first), then weight.
+  // Includes provenance: how many distinct source sessions + date range.
   const rules = db.prepare(`
-    SELECT dr.text, dr.weight, dr.priority, COUNT(DISTINCT rs.fragment_id) as sc
+    SELECT dr.id, dr.text, dr.weight, dr.priority,
+           COUNT(DISTINCT rs.fragment_id) as sc,
+           COUNT(DISTINCT f.session_id) as sessions,
+           MAX(s.started_at) as last_seen,
+           MIN(s.started_at) as first_seen
     FROM distilled_rules dr
     JOIN rule_sources rs ON rs.rule_id = dr.id
+    JOIN fragments f ON f.id = rs.fragment_id
+    LEFT JOIN sessions s ON s.id = f.session_id
     WHERE rs.project_id = ? OR rs.project_id IN (SELECT DISTINCT project_id FROM rule_sources WHERE rule_id = dr.id)
+      AND dr.superseded_by IS NULL
     GROUP BY dr.id ORDER BY dr.priority ASC, dr.weight DESC, sc DESC LIMIT 15
-  `).all(projectId) as Array<{ text: string; weight: number; priority: number; sc: number }>;
+  `).all(projectId) as Array<{ id: string; text: string; weight: number; priority: number; sc: number; sessions: number; last_seen: number | null; first_seen: number | null }>;
+
+  function fmtDate(ts: number | null): string {
+    if (!ts) return "";
+    const d = new Date(ts);
+    return `${d.getMonth()+1}月${d.getDate()}日`;
+  }
 
   const constitutional = rules.filter(r => r.priority === 0);
   const lessonRules = rules.filter(r => r.priority > 0 && r.priority < 50);
   const behavioral = rules.filter(r => r.priority >= 50);
 
   if (constitutional.length > 0) {
-    const lines = constitutional.map(r => `- ${r.text} (×${r.sc})`);
-    console.log(`[AgentMemory] 铁律约束 — 不可覆盖，不可违反:\n${lines.join("\n")}`);
+    const lines = constitutional.map(r => `${r.text} — 基于${r.sessions}次对话 (${fmtDate(r.first_seen)}→${fmtDate(r.last_seen)})`);
+    console.log(`[AgentMemory] 铁律约束 — 不可覆盖:\n${lines.join("\n")}`);
   }
   if (lessonRules.length > 0) {
-    const lines = lessonRules.map(r => `- ${r.text} (×${r.sc})`);
+    const lines = lessonRules.map(r => `${r.text} — 基于${r.sessions}次对话 (${fmtDate(r.first_seen)}→${fmtDate(r.last_seen)})`);
     const note = constitutional.length > 0 ? "\n（受铁律约束，冲突时铁律优先）" : "";
-    console.log(`[AgentMemory] 教训规则（单次纠正提取）:\n${lines.join("\n")}${note}`);
+    console.log(`[AgentMemory] 教训规则:\n${lines.join("\n")}${note}`);
   }
   if (behavioral.length > 0) {
-    const lines = behavioral.map(r => `- ${r.text} (×${r.sc})`);
+    const lines = behavioral.map(r => `${r.text} — 基于${r.sessions}次对话 (${fmtDate(r.first_seen)}→${fmtDate(r.last_seen)})`);
     const note = (constitutional.length > 0 || lessonRules.length > 0) ? "\n（受铁律和教训规则约束，冲突时高优先级规则优先）" : "";
     console.log(`[AgentMemory] 行为建议:\n${lines.join("\n")}${note}`);
   }
@@ -215,17 +229,17 @@ async function main() {
         // Output behavioral constraints — keep it short (≤ 6)
         const deduped = [...new Set(behavioralLines)];
         if (deduped.length > 0) {
-          console.log(`[AgentMemory] 行为约束 — 必须遵守，不是建议:\n${deduped.slice(0, 6).join("\n")}`);
+          console.log(`[AgentMemory] 用户偏好事实 — 基于历史对话蒸馏:\n${deduped.slice(0, 6).join("\n")}`);
         }
 
         // Output user profile — values and personality
         if (profileLines.length > 0) {
-          console.log(`[AgentMemory] 用户画像:\n${profileLines.map(l => `  · ${l}`).join("\n")}`);
+          console.log(`[AgentMemory] 用户画像 — 长期观察总结:\n${profileLines.map(l => `  · ${l}`).join("\n")}`);
         }
 
         // Output product direction
         if (productLines.length > 0) {
-          console.log(`[AgentMemory] 产品方向:\n${productLines.map(l => `  · ${l}`).join("\n")}`);
+          console.log(`[AgentMemory] 产品方向 — 已确认的长期目标:\n${productLines.map(l => `  · ${l}`).join("\n")}`);
         }
       }
 

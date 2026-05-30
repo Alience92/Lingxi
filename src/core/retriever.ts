@@ -160,10 +160,16 @@ export async function prefetch(
     return { contextBlock: "", fragmentIds: [], confidence: 0 };
   }
 
-  // Rerank: composite score = vector × anchor_weight × decay_score
+  // Rerank: composite score = vector × anchor_weight × decay_score +
+  //         scope bonus (matching scope or global gets +0.05)
+  const projectScope = `project:${projectId}`;
   const reranked = candidates.map((r) => {
     const maxAnchorWeight = Math.max(...r.fragment.anchors.map((a) => a.weight), 10) / 255;
-    const compositeScore = r.score * 0.5 + maxAnchorWeight * 0.3 + r.fragment.decayScore * 0.2;
+    let compositeScore = r.score * 0.5 + maxAnchorWeight * 0.3 + r.fragment.decayScore * 0.2;
+    const scope = (r.fragment as any).scope as string | null | undefined;
+    if (!scope || scope === projectScope) {
+      compositeScore += 0.05; // matching scope or global — small boost
+    }
     return { ...r, compositeScore };
   }).sort((a, b) => b.compositeScore - a.compositeScore);
 

@@ -261,6 +261,18 @@ const TOOL_DEFINITIONS = [
       required: ["projectId"],
     },
   },
+  {
+    name: "forget_memory",
+    description: "Delete a specific memory fragment by ID. Removes it from search results and marks it for cleanup.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        fragmentId: { type: "string", description: "Fragment ID to forget" },
+        projectId: { type: "string", description: "Project identifier" },
+      },
+      required: ["fragmentId", "projectId"],
+    },
+  },
 ];
 
 export async function startServer(apiKey: string, dbPath?: string) {

@@ -48,12 +48,19 @@ const FRAGMENT_PROMPT = `你是记忆提取专家。分析以下对话，严格�
   "linkedTo": [],
   "is_decision": true/false,
   "is_todo": true/false,
-  "is_preference": true/false
+  "is_preference": true/false,
+  "scope": null 或 "project:名称" 或 "domain:类型"
 }
 
 weight 规则：
 - WHAT / WHO / WHERE：默认 10
 - FEEL：按上述判据（纠正80/挫败90/紧迫50/确认30）
+
+scope 规则（记忆适用边界）：
+- 如果信息与当前对话所属的项目直接相关 → "project:当前"
+- 如果信息是通用领域知识 → "domain:语言/框架名"（如 "domain:typescript"）
+- 如果信息是全局偏好 → null（表示适用于所有场景）
+- 例如："这个API用Bearer token" → "project:当前"；"我不喜欢动态类型" → "domain:typescript"
 
 is_decision / is_todo / is_preference 三者互斥（至多一个为true）。
 纯事实碎片可全部为 false。
@@ -122,6 +129,7 @@ interface RawFragment {
   is_decision?: boolean;
   is_todo?: boolean;
   is_preference?: boolean;
+  scope?: string;
 }
 
 // Bracket-depth-aware JSON array extraction — handles nested arrays (linkedTo: [1])
@@ -191,6 +199,9 @@ export function parseFragmentationResponse(
       if (r.is_decision) subtype = "decision";
       else if (r.is_todo) subtype = "todo";
       else if (r.is_preference) subtype = "preference";
+      const scope = r.scope && typeof r.scope === "string" && r.scope.length > 0
+        ? r.scope.slice(0, 50) : null;
+
       return {
         id: uuid(),
         sessionId,
@@ -207,6 +218,7 @@ export function parseFragmentationResponse(
         summary: r.summary.slice(0, 50),
         createdAt: Date.now(),
         subtype,
+        scope,
       };
     });
 

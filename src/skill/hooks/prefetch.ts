@@ -134,6 +134,32 @@ async function main() {
     const signals = extractSignals(userMessage);
     if (signals.length > 0) {
       persistLightweightSignals(mainProject, sessionId, signals);
+
+      // Correction event retrieval: when user corrects agent,
+      // search past 30 days for similar corrections as quick reference.
+      const hasCorrection = signals.some(s => s.signalType === "correction");
+      if (hasCorrection) {
+        const pastCorrections = db.prepare(`
+          SELECT f.id, f.summary, f.created_at FROM fragments f
+          JOIN fragment_anchors fa ON fa.fragment_id = f.id
+          WHERE f.project_id = ? AND fa.channel = 'FEEL' AND fa.weight >= 80
+            AND f.created_at > ? AND f.asset_state != 'user_deleted'
+          ORDER BY fa.weight DESC, f.created_at DESC LIMIT 5
+        `).all(mainProject, Date.now() - 30 * 24 * 60 * 60 * 1000) as Array<{ id: string; summary: string; created_at: number }>;
+
+        if (pastCorrections.length > 0) {
+          const lines = pastCorrections.slice(0, 2).map(f =>
+            `  · ${f.summary} (${new Date(f.created_at).toLocaleDateString("zh-CN")})`
+          );
+          const correctionBlock = "相关历史: 过去30天内被纠正过类似问题:\n" + lines.join("\n");
+          if (bestBlock) {
+            bestBlock = bestBlock + "\n" + correctionBlock;
+          } else {
+            bestBlock = correctionBlock;
+            bestConfidence = Math.max(bestConfidence, 0.25);
+          }
+        }
+      }
     }
   } catch {}
 

@@ -46,8 +46,8 @@ export async function persistFragments(input: PersistInput): Promise<Fragment[]>
   }
 
   const insertFrag = db.prepare(`
-    INSERT INTO fragments (id, session_id, project_id, summary, linked_count, decay_score, created_at, status, retrieval_state, asset_state, distilled_to, subtype, vector)
-    VALUES (?, ?, ?, ?, ?, 1.0, ?, 'active', 'active', 'retained', NULL, ?, ?)
+    INSERT INTO fragments (id, session_id, project_id, summary, linked_count, decay_score, created_at, status, retrieval_state, asset_state, distilled_to, subtype, vector, scope)
+    VALUES (?, ?, ?, ?, ?, 1.0, ?, 'active', 'active', 'retained', NULL, ?, ?, ?)
   `);
   const insertAnchor = db.prepare(`
     INSERT INTO fragment_anchors (fragment_id, channel, label, weight, source, timestamp)
@@ -72,7 +72,7 @@ export async function persistFragments(input: PersistInput): Promise<Fragment[]>
       };
 
       const vec = vectors.get(f.id);
-      insertFrag.run(f.id, f.sessionId, f.projectId, f.summary, f.linkedCount, f.createdAt, f.subtype ?? null, vec ?? null);
+      insertFrag.run(f.id, f.sessionId, f.projectId, f.summary, f.linkedCount, f.createdAt, f.subtype ?? null, vec ?? null, (f as any).scope ?? null);
 
       for (const anchor of f.anchors) {
         insertAnchor.run(f.id, anchor.channel, anchor.label, anchor.weight, anchor.source, anchor.timestamp);

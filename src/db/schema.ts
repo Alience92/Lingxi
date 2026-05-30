@@ -24,7 +24,8 @@ CREATE TABLE IF NOT EXISTS fragments (
   asset_state TEXT NOT NULL DEFAULT 'retained' CHECK(asset_state IN ('retained','exportable','user_deleted')),
   distilled_to TEXT,
   subtype TEXT CHECK(subtype IN ('decision','todo','preference',NULL)),
-  vector BLOB
+  vector BLOB,
+  scope TEXT
 );
 
 CREATE TABLE IF NOT EXISTS fragment_anchors (
@@ -50,6 +51,7 @@ CREATE TABLE IF NOT EXISTS distilled_rules (
   text TEXT NOT NULL,
   weight REAL NOT NULL DEFAULT 1.0,
   priority INTEGER NOT NULL DEFAULT 50,
+  superseded_by TEXT,
   created_at INTEGER NOT NULL
 );
 

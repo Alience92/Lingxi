@@ -446,5 +446,21 @@ export function buildToolHandlers(engine: MemoryEngine) {
         generatedAt: Date.now(),
       };
     },
+
+    forget_memory(params: { fragmentId: string; projectId: string }) {
+      const db = getDb();
+      const frag = db.prepare(`SELECT id FROM fragments WHERE id = ? AND project_id = ?`).get(params.fragmentId, params.projectId);
+      if (!frag) return { deleted: false, message: "未找到该记忆碎片" };
+
+      // Soft-delete: set asset_state='user_deleted', retrieval_state='cold'
+      db.prepare(`UPDATE fragments SET asset_state = 'user_deleted', retrieval_state = 'cold' WHERE id = ?`).run(params.fragmentId);
+      // Remove from FTS index
+      const row = db.prepare("SELECT rowid FROM fragments WHERE id = ?").get(params.fragmentId) as { rowid: number } | undefined;
+      if (row) {
+        try { db.prepare("INSERT INTO fragments_fts(fragments_fts, rowid, summary) VALUES('delete', ?, ?)").run(row.rowid, ""); } catch {}
+      }
+
+      return { deleted: true, id: params.fragmentId };
+    },
   };
 }

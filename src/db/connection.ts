@@ -408,6 +408,21 @@ function ensureSchemaMigrations(database: Database.Database): void {
       )
     `);
   }
+
+  // Migration 27: scope column on fragments for memory applicability boundaries
+  const fragCols8 = database.prepare(`PRAGMA table_info(fragments)`).all() as Array<{ name: string }>;
+  const hasScope = fragCols8.some((col) => col.name === "scope");
+  if (!hasScope) {
+    database.exec(`ALTER TABLE fragments ADD COLUMN scope TEXT`);
+    database.exec(`CREATE INDEX IF NOT EXISTS idx_fragments_project_scope ON fragments(project_id, scope)`);
+  }
+
+  // Migration 28: superseded_by on distilled_rules for conflict resolution chain
+  const drCols2 = database.prepare(`PRAGMA table_info(distilled_rules)`).all() as Array<{ name: string }>;
+  const hasSupersededBy = drCols2.some((col) => col.name === "superseded_by");
+  if (!hasSupersededBy) {
+    database.exec(`ALTER TABLE distilled_rules ADD COLUMN superseded_by TEXT`);
+  }
 }
 
 export function checkpointWAL(): void {

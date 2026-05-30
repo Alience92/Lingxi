@@ -267,6 +267,37 @@ async function main() {
         );
       }
       contradictionCount = contradictions.length;
+      // Conflict resolution chain: for each contradiction, try to resolve via superseded chain
+      let resolved = 0;
+      for (const c of contradictions.slice(0, 10)) {
+        const [distA, distB] = [c.fragmentA.id, c.fragmentB.id].map(fid =>
+          db.prepare(`SELECT distilled_to FROM fragments WHERE id = ? AND distilled_to IS NOT NULL`).get(fid) as { distilled_to: string } | undefined
+        );
+        // If one side has been distilled to a rule and the other hasn't → the distilled side takes priority
+        if (distA && !distB) {
+          const sourceRule = db.prepare(`SELECT id, created_at FROM distilled_rules WHERE id = ?`).get(distA.distilled_to) as { id: string; created_at: number } | undefined;
+          if (sourceRule) {
+            // Mark the other fragment as "resolved by" the distilled rule
+            db.prepare(`UPDATE fragment_anchors SET label = label || ' [已被规则取代]' WHERE fragment_id = ? AND channel = 'FEEL' AND weight >= 80`).run(c.fragmentB.id);
+            resolved++;
+          }
+        } else if (!distA && distB) {
+          db.prepare(`UPDATE fragment_anchors SET label = label || ' [已被规则取代]' WHERE fragment_id = ? AND channel = 'FEEL' AND weight >= 80`).run(c.fragmentA.id);
+          resolved++;
+        } else if (distA && distB) {
+          // Both distilled — mark the older (lower-confidence) rule as superseded
+          const [ruleA, ruleB] = [db.prepare(`SELECT id, weight, created_at FROM distilled_rules WHERE id = ?`).get(distA.distilled_to) as { id: string; weight: number; created_at: number } | undefined, db.prepare(`SELECT id, weight, created_at FROM distilled_rules WHERE id = ?`).get(distB.distilled_to) as { id: string; weight: number; created_at: number } | undefined];
+          if (ruleA && ruleB) {
+            if (ruleA.weight >= ruleB.weight && ruleA.id !== ruleB.id) {
+              db.prepare(`UPDATE distilled_rules SET superseded_by = ? WHERE id = ?`).run(ruleA.id, ruleB.id);
+            } else if (ruleB.id !== ruleA.id) {
+              db.prepare(`UPDATE distilled_rules SET superseded_by = ? WHERE id = ?`).run(ruleB.id, ruleA.id);
+            }
+            resolved++;
+          }
+        }
+      }
+      if (resolved > 0) console.error(`[AgentMemory] P0 冲突解决: ${resolved} 个矛盾已标记`);
       console.error(`[AgentMemory] P0 矛盾检测: ${contradictions.length} 个潜在冲突 (${contradictions.filter(c => c.riskLevel === "high").length} 高风险)`);
     }
   } catch (e) {

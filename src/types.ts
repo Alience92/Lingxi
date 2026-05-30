@@ -25,6 +25,7 @@ export interface Fragment {
   assetState: "retained" | "exportable" | "user_deleted";
   distilledTo: string | undefined;
   subtype?: "decision" | "todo" | "preference" | null;
+  scope?: string | null;
 }
 
 export interface DistilledRule {
