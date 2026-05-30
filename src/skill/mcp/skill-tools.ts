@@ -4,6 +4,7 @@ import { fourLayerRecall } from "../../core/backup-recall.js";
 import { getDb } from "../../db/connection.js";
 import { buildFragmentationPrompt, parseFragmentationResponse, resolveLinks } from "../../core/fragmenter.js";
 import { getMemoryHealth } from "../../core/health.js";
+import { updateActiveContext } from "../../core/active-context.js";
 import { scanExistingMemoryFiles, buildInstallMessage, injectAgentsMdAppendix } from "./install.js";
 import * as fs from "node:fs";
 import * as path from "node:path";
@@ -268,9 +269,10 @@ export function buildToolHandlers(engine: MemoryEngine) {
       const rules = db.prepare(`
         SELECT dr.text FROM distilled_rules dr
         JOIN rule_sources rs ON rs.rule_id = dr.id
-        WHERE rs.project_id = ? OR rs.project_id IN (
+        WHERE (rs.project_id = ? OR rs.project_id IN (
           SELECT DISTINCT project_id FROM rule_sources WHERE rule_id = dr.id
-        )
+        ))
+        AND dr.superseded_by IS NULL
         GROUP BY dr.id ORDER BY dr.weight DESC LIMIT 5
       `).all(params.projectId) as Array<{ text: string }>;
 
@@ -462,23 +464,27 @@ export function buildToolHandlers(engine: MemoryEngine) {
         try { db.prepare("INSERT INTO fragments_fts(fragments_fts, rowid, summary) VALUES('delete', ?, ?)").run(row.rowid, frag.summary); } catch {}
       }
 
-      // Cascade: unwind rule_sources and re-check affected rules
+      // Cascade: unwind rule_sources and re-check affected rules.
+      // Threshold differentiated by rule type: single-event lessons (priority=25)
+      // tolerate 1 source; standard L0 rules (priority≥50) need ≥2.
       const affectedRules = db.prepare(`SELECT rule_id FROM rule_sources WHERE fragment_id = ?`).all(fid) as Array<{ rule_id: string }>;
       for (const { rule_id } of affectedRules) {
-        // Remove source link
         db.prepare(`DELETE FROM rule_sources WHERE rule_id = ? AND fragment_id = ?`).run(rule_id, fid);
-        // Check remaining source count — if below threshold 2, deprecate
+        const rule = db.prepare(`SELECT priority, weight FROM distilled_rules WHERE id = ?`).get(rule_id) as { priority: number; weight: number } | undefined;
+        if (!rule) continue;
         const remaining = (db.prepare(`SELECT COUNT(*) as c FROM rule_sources WHERE rule_id = ?`).get(rule_id) as { c: number }).c;
-        if (remaining < 2) {
+        const minSources = rule.priority <= 25 ? 0 : 2; // single-event rules: 0 sources = deprecate; L0: <2 = deprecate
+        if (remaining <= minSources) {
           db.prepare(`UPDATE distilled_rules SET superseded_by = 'user_deleted_source', priority = 100 WHERE id = ?`).run(rule_id);
         }
       }
 
       // Rebuild active_context to exclude deleted fragment's contributions
       try {
-        const { updateActiveContext } = require("../../core/active-context.js");
         updateActiveContext(pid);
-      } catch {}
+      } catch (e) {
+        console.error("[AgentMemory] forget_memory: active_context rebuild failed:", (e as Error).message?.slice(0, 80));
+      }
 
       return {
         deleted: true,

@@ -19,7 +19,7 @@ function searchDistilledRules(db: ReturnType<typeof getDb>, query: string, proje
     const rows = db.prepare(`
       SELECT DISTINCT dr.text, dr.weight FROM distilled_rules dr
       JOIN rule_sources rs ON rs.rule_id = dr.id
-      WHERE rs.project_id = ? AND dr.text LIKE ?
+      WHERE rs.project_id = ? AND dr.text LIKE ? AND dr.superseded_by IS NULL
       ORDER BY dr.weight DESC LIMIT 3
     `).all(projectId, `%${token}%`) as Array<{ text: string; weight: number }>;
 
