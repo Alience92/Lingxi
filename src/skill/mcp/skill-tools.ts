@@ -449,18 +449,45 @@ export function buildToolHandlers(engine: MemoryEngine) {
 
     forget_memory(params: { fragmentId: string; projectId: string }) {
       const db = getDb();
-      const frag = db.prepare(`SELECT id, summary FROM fragments WHERE id = ? AND project_id = ?`).get(params.fragmentId, params.projectId) as { id: string; summary: string } | undefined;
+      const pid = params.projectId;
+      const fid = params.fragmentId;
+      const frag = db.prepare(`SELECT id, summary FROM fragments WHERE id = ? AND project_id = ?`).get(fid, pid) as { id: string; summary: string } | undefined;
       if (!frag) return { deleted: false, message: "未找到该记忆碎片" };
 
-      // Soft-delete: set asset_state='user_deleted', retrieval_state='cold'
-      db.prepare(`UPDATE fragments SET asset_state = 'user_deleted', retrieval_state = 'cold' WHERE id = ?`).run(params.fragmentId);
-      // Remove from FTS index — must pass original summary for FTS5 external content table
-      const row = db.prepare("SELECT rowid FROM fragments WHERE id = ?").get(params.fragmentId) as { rowid: number } | undefined;
+      // Soft-delete fragment
+      db.prepare(`UPDATE fragments SET asset_state = 'user_deleted', retrieval_state = 'cold' WHERE id = ?`).run(fid);
+      // Remove from FTS index
+      const row = db.prepare("SELECT rowid FROM fragments WHERE id = ?").get(fid) as { rowid: number } | undefined;
       if (row) {
         try { db.prepare("INSERT INTO fragments_fts(fragments_fts, rowid, summary) VALUES('delete', ?, ?)").run(row.rowid, frag.summary); } catch {}
       }
 
-      return { deleted: true, id: params.fragmentId };
+      // Cascade: unwind rule_sources and re-check affected rules
+      const affectedRules = db.prepare(`SELECT rule_id FROM rule_sources WHERE fragment_id = ?`).all(fid) as Array<{ rule_id: string }>;
+      for (const { rule_id } of affectedRules) {
+        // Remove source link
+        db.prepare(`DELETE FROM rule_sources WHERE rule_id = ? AND fragment_id = ?`).run(rule_id, fid);
+        // Check remaining source count — if below threshold 2, deprecate
+        const remaining = (db.prepare(`SELECT COUNT(*) as c FROM rule_sources WHERE rule_id = ?`).get(rule_id) as { c: number }).c;
+        if (remaining < 2) {
+          db.prepare(`UPDATE distilled_rules SET superseded_by = 'user_deleted_source', priority = 100 WHERE id = ?`).run(rule_id);
+        }
+      }
+
+      // Rebuild active_context to exclude deleted fragment's contributions
+      try {
+        const { updateActiveContext } = require("../../core/active-context.js");
+        updateActiveContext(pid);
+      } catch {}
+
+      return {
+        deleted: true,
+        id: fid,
+        cascadedRules: affectedRules.length,
+        message: affectedRules.length > 0
+          ? `已删除记忆碎片，并移除 ${affectedRules.length} 条关联规则的来源证据`
+          : "已删除记忆碎片",
+      };
     },
   };
 }

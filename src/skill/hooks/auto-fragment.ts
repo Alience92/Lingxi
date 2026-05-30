@@ -83,10 +83,13 @@ async function fragmentOneSession(
   if (fullTranscript.length < 200) return 0;
 
   let chunks = chunkConversation(conversation, MAX_TRANSCRIPT_CHARS);
+  const totalChunks = chunks.length;
 
-  // Only process the last N chunks when maxChunks < total — keeps recent content
-  // without re-processing the entire session.
+  // Compute chunk offset: for incremental mode, start numbering from where
+  // the last run left off. This prevents chunk ID collisions with prior runs.
+  let chunkOffset = 0;
   if (chunks.length > maxChunks) {
+    chunkOffset = totalChunks - maxChunks;
     chunks = chunks.slice(-maxChunks);
   }
 
@@ -94,10 +97,11 @@ async function fragmentOneSession(
   let anyChunkFailed = false;
 
   for (let i = 0; i < chunks.length; i++) {
+    const chunkIdx = chunkOffset + i;
     try {
       const result: unknown = await withTimeout(
         engine.fragmentSession({
-          sessionId: chunks.length > 1 ? `${sessionId}__chunk${i}` : sessionId,
+          sessionId: totalChunks > 1 ? `${sessionId}__chunk${chunkIdx}` : sessionId,
           projectId,
           transcript: chunks[i]!,
         }),
