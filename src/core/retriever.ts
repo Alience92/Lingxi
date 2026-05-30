@@ -166,8 +166,7 @@ export async function prefetch(
   const reranked = candidates.map((r) => {
     const maxAnchorWeight = Math.max(...r.fragment.anchors.map((a) => a.weight), 10) / 255;
     let compositeScore = r.score * 0.5 + maxAnchorWeight * 0.3 + r.fragment.decayScore * 0.2;
-    const scope = (r.fragment as any).scope as string | null | undefined;
-    if (!scope || scope === projectScope) {
+    if (!r.fragment.scope || r.fragment.scope === projectScope) {
       compositeScore += 0.05; // matching scope or global — small boost
     }
     return { ...r, compositeScore };
@@ -430,6 +429,7 @@ async function vectorSearch(
       retrievalState: (r.retrieval_state as "active" | "warm" | "archived" | "cold") ?? "warm",
       assetState: (r.asset_state as "retained" | "exportable" | "user_deleted") ?? "retained",
       distilledTo: r.distilled_to as string | undefined,
+      scope: (r.scope as string) || null,
       anchors: anchors.map((a) => ({
         channel: a.channel as import("../types.js").Channel,
         label: a.label,

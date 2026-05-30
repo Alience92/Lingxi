@@ -289,9 +289,11 @@ async function main() {
           const [ruleA, ruleB] = [db.prepare(`SELECT id, weight, created_at FROM distilled_rules WHERE id = ?`).get(distA.distilled_to) as { id: string; weight: number; created_at: number } | undefined, db.prepare(`SELECT id, weight, created_at FROM distilled_rules WHERE id = ?`).get(distB.distilled_to) as { id: string; weight: number; created_at: number } | undefined];
           if (ruleA && ruleB) {
             if (ruleA.weight >= ruleB.weight && ruleA.id !== ruleB.id) {
-              db.prepare(`UPDATE distilled_rules SET superseded_by = ? WHERE id = ?`).run(ruleA.id, ruleB.id);
-            } else if (ruleB.id !== ruleA.id) {
+              // ruleA is stronger → ruleB is superseded by ruleA
               db.prepare(`UPDATE distilled_rules SET superseded_by = ? WHERE id = ?`).run(ruleB.id, ruleA.id);
+            } else if (ruleB.id !== ruleA.id) {
+              // ruleB is stronger → ruleA is superseded by ruleB
+              db.prepare(`UPDATE distilled_rules SET superseded_by = ? WHERE id = ?`).run(ruleA.id, ruleB.id);
             }
             resolved++;
           }

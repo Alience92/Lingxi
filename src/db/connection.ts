@@ -423,6 +423,28 @@ function ensureSchemaMigrations(database: Database.Database): void {
   if (!hasSupersededBy) {
     database.exec(`ALTER TABLE distilled_rules ADD COLUMN superseded_by TEXT`);
   }
+
+  // Migration 29: memory_repair_jobs CHECK constraint — add P0 active cycle job types.
+  // SQLite can't alter CHECK, so rebuild the table.
+  const mrjCheck = database.prepare(`SELECT sql FROM sqlite_master WHERE type='table' AND name='memory_repair_jobs'`).get() as { sql: string } | undefined;
+  if (mrjCheck?.sql && !mrjCheck.sql.includes("contradiction_detect")) {
+    database.exec(`
+      CREATE TABLE memory_repair_jobs_new (
+        id TEXT PRIMARY KEY,
+        project_id TEXT NOT NULL,
+        job_type TEXT NOT NULL CHECK(job_type IN ('auto_alias','re_embed','re_group','weight_adjust','deprecate_rule','contradiction_detect','pattern_insight','self_check','proactive_care')),
+        trigger TEXT NOT NULL,
+        fragments_affected TEXT NOT NULL,
+        action_taken TEXT NOT NULL,
+        before_state TEXT,
+        after_state TEXT,
+        created_at INTEGER NOT NULL
+      );
+      INSERT INTO memory_repair_jobs_new SELECT * FROM memory_repair_jobs;
+      DROP TABLE memory_repair_jobs;
+      ALTER TABLE memory_repair_jobs_new RENAME TO memory_repair_jobs;
+    `);
+  }
 }
 
 export function checkpointWAL(): void {

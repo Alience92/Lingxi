@@ -92,7 +92,7 @@ async function main() {
     JOIN rule_sources rs ON rs.rule_id = dr.id
     JOIN fragments f ON f.id = rs.fragment_id
     LEFT JOIN sessions s ON s.id = f.session_id
-    WHERE rs.project_id = ? OR rs.project_id IN (SELECT DISTINCT project_id FROM rule_sources WHERE rule_id = dr.id)
+    WHERE (rs.project_id = ? OR rs.project_id IN (SELECT DISTINCT project_id FROM rule_sources WHERE rule_id = dr.id))
       AND dr.superseded_by IS NULL
     GROUP BY dr.id ORDER BY dr.priority ASC, dr.weight DESC, sc DESC LIMIT 15
   `).all(projectId) as Array<{ id: string; text: string; weight: number; priority: number; sc: number; sessions: number; last_seen: number | null; first_seen: number | null }>;

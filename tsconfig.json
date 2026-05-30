@@ -41,5 +41,5 @@
 
     "moduleResolution": "nodenext",
   },
-  "exclude": ["vitest.config.ts", "tests"]
+  "exclude": ["vitest.config.ts", "tests", "tools"]
 }
