@@ -53,9 +53,9 @@ export function extractSignals(text: string): LightweightSignal[] {
     signals.push({ signalType: "urgency", label: text.slice(0, 40), weight: 50 });
   }
 
-  // Decision signals
+  // Decision signals (raised from 10 to 25 per correction signal tiering)
   if (DECISION_KW.test(text)) {
-    signals.push({ signalType: "decision", label: text.slice(0, 50), weight: 10 });
+    signals.push({ signalType: "decision", label: text.slice(0, 50), weight: 25 });
   }
 
   // WHERE signals (file/path references)

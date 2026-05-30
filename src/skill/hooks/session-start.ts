@@ -80,20 +80,32 @@ async function main() {
     console.error(`[AgentMemory] 后台 Dreaming 自动触发: ${trigger.reason}`);
   }
 
-  // L0 distilled rules
+  // L0 distilled rules — ordered by priority (constitutional=0 first), then weight
   const rules = db.prepare(`
-    SELECT dr.text, dr.weight, COUNT(DISTINCT rs.fragment_id) as sc,
-           MAX(CASE WHEN fa.channel = 'FEEL' AND fa.weight >= ${CONSTITUTIONAL_WEIGHT_THRESHOLD} THEN 1 ELSE 0 END) as constitutional
+    SELECT dr.text, dr.weight, dr.priority, COUNT(DISTINCT rs.fragment_id) as sc
     FROM distilled_rules dr
     JOIN rule_sources rs ON rs.rule_id = dr.id
-    LEFT JOIN fragment_anchors fa ON fa.fragment_id = rs.fragment_id
     WHERE rs.project_id = ? OR rs.project_id IN (SELECT DISTINCT project_id FROM rule_sources WHERE rule_id = dr.id)
-    GROUP BY dr.id ORDER BY constitutional DESC, dr.weight DESC, sc DESC LIMIT 10
-  `).all(projectId) as Array<{ text: string; weight: number; sc: number; constitutional: number }>;
+    GROUP BY dr.id ORDER BY dr.priority ASC, dr.weight DESC, sc DESC LIMIT 15
+  `).all(projectId) as Array<{ text: string; weight: number; priority: number; sc: number }>;
 
-  if (rules.length > 0) {
-    const lines = rules.map(r => `${r.constitutional ? "[宪法]" : ""}- ${r.text} (×${r.sc})`);
-    console.log(`[AgentMemory] L0 蒸馏规则:\n${lines.join("\n")}`);
+  const constitutional = rules.filter(r => r.priority === 0);
+  const lessonRules = rules.filter(r => r.priority > 0 && r.priority < 50);
+  const behavioral = rules.filter(r => r.priority >= 50);
+
+  if (constitutional.length > 0) {
+    const lines = constitutional.map(r => `- ${r.text} (×${r.sc})`);
+    console.log(`[AgentMemory] 铁律约束 — 不可覆盖，不可违反:\n${lines.join("\n")}`);
+  }
+  if (lessonRules.length > 0) {
+    const lines = lessonRules.map(r => `- ${r.text} (×${r.sc})`);
+    const note = constitutional.length > 0 ? "\n（受铁律约束，冲突时铁律优先）" : "";
+    console.log(`[AgentMemory] 教训规则（单次纠正提取）:\n${lines.join("\n")}${note}`);
+  }
+  if (behavioral.length > 0) {
+    const lines = behavioral.map(r => `- ${r.text} (×${r.sc})`);
+    const note = (constitutional.length > 0 || lessonRules.length > 0) ? "\n（受铁律和教训规则约束，冲突时高优先级规则优先）" : "";
+    console.log(`[AgentMemory] 行为建议:\n${lines.join("\n")}${note}`);
   }
 
   // Cross-session continuity (24h window, prefer task_brief)

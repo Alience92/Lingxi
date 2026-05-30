@@ -77,6 +77,17 @@ async function main() {
     console.error(`[AgentMemory] dreaming: distillation failed:`, (e as Error).message?.slice(0, 80));
   }
 
+  // Step 2b: Single-event distillation — high-value correction/decision signals that
+  // don't need cross-session repetition. Uses vector similarity for dedup, creates
+  // priority=25 rules. Also handles probation downgrade for unused priority=25 rules.
+  let singleEventRules = 0;
+  try {
+    singleEventRules = await engine.distillSingleEventRules(projectId);
+    if (singleEventRules > 0) console.error(`[AgentMemory] dreaming: 单次事件蒸馏 ${singleEventRules} 条教训规则`);
+  } catch (e) {
+    console.error(`[AgentMemory] dreaming: single-event distillation failed:`, (e as Error).message?.slice(0, 80));
+  }
+
   // Step 2.5: Auto-alias detection — map abandoned terminology to current canonical terms
   const NOW = Date.now();
   const ALIAS_SIM_THRESHOLD = 0.85;
@@ -345,6 +356,7 @@ async function main() {
   const parts: string[] = [];
   if (stats.archived + stats.cooled > 0) parts.push(`清理 ${stats.archived + stats.cooled} 条过期记忆`);
   if (distilled > 0) parts.push(`蒸馏 ${distilled} 条 L0 规则`);
+  if (singleEventRules > 0) parts.push(`单次事件蒸馏 ${singleEventRules} 条教训规则`);
   if (criteriaRows.length > 0) parts.push(`蒸馏 ${criteriaRows.length} 条决策判据`);
   if (relationshipChanged) parts.push("关系档案已更新");
   if (contradictionCount > 0) parts.push(`发现 ${contradictionCount} 个潜在矛盾`);

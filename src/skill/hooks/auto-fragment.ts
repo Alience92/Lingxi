@@ -229,7 +229,9 @@ async function main() {
     }
   }
 
-  // Encoder shadow mode: two-stage macbert classifier vs LLM
+  // Encoder production mode: two-stage macbert classifier replaces LLM for channel classification.
+  // Previously shadow-only (record comparison, don't override). Now encoder result actually
+  // updates fragment_anchors when confidence ≥ 0.6. Fallback to LLM few-shot when < 0.6.
   if (totalFragments > 0) {
     try {
       const { ensureReady, classify } = await import("../../smallmodel/encoder.js");
@@ -242,19 +244,20 @@ async function main() {
 
         const recentFrags = db.prepare(`
           SELECT f.id, f.summary,
+            (SELECT fa2.id FROM fragment_anchors fa2 WHERE fa2.fragment_id = f.id ORDER BY fa2.weight DESC LIMIT 1) as anchor_id,
             (SELECT fa2.channel FROM fragment_anchors fa2 WHERE fa2.fragment_id = f.id ORDER BY fa2.weight DESC LIMIT 1) as llm_channel
           FROM fragments f
           WHERE f.project_id = ? AND (${chunkClauses})
           LIMIT 50
-        `).all(projectId, ...chunkParams) as Array<{ id: string; summary: string; llm_channel: string }>;
+        `).all(projectId, ...chunkParams) as Array<{ id: string; summary: string; anchor_id: number | null; llm_channel: string }>;
 
         let encCompared = 0;
         let encMatches = 0;
+        let encOverrides = 0;
         let encLatency = 0;
         const encNow = Date.now();
 
-        // Lazy-load fallback module only if needed
-        let classifyFallback: ((text: string) => Promise<{ label: string; confidence: number; source: string }>) | null = null;
+        let classifyFallback: ((text: string) => Promise<{ label: "WHAT" | "FEEL" | "WHERE" | "WHO"; confidence: number; source: string }>) | null = null;
         let fallbackUsed = 0;
 
         for (const frag of recentFrags) {
@@ -267,7 +270,6 @@ async function main() {
             let modelName = "macbert-2stage";
             let fallbackUsedFlag = 0;
 
-            // Low-confidence fallback → LLM few-shot
             if (encoderResult.confidence < 0.6 && fragmentationKey && fragmentationKey.length > 10) {
               if (!classifyFallback) {
                 const fb = await import("../../smallmodel/fallback.js");
@@ -276,8 +278,7 @@ async function main() {
               }
               try {
                 const fbResult = await classifyFallback(frag.summary);
-                const fbLabel = fbResult.label as "WHAT" | "FEEL" | "WHERE" | "WHO";
-                finalLabel = fbLabel;
+                finalLabel = fbResult.label;
                 modelName = "macbert-2stage+fallback";
                 fallbackUsedFlag = 1;
                 fallbackUsed++;
@@ -289,6 +290,14 @@ async function main() {
             const match = finalLabel === frag.llm_channel ? 1 : 0;
             if (match) encMatches++;
             encCompared++;
+
+            // Production override: update fragment_anchors with encoder-assigned channel
+            const VALID_CH = ["WHAT", "FEEL", "WHERE", "WHO"];
+            if (frag.anchor_id && finalLabel !== frag.llm_channel && VALID_CH.includes(finalLabel)) {
+              const ch = finalLabel as typeof VALID_CH[number];
+              db.prepare(`UPDATE fragment_anchors SET channel = ? WHERE id = ?`).run(ch, frag.anchor_id);
+              encOverrides++;
+            }
 
             db.prepare(`
               INSERT OR REPLACE INTO shadow_comparisons
@@ -318,11 +327,12 @@ async function main() {
 
           const cumRate = cumStats.total > 0 ? (cumStats.matches / cumStats.total * 100) : 0;
           const fbNote = fallbackUsed > 0 ? ` (${fallbackUsed}条fallback)` : "";
-          console.error(`[AgentMemory] Encoder影子对比: 本批 ${encCompared} 条 匹配率 ${encMatchRate.toFixed(0)}% 延时 ${encAvgLatency.toFixed(0)}ms${fbNote} | 累计 ${cumStats.total} 条 匹配率 ${cumRate.toFixed(0)}%`);
+          const ovNote = encOverrides > 0 ? ` 覆盖${encOverrides}条` : "";
+          console.error(`[AgentMemory] 编码器通道分类: ${encCompared}条 匹配率${encMatchRate.toFixed(0)}% 延时${encAvgLatency.toFixed(0)}ms${fbNote} | 累计${cumStats.total}条 ${cumRate.toFixed(0)}%${ovNote}`);
         }
       }
     } catch (e) {
-      console.error(`[AgentMemory] Encoder影子对比失败:`, (e as Error).message?.slice(0, 80));
+      console.error(`[AgentMemory] Encoder分类失败:`, (e as Error).message?.slice(0, 80));
     }
   }
 

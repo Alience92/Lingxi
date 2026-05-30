@@ -391,6 +391,23 @@ function ensureSchemaMigrations(database: Database.Database): void {
     database.exec(`UPDATE fragments SET asset_state = 'user_deleted' WHERE status = 'deleted' AND asset_state = 'retained'`);
     database.exec(`CREATE INDEX IF NOT EXISTS idx_fragments_project_asset ON fragments(project_id, asset_state)`);
   }
+
+  // Migration 26: priority column on distilled_rules for constitutional vs behavioral tiering
+  const drCols = database.prepare(`PRAGMA table_info(distilled_rules)`).all() as Array<{ name: string }>;
+  const hasPriority = drCols.some((col) => col.name === "priority");
+  if (!hasPriority) {
+    database.exec(`ALTER TABLE distilled_rules ADD COLUMN priority INTEGER NOT NULL DEFAULT 50`);
+    // Existing constitutional rules (detected via FEEL anchor w >= 80): mark as priority=0
+    database.exec(`
+      UPDATE distilled_rules SET priority = 0
+      WHERE id IN (
+        SELECT DISTINCT dr.id FROM distilled_rules dr
+        JOIN rule_sources rs ON rs.rule_id = dr.id
+        JOIN fragment_anchors fa ON fa.fragment_id = rs.fragment_id
+        WHERE fa.channel = 'FEEL' AND fa.weight >= 80
+      )
+    `);
+  }
 }
 
 export function checkpointWAL(): void {

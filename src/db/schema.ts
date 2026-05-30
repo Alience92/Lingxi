@@ -49,6 +49,7 @@ CREATE TABLE IF NOT EXISTS distilled_rules (
   fingerprint TEXT NOT NULL UNIQUE,
   text TEXT NOT NULL,
   weight REAL NOT NULL DEFAULT 1.0,
+  priority INTEGER NOT NULL DEFAULT 50,
   created_at INTEGER NOT NULL
 );
 

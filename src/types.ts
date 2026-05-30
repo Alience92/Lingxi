@@ -32,6 +32,7 @@ export interface DistilledRule {
   text: string;
   sourceFragmentIds: string[];
   weight: number;
+  priority: number;
   projectIds: string[];
   readonly createdAt: number;
 }

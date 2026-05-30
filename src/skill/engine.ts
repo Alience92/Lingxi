@@ -320,6 +320,129 @@ export class MemoryEngine {
     return distilled;
   }
 
+  /** Step 2b: Single-event distillation — high-value signals (correction, decision) that
+   *  don't need cross-session repetition to be worth distilling.
+   *  Uses vector similarity for dedup, creates priority=25 rules.
+   *  Also handles probation downgrade for unused priority=25 rules. */
+  async distillSingleEventRules(projectId: string): Promise<number> {
+    const db = getDb();
+    const NOW = Date.now();
+
+    // Probation downgrade: priority=25 rules unused for 30 days → demote to 50
+    const downgraded = db.prepare(`
+      UPDATE distilled_rules SET priority = 50 WHERE priority = 25
+      AND created_at < ?
+      AND id NOT IN (
+        SELECT DISTINCT dr.id FROM distilled_rules dr
+        JOIN rule_sources rs ON rs.rule_id = dr.id
+        JOIN fragments f ON f.id = rs.fragment_id
+        WHERE f.last_recalled_at > ?
+      )
+    `).run(NOW - 30 * 24 * 60 * 60 * 1000, NOW - 30 * 24 * 60 * 60 * 1000);
+    if (downgraded.changes > 0) {
+      console.error(`[AgentMemory] 教训规则试用期降级: ${downgraded.changes} 条`);
+    }
+
+    // Load unconsumed high-weight signals ordered by weight
+    const signals = db.prepare(`
+      SELECT ls.id, ls.session_id, ls.signal_type, ls.label, ls.weight
+      FROM lightweight_signals ls
+      WHERE ls.project_id = ? AND ls.consumed = 0
+        AND ls.signal_type IN ('correction','decision','frustration')
+        AND ls.weight >= 25
+      ORDER BY ls.weight DESC, ls.created_at ASC
+      LIMIT 50
+    `).all(projectId) as Array<{ id: string; session_id: string; signal_type: string; label: string; weight: number }>;
+
+    if (signals.length === 0) return 0;
+
+    // Batch-embed existing rule texts for dedup (cosine > 0.80 = duplicate)
+    const existingRules = db.prepare(`
+      SELECT id, text, vector FROM distilled_rules WHERE vector IS NOT NULL
+    `).all() as Array<{ id: string; text: string; vector: Buffer | null }>;
+
+    let distilled = 0;
+
+    for (const sig of signals) {
+      // Find fragments from this signal's session
+      const frags = db.prepare(`
+        SELECT f.id, f.summary, f.vector,
+               (SELECT fa.label FROM fragment_anchors fa
+                WHERE fa.fragment_id = f.id AND fa.channel = 'WHAT'
+                ORDER BY fa.weight DESC LIMIT 1) as what_label
+        FROM fragments f
+        WHERE f.project_id = ? AND f.session_id = ? AND f.retrieval_state IN ('active','warm')
+        ORDER BY f.created_at DESC LIMIT 3
+      `).all(projectId, sig.session_id) as Array<{ id: string; summary: string; vector: Buffer | null; what_label: string | null }>;
+
+      if (frags.length === 0) {
+        // Signal consumed even if no fragments found (stale signal)
+        db.prepare(`UPDATE lightweight_signals SET consumed = 1 WHERE id = ?`).run(sig.id);
+        continue;
+      }
+
+      const exemplarText = frags[0]!.what_label || frags[0]!.summary.slice(0, 80);
+      const channel = sig.signal_type === "correction" ? "FEEL" : "WHAT";
+      const fingerprint = `${projectId}::${channel}::${exemplarText.trim().toLowerCase().slice(0, 50)}`;
+
+      // Dedup check: vector similarity against existing rules
+      let isDuplicate = false;
+      let existingRuleId: string | null = null;
+
+      try {
+        let queryVec: number[];
+        const cachedVec = frags.find(f => f.vector && f.vector.length >= 4);
+        if (cachedVec?.vector) {
+          queryVec = Array.from(new Float32Array(cachedVec.vector.buffer, cachedVec.vector.byteOffset, cachedVec.vector.length / 4));
+        } else {
+          queryVec = await this.embedder.embed(exemplarText, "store");
+        }
+
+        for (const rule of existingRules) {
+          if (!rule.vector || rule.vector.length < 4) continue;
+          const ruleVec = Array.from(new Float32Array(rule.vector.buffer, rule.vector.byteOffset, rule.vector.length / 4));
+          if (cosineSimilarity(queryVec, ruleVec) > 0.80) {
+            isDuplicate = true;
+            existingRuleId = rule.id;
+            break;
+          }
+        }
+      } catch { /* embed failed — skip dedup, create new rule */ }
+
+      if (isDuplicate && existingRuleId) {
+        // Existing rule matched: add rule_source links for these fragments
+        for (const f of frags) {
+          db.prepare(`INSERT OR IGNORE INTO rule_sources (rule_id, fragment_id, project_id) VALUES (?, ?, ?)`).run(
+            existingRuleId, f.id, projectId
+          );
+        }
+        // Boost weight slightly
+        db.prepare(`UPDATE distilled_rules SET weight = MIN(2.0, weight * 1.1) WHERE id = ?`).run(existingRuleId);
+      } else {
+        // New lesson rule
+        const ruleId = `rule-${NOW}-${Math.random().toString(36).slice(2, 6)}`;
+        const ruleWeight = Math.min(1.5, 0.5 + sig.weight * 0.01);
+
+        db.prepare(`
+          INSERT OR IGNORE INTO distilled_rules (id, fingerprint, text, weight, priority, created_at)
+          VALUES (?, ?, ?, ?, 25, ?)
+        `).run(ruleId, fingerprint, exemplarText.slice(0, 120), ruleWeight, NOW);
+
+        for (const f of frags) {
+          db.prepare(`INSERT OR IGNORE INTO rule_sources (rule_id, fragment_id, project_id) VALUES (?, ?, ?)`).run(
+            ruleId, f.id, projectId
+          );
+        }
+        distilled++;
+      }
+
+      // Mark signal consumed
+      db.prepare(`UPDATE lightweight_signals SET consumed = 1 WHERE id = ?`).run(sig.id);
+    }
+
+    return distilled;
+  }
+
   getTrustProfile(projectId: string) {
     const db = getDb();
     const profile = db.prepare(`SELECT * FROM trust_profile WHERE project_id = ?`).get(projectId) as Record<string, unknown> | undefined;
