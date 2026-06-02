@@ -14,6 +14,7 @@ const DREAMING_THRESHOLD = 100; // fragments (mature)
 const SIGNAL_THRESHOLD = 50;    // lightweight signals (mature)
 const TIME_THRESHOLD_MS = 12 * 60 * 60 * 1000; // 12 hours (mature)
 const MIN_SIGNALS_FOR_TIME = 10; // minimum signals for time-based trigger
+const MAINTENANCE_INTERVAL_MS = 48 * 60 * 60 * 1000; // 48h — pure time trigger, no signal requirement
 
 /** Check all dreaming trigger conditions. Returns the first satisfied condition. */
 export function checkDreamingTrigger(projectId: string): TriggerCheck {
@@ -59,6 +60,14 @@ export function checkDreamingTrigger(projectId: string): TriggerCheck {
 
   if (fragCount.cnt >= fragmentThreshold) {
     return { shouldTrigger: true, reason: `新碎片 ${fragCount.cnt} 条 (nf=${nf.toFixed(1)} 阈值 ${fragmentThreshold})`, signalCount: sigCount.cnt };
+  }
+
+  // Condition D: Maintenance — pure time trigger, no signal requirement.
+  // Ensures decay runs even during quiet periods. Novelty-adjusted: 48h → ~10h for new systems.
+  const maintenanceInterval = MAINTENANCE_INTERVAL_MS * (1 - nf * 0.8);
+  if (lastAt > 0 && now - lastAt >= maintenanceInterval) {
+    const thresholdH = Math.round(maintenanceInterval / 3600000 * 10) / 10;
+    return { shouldTrigger: true, reason: `维护触发: 距上次 dreaming ${hoursSince}h (nf=${nf.toFixed(1)} 阈值 ${thresholdH}h)`, signalCount: sigCount.cnt };
   }
 
   return { shouldTrigger: false, reason: null, signalCount: sigCount.cnt };
