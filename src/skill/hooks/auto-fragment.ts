@@ -233,6 +233,25 @@ async function main() {
     }
   }
 
+  // AI self-reflection extraction: scan assistant messages for introspection signals
+  // (unverified assumptions, discovered mistakes, uncertain judgment).
+  // These feed the same pipeline as user correction signals at lower weight (30-70).
+  if (totalFragments > 0) {
+    try {
+      const { extractAssistantSignals, persistLightweightSignals } = await import("../../core/lightweight-extractor.js");
+      for (const sessionId of sessionIds) {
+        const jsonlPath = path.join(workspaceDir, `${sessionId}.jsonl`);
+        if (!fs.existsSync(jsonlPath)) continue;
+        const conversation = extractConversation(jsonlPath);
+        const assistantMsgs = conversation.filter(l => l.startsWith("Assistant: "));
+        const sigs = assistantMsgs.flatMap(m => extractAssistantSignals(m.slice(11))); // strip "Assistant: "
+        if (sigs.length > 0) {
+          persistLightweightSignals(projectId, sessionId, sigs);
+        }
+      }
+    } catch {}
+  }
+
   // Encoder production mode: two-stage macbert classifier replaces LLM for channel classification.
   // Previously shadow-only (record comparison, don't override). Now encoder result actually
   // updates fragment_anchors when confidence ≥ 0.6. Fallback to LLM few-shot when < 0.6.

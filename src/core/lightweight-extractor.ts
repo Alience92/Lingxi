@@ -6,7 +6,7 @@
 import { getDb } from "../db/connection.js";
 
 export interface LightweightSignal {
-  signalType: "decision" | "correction" | "confirmation" | "frustration" | "urgency" | "file_ref" | "person_ref" | "topic";
+  signalType: "decision" | "correction" | "confirmation" | "frustration" | "urgency" | "file_ref" | "person_ref" | "topic" | "self_reflect";
   label: string;
   weight: number;
 }
@@ -18,6 +18,12 @@ const FRUSTRATION_KW = /又|总是|一直|每次|老是|永远|从来|服了|烦
 const URGENCY_KW = /快|赶紧|马上|立刻|急|紧急|现在/;
 const FILE_REF_KW = /[A-Za-z]:[\\/][^\s,;]{2,}|\.ts\b|\.js\b|\.py\b|\.json\b|\.sql\b|\.md\b|\.tsx\b|src[\\/]|node_modules/;
 const PERSON_REF_KW = /用户|助手|Agent|产品经理|后端|前端|PM|开发|设计师/;
+
+// AI self-reflection: assistant realizing its own error or uncertainty.
+// Extracted from assistant messages (thinking content), not user messages.
+const SELF_REFLECT_UNVERIFIED = /我假设了|我默认|我以为|我猜测|无凭据|没先确认|没检查|没验证|漏检|漏掉|忽略/;
+const SELF_REFLECT_WRONG = /我错了|我犯错|我搞错|我的错|我失误|是我的疏忽|错误判断|误判|错误地/;
+const SELF_REFLECT_UNCERTAIN = /不确定|不太确定|可能应该|也许该|应该先|最好先|下次要|以后要/;
 
 // Topic extraction: meaningful CJK bigrams, deduplicated
 function extractTopics(text: string): string[] {
@@ -69,6 +75,25 @@ export function extractSignals(text: string): LightweightSignal[] {
   // WHO signals
   if (PERSON_REF_KW.test(text)) {
     signals.push({ signalType: "person_ref", label: text.slice(0, 40), weight: 10 });
+  }
+
+  return signals;
+}
+
+/** Extract self-reflection signals from assistant messages (thinking/analysis content).
+ *  Weights lower than user correction (80-90) — need 2-3 accumulations to distill.
+ *  - Unverified assumption: 70 (highest — caused real errors)
+ *  - Discovered mistake: 50
+ *  - Recognized uncertainty: 30 */
+export function extractAssistantSignals(text: string): LightweightSignal[] {
+  const signals: LightweightSignal[] = [];
+
+  if (SELF_REFLECT_UNVERIFIED.test(text)) {
+    signals.push({ signalType: "self_reflect", label: text.slice(0, 80), weight: 70 });
+  } else if (SELF_REFLECT_WRONG.test(text)) {
+    signals.push({ signalType: "self_reflect", label: text.slice(0, 80), weight: 50 });
+  } else if (SELF_REFLECT_UNCERTAIN.test(text)) {
+    signals.push({ signalType: "self_reflect", label: text.slice(0, 80), weight: 30 });
   }
 
   return signals;

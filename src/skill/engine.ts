@@ -351,7 +351,7 @@ export class MemoryEngine {
       SELECT ls.id, ls.session_id, ls.signal_type, ls.label, ls.weight
       FROM lightweight_signals ls
       WHERE ls.project_id = ? AND ls.consumed = 0
-        AND ls.signal_type IN ('correction','decision','frustration')
+        AND ls.signal_type IN ('correction','decision','frustration','self_reflect')
         AND ls.weight >= 25
       ORDER BY ls.weight DESC, ls.created_at ASC
       LIMIT 50
