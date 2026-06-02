@@ -7,8 +7,7 @@ dist/
 *.db-shm
 *.db-wal
 
-# Encoder model files (generated locally)
-tools/two-stage-output/*.onnx
+# Encoder model files — stored in GitHub Releases, downloaded via setup.sh
 tools/encoder-output/
 
 tools/clean-model-output/

@@ -276,12 +276,15 @@ cd Lingxi
 npm install
 npx tsc
 
+# 下载灵眸 ONNX 模型（首次安装必需）
+bash tools/setup-models.sh
+
 # 启动 MCP server
 node dist/skill/mcp/server.js
-
-# 运行评测仪表板（用真实使用数据评估记忆质量）
-npx tsx tools/eval-dashboard.ts [projectId]
 ```
+
+> **灵眸模型**：通道分类使用本地 ONNX 推理（零 API 成本）。模型文件通过 `setup-models.sh` 从 GitHub Releases 下载。如果未下载，系统自动回退 LLM 分类，不影响正常使用——只是灵眸那 80% 的零成本优化暂时不生效。
+> **自行训练**：运行 `python tools/train-two-stage.py`（需 GPU/NPU + HuggingFace 网络）。正常使用不需要此步骤。
 
 ### 环境变量
 
