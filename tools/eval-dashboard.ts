@@ -123,4 +123,78 @@ console.log(`蒸馏覆盖率: ${(coverage*100).toFixed(1)}% (权重 30%)`);
 console.log(`反零命中率: ${((1-zeroHitRate)*100).toFixed(1)}% (权重 20%)`);
 console.log(`综合质量分: ${qualityScore.toFixed(1)}/100`);
 
-console.log("\n提示: 定期运行此脚本追踪趋势。发布前目标: 综合分 > 70。");
+// ── Phase 0A: Extended baseline metrics ──────────────────────────
+
+// 7. Per-channel hit rate — which channels does retrieval serve best?
+console.log("\n=== 分通道命中率 ===");
+const chanHit = db.prepare(`
+  SELECT fa.channel, COUNT(DISTINCT rl.fragment_id) as hits
+  FROM recall_log rl
+  JOIN fragment_anchors fa ON fa.fragment_id = rl.fragment_id
+  WHERE rl.recalled_at > ?
+  GROUP BY fa.channel ORDER BY hits DESC
+`).all(NOW - 7 * DAY) as Array<{ channel: string; hits: number }>;
+const totalHits = chanHit.reduce((s, r) => s + r.hits, 0);
+for (const c of chanHit) {
+  console.log(`  ${c.channel}: ${c.hits} (${totalHits > 0 ? (c.hits/totalHits*100).toFixed(1) : "0"}%)`);
+}
+
+// 8. Hit rate by fragment age — does recall decay with age?
+console.log("\n=== 按碎片年龄的召回频率 ===");
+const ageBuckets = [
+  { label: "0-1天", max: NOW - 1 * DAY },
+  { label: "1-3天", max: NOW - 3 * DAY, min: NOW - 1 * DAY },
+  { label: "3-7天", max: NOW - 7 * DAY, min: NOW - 3 * DAY },
+  { label: "7-14天", max: NOW - 14 * DAY, min: NOW - 7 * DAY },
+  { label: "14天+", min: 0, max: NOW - 14 * DAY },
+];
+for (const b of ageBuckets) {
+  let sql: string;
+  let row: { total: number; recalled: number };
+  if (b.min != null) {
+    sql = `SELECT COUNT(DISTINCT f.id) as total, SUM(CASE WHEN f.recalled_count > 0 THEN 1 ELSE 0 END) as recalled FROM fragments f WHERE f.project_id = ? AND f.created_at <= ? AND f.created_at > ? AND f.asset_state != 'user_deleted'`;
+    row = db.prepare(sql).get(projectId, b.max, b.min) as { total: number; recalled: number };
+  } else if (b.max != null) {
+    sql = `SELECT COUNT(DISTINCT f.id) as total, SUM(CASE WHEN f.recalled_count > 0 THEN 1 ELSE 0 END) as recalled FROM fragments f WHERE f.project_id = ? AND f.created_at > ? AND f.asset_state != 'user_deleted'`;
+    row = db.prepare(sql).get(projectId, b.max) as { total: number; recalled: number };
+  } else {
+    sql = `SELECT COUNT(DISTINCT f.id) as total, SUM(CASE WHEN f.recalled_count > 0 THEN 1 ELSE 0 END) as recalled FROM fragments f WHERE f.project_id = ? AND f.created_at <= ? AND f.asset_state != 'user_deleted'`;
+    row = db.prepare(sql).get(projectId, b.max ?? 0) as { total: number; recalled: number };
+  }
+  const rate = row.total > 0 ? (row.recalled / row.total * 100).toFixed(1) : "0";
+  console.log(`  ${b.label}: ${row.recalled}/${row.total} (${rate}%)`);
+}
+
+// 9. Distilled rule actual usage — are L0 rules being hit by prefetch?
+console.log("\n=== 蒸馏规则使用频率 ===");
+const ruleUsage = db.prepare(`
+  SELECT DISTINCT dr.text, dr.weight, dr.priority,
+    (SELECT COUNT(*) FROM rule_application_logs ral WHERE ral.rule_id = dr.id) as applied,
+    (SELECT SUM(CASE WHEN ral.user_accepted = 1 THEN 1 ELSE 0 END) FROM rule_application_logs ral WHERE ral.rule_id = dr.id) as accepted
+  FROM distilled_rules dr
+  WHERE dr.superseded_by IS NULL
+  ORDER BY dr.weight DESC LIMIT 10
+`).all() as Array<{ text: string; weight: number; priority: number; applied: number; accepted: number }>;
+for (const r of ruleUsage) {
+  const tag = r.priority === 0 ? "[铁律]" : r.priority === 25 ? "[教训]" : "";
+  console.log(`  ${tag}${r.text.slice(0, 50)} — 应用${r.applied}次 接受${r.accepted}次 (权重${r.weight.toFixed(2)})`);
+}
+
+// 10. self_reflect vs behavior signal distinction
+console.log("\n=== 信号源统计 (近7天) ===");
+const sigStats = db.prepare(`
+  SELECT signal_type,
+    COUNT(*) as total,
+    SUM(CASE WHEN consumed = 1 THEN 1 ELSE 0 END) as consumed,
+    AVG(weight) as avgWeight
+  FROM lightweight_signals
+  WHERE project_id = ? AND created_at > ?
+  GROUP BY signal_type ORDER BY total DESC
+`).all(projectId, NOW - 7 * DAY) as Array<{ signal_type: string; total: number; consumed: number; avgWeight: number }>;
+const userSignals = ["correction", "frustration", "confirmation"];
+for (const s of sigStats) {
+  const source = s.signal_type === "self_reflect" ? "AI反思" : userSignals.includes(s.signal_type) ? "用户行为" : "其他";
+  console.log(`  [${source}] ${s.signal_type}: ${s.total}条 消费${s.consumed} 均权${s.avgWeight.toFixed(0)}`);
+}
+
+console.log("\n提示: Phase 0A 四维基线就绪。定期运行追踪趋势。");
