@@ -452,6 +452,21 @@ function ensureSchemaMigrations(database: Database.Database): void {
       ALTER TABLE memory_repair_jobs_new RENAME TO memory_repair_jobs;
     `);
   }
+
+  // Migration 30: activation_log table for real-time activation tracking
+  const hasActivationLog = database.prepare(`SELECT name FROM sqlite_master WHERE type='table' AND name='activation_log'`).get();
+  if (!hasActivationLog) {
+    database.exec(`
+      CREATE TABLE IF NOT EXISTS activation_log (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        fragment_id TEXT NOT NULL,
+        query_hash TEXT NOT NULL,
+        activated_at INTEGER NOT NULL
+      );
+      CREATE INDEX IF NOT EXISTS idx_activation_log_fragment ON activation_log(fragment_id);
+      CREATE INDEX IF NOT EXISTS idx_activation_log_time ON activation_log(activated_at);
+    `);
+  }
 }
 
 export function checkpointWAL(): void {

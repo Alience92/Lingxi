@@ -264,6 +264,17 @@ CREATE TABLE IF NOT EXISTS query_events (
 );
 
 CREATE INDEX IF NOT EXISTS idx_query_events_project ON query_events(project_id, searched_at);
+
+-- Activation log: tracks every fragment retrieval for persistent activation state
+CREATE TABLE IF NOT EXISTS activation_log (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  fragment_id TEXT NOT NULL,
+  query_hash TEXT NOT NULL,
+  activated_at INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_activation_log_fragment ON activation_log(fragment_id);
+CREATE INDEX IF NOT EXISTS idx_activation_log_time ON activation_log(activated_at);
+
 CREATE INDEX IF NOT EXISTS idx_fragments_project_retrieval_asset ON fragments(project_id, retrieval_state, asset_state, decay_score);
 CREATE INDEX IF NOT EXISTS idx_fragments_project_created ON fragments(project_id, created_at);
 CREATE INDEX IF NOT EXISTS idx_fragments_project_subtype ON fragments(project_id, subtype);

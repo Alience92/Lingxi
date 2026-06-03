@@ -283,6 +283,17 @@ export async function prefetch(
     console.error(`[AgentMemory] prefetch timing: embed=${tEmbed - t0}ms search=${tSearch - tEmbed}ms mmr=${tMMR - tSearch}ms total=${tTotal - t0}ms | cache hits=${cacheHits} misses=${cacheMisses} | candidates=${candidates.length} selected=${selected.length}`);
   }
 
+  // Activation logging: record fragment retrievals for persistent state tracking
+  try {
+    const db = getDb();
+    const qHash = String(queryText.length * 31 + queryText.charCodeAt(0));
+    const now = Date.now();
+    const log = db.prepare(`INSERT INTO activation_log (fragment_id, query_hash, activated_at) VALUES (?, ?, ?)`);
+    for (const id of fragmentIds) {
+      log.run(id, qHash, now);
+    }
+  } catch {}
+
   return { contextBlock: block, fragmentIds, confidence };
 }
 
