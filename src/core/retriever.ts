@@ -125,40 +125,6 @@ export async function prefetch(
 
   // Get more candidates for reranking — also get the per-query embedding cache
   const { results: candidates, cache, cacheHits, cacheMisses } = await vectorSearch(queryVec, projectId, 20, getDefaultMinScore() * 0.6);
-  // Memory-bias embedding feature flag (env AGENTMEMORY_BIAS_ALPHA, default 0 = off)
-  const biasAlpha = parseFloat(process.env.AGENTMEMORY_BIAS_ALPHA || "0");
-  if (biasAlpha > 0) {
-    try {
-      const db = getDb();
-      const profileFrags = db.prepare(`
-        SELECT f.vector, f.decay_score,
-          MAX(CASE WHEN fa.channel = 'FEEL' THEN fa.weight ELSE 0 END) as feel_w
-        FROM fragments f
-        LEFT JOIN fragment_anchors fa ON fa.fragment_id = f.id
-        WHERE f.project_id = ? AND f.vector IS NOT NULL
-          AND f.retrieval_state IN ('active','warm') AND f.asset_state != 'user_deleted'
-        GROUP BY f.id LIMIT 2000
-      `).all(projectId) as Array<{ vector: Buffer; decay_score: number; feel_w: number }>;
-
-      if (profileFrags.length > 0) {
-        const DIM = queryVec.length;
-        const profileVec = new Array(DIM).fill(0);
-        let totalW = 0;
-        for (const f of profileFrags) {
-          if (!f.vector || f.vector.length < 4) continue;
-          const v = Array.from(new Float32Array(f.vector.buffer, f.vector.byteOffset, f.vector.length / 4));
-          const w = f.decay_score * (1 + f.feel_w / 255);
-          for (let i = 0; i < DIM; i++) profileVec[i] += v[i]! * w;
-          totalW += w;
-        }
-        if (totalW > 0) {
-          for (let i = 0; i < DIM; i++) profileVec[i]! /= totalW;
-          for (let i = 0; i < DIM; i++) queryVec[i] = queryVec[i]! + biasAlpha * profileVec[i]!;
-        }
-      }
-    } catch { /* bias is best-effort */ }
-  }
-
   const tSearch = Date.now();
 
   if (candidates.length === 0) {
