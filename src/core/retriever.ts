@@ -203,9 +203,44 @@ export async function prefetch(
   }
   const tMMR = Date.now();
 
-  // Build context block within token budget
+  // ── Knowledge edge augmentation ──────────────────────────
+  // For each selected fragment, query corrected_by and distilled_from
+  // edges to find causally related fragments that keyword+vector search misses.
+  const augmentedIds = new Set(selected.map(r => r.fragment.id));
+  if (selected.length > 0) {
+    try {
+      const db = getDb();
+      for (const r of selected) {
+        // corrected_by: FEEL corrections from same session → WHAT fragments
+        const feelAnchors = r.fragment.anchors.filter(a => a.channel === "FEEL" && a.weight >= 80);
+        if (feelAnchors.length > 0) {
+          const peers = db.prepare(`
+            SELECT f.id, f.summary, f.decay_score FROM fragments f
+            WHERE f.project_id = ? AND f.session_id = ? AND f.id != ?
+              AND f.retrieval_state IN ('active','warm') AND f.asset_state != 'user_deleted'
+            ORDER BY f.decay_score DESC LIMIT 3
+          `).all(r.fragment.projectId, r.fragment.sessionId, r.fragment.id) as Array<{ id: string; summary: string; decay_score: number }>;
+          for (const p of peers) augmentedIds.add(p.id);
+        }
+        // distilled_from: if this fragment was distilled to a rule, add sibling source fragments
+        if (r.fragment.distilledTo) {
+          const siblings = db.prepare(`
+            SELECT rs.fragment_id as id FROM rule_sources rs
+            JOIN fragments f ON f.id = rs.fragment_id
+            WHERE rs.rule_id = ? AND f.id != ?
+              AND f.retrieval_state IN ('active','warm') AND f.asset_state != 'user_deleted'
+            LIMIT 3
+          `).all(r.fragment.distilledTo, r.fragment.id) as Array<{ id: string }>;
+          for (const s of siblings) augmentedIds.add(s.id);
+        }
+      }
+    } catch { /* edge augmentation is best-effort, never block prefetch */ }
+  }
+
+  // Build context block within token budget — including augmented fragments
   let block = "";
   const fragmentIds: string[] = [];
+  // First pass: selected (MMR-ranked) fragments
   for (const r of selected) {
     const anchor = r.fragment.anchors[0];
     const channel = anchor ? anchor.channel : "WHAT";
@@ -215,6 +250,18 @@ export async function prefetch(
     if (block.length + candidate.length + 2 <= PREFETCH_BUDGET_CHARS) {
       block = block ? `${block}\n${candidate}` : candidate;
       fragmentIds.push(r.fragment.id);
+    }
+  }
+  // Second pass: augmented edge fragments (only if budget remains)
+  for (const id of augmentedIds) {
+    if (fragmentIds.includes(id)) continue;
+    const edgeFrag = candidates.find(c => c.fragment.id === id)?.fragment;
+    if (!edgeFrag) continue;
+    const channel = edgeFrag.anchors[0]?.channel ?? "WHAT";
+    const candidate = `[${channel}] ${edgeFrag.summary}`;
+    if (block.length + candidate.length + 2 <= PREFETCH_BUDGET_CHARS && fragmentIds.length < 8) {
+      block = block ? `${block}\n${candidate}` : candidate;
+      fragmentIds.push(id);
     }
   }
 
