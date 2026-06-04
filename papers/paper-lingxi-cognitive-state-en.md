@@ -1,4 +1,4 @@
-# What You Say and What You Think Are Orthogonal: Discovering Dual Memory Signals in Personal Agent Systems
+# Semantic Retrieval and Cognitive State Perception Exhibit Divergent Memory Access Patterns in a Personal Agent System
 
 **Authors**: [Author]
 **Affiliation**: Independent Researcher
@@ -9,7 +9,7 @@
 
 ## Abstract
 
-Current LLM-based agent memory systems treat memory as a single-dimensional resource: fragments are stored, retrieved by semantic similarity, and injected into context. We present Lingxi, a personal agent cognitive architecture comprising 2,700+ memory fragments organized across four semantic channels (WHAT/FEEL/WHO/WHERE), an on-device neural classifier (<50ms inference), an 8-stage memory distillation pipeline, and a retrieval engine combining full-text search with vector similarity. During the construction of this system, we discovered that agent memory contains two orthogonal signal dimensions: **semantic retrieval** (what the user is talking about) and **cognitive state perception** (what the user is thinking about). We validate this finding through three converging lines of evidence: (1) memory-bias embedding redirection shows 60% of queries are reranked by cognitive state with 93% non-overlap against semantic search; (2) cognitive offset detection identifies 96% attention shift between temporal windows using only top-5 fragment bigram overlap; (3) a local lightweight model (macbert-102M + MLP) predicts cognitive state vectors with cosine similarity 0.967 against statistical labels that are **automatically generated from memory system statistics** — requiring zero human annotation or LLM labeling. Sequence context is noise for semantic search (similarity drops from 0.945 to 0.892) but signal for cognitive state prediction (overlap improves from 1.76 to 2.40), confirming these are fundamentally different information processing paradigms. We further show that the training paradigm matters: pair classification of causal relations hits a ceiling at 0.77 due to structural overfitting, while cognitive state regression eliminates the data bottleneck entirely through self-bootstrapping labels. Our results suggest that effective personal agent memory requires at least two independent processing mechanisms, and that the cognitive dimension can be captured locally without cloud LLM calls. Code, experimental scripts, and training data are publicly available.
+Current LLM-based agent memory systems treat memory as a single-dimensional resource: fragments are stored, retrieved by semantic similarity, and injected into context. We present Lingxi, a personal agent cognitive architecture comprising 2,700+ memory fragments organized across four semantic channels (WHAT/FEEL/WHO/WHERE), an on-device neural classifier (<50ms inference), an 8-stage memory distillation pipeline, and a retrieval engine combining full-text search with vector similarity. During the construction of this system, we observed that memory access can produce two strongly divergent signal patterns: **semantic retrieval** (fragments retrieved by query similarity) and **memory-bias-defined cognitive proxy state** (fragments retrieved by a system-computed state vector). We characterize this divergence through three converging lines of evidence: (1) memory-bias embedding redirection shows 60% of queries are reranked with 93% non-overlap against semantic search; (2) cognitive offset detection identifies 96% attention shift between temporal windows using only top-5 fragment bigram overlap; (3) a local lightweight model (macbert-102M + MLP) predicts these proxy state vectors with cosine similarity 0.967 against statistical labels that are **automatically generated from memory system statistics** — requiring zero human annotation or LLM labeling. Sequence context degrades semantic search quality (similarity drops from 0.945 to 0.892) but improves proxy state prediction (overlap improves from 1.76 to 2.40), suggesting these two access patterns respond to fundamentally different information processing requirements. We further show that the training paradigm matters: pair classification of causal relations hits a ceiling at 0.77 due to structural overfitting, while proxy state regression removes the external-label bottleneck through self-bootstrapping labels. Our results suggest that effective personal agent memory may benefit from multiple independent access mechanisms operating in parallel, and that the proxy state dimension can be captured locally without cloud LLM calls. Code, experimental scripts, and training data are publicly available.
 
 ## 1 Introduction
 
@@ -17,26 +17,24 @@ The rapid development of LLM-based agents has been accompanied by a parallel evo
 
 Under this assumption, a fact ("the user uses TypeScript"), a preference ("the user dislikes verbose confirmations"), a correction ("the user corrected the agent for deleting comments"), and a decision ("the user chose React over Vue") are all treated as memory fragments of equal type, differentiated only by their semantic content and retrieval score. The retrieval mechanism — whether full-text search, vector cosine similarity, or learned attention — operates uniformly across all fragment types.
 
-We challenge this assumption. Through the construction of Lingxi, a personal agent cognitive architecture designed to model not just *what the user knows* but *how the user thinks*, we discovered that agent memory contains at least two fundamentally different signal dimensions that are nearly orthogonal to each other:
+We challenge this assumption. Through the construction of Lingxi, a personal agent cognitive architecture designed to model not just *what the user knows* but also behavioral interaction patterns, we observed that memory access can produce two strongly divergent signal patterns:
 
-- **Semantic retrieval signal**: what the user is currently talking about. This is captured by standard embedding-based retrieval and answers "which memories are relevant to this query?"
-- **Cognitive state signal**: what the user is currently thinking about — their attentional focus, their concern priorities, their cognitive trajectory. This answers "what is the user's cognitive state right now?"
+- **Semantic retrieval signal**: fragments retrieved by query embedding similarity. This answers "which memories match what the user is currently talking about?"
+- **Memory-bias proxy state signal**: fragments retrieved by a system-computed state vector (memory-bias weighted average). This answers "which memories is the system's weighting mechanism pointing to right now?"
 
-These two signals point to nearly non-overlapping regions of memory space. In our experiments, the top-10 fragments retrieved by cognitive state prediction overlap with semantic search by only 0.68 out of 10 — meaning 93% of retrieved fragments are different. This is not a marginal improvement from a better ranking function; it is evidence that **cognitive state and semantic relevance are independent dimensions of memory access**.
+These two signals point to substantially non-overlapping regions of memory space. In our experiments, the top-10 fragments retrieved by the proxy state vector overlap with semantic search by only 0.68 out of 10 — meaning 93% of retrieved fragments are different. This is not a marginal improvement from a better ranking function; it suggests that **the system's internal weighting mechanism and query-based retrieval access different regions of the memory space**.
 
 The discovery emerged not from a priori theoretical reasoning but from the practical challenges of building a complete cognitive architecture. Lingxi organizes memory fragments across four semantic channels (WHAT for facts, FEEL for corrections and preferences, WHO for relationship context, WHERE for file/project references), runs a local ONNX neural classifier for sub-50ms inference, implements an 8-stage dreaming pipeline for memory distillation, and maintains a decay system with constitutional-level protection for critical fragments. Each of these architectural decisions contributed to the conditions under which the dual-signal discovery became visible.
 
 Our contributions are threefold:
 
-1. **Empirical discovery**: We provide quantitative evidence that cognitive state perception and semantic retrieval are orthogonal signal dimensions in personal agent memory. Sequence context acts as signal for cognitive state prediction but noise for semantic search, confirming these are fundamentally different information processing paradigms (§4).
+1. **Evidence for a second retrieval-divergent latent state signal**: We provide quantitative evidence that a memory-bias-defined proxy state vector and query-based semantic retrieval access substantially different regions of memory space. Under our setup, sequence context degrades semantic search but improves proxy state prediction, suggesting different processing requirements for the two access patterns (§4).
 
-2. **Self-bootstrapping training method**: We demonstrate that cognitive state prediction can be trained with labels automatically generated from memory system statistics (memory-bias weighted averaging), requiring zero human annotation or LLM labeling. Each additional conversation session produces dozens of training samples automatically (§5).
+2. **Self-bootstrapping training method**: We demonstrate that a proxy state prediction model can be trained with labels automatically generated from memory system statistics (memory-bias weighted averaging), requiring zero human annotation or LLM labeling. This removes the external-label bottleneck that constrained prior classification approaches (§5).
 
-3. **Local cognitive prediction**: We show that a lightweight local model (macbert-102M + MLP, <50ms inference) can predict cognitive state vectors with cosine similarity 0.967, capturing user cognitive state without cloud LLM calls, without network transmission, and without per-query annotation cost (§5, §6).
+3. **Local proxy state prediction**: We show that a lightweight local model (macbert-102M + MLP, <50ms inference) can predict these proxy state vectors with cosine similarity 0.967, enabling continuous state tracking without cloud LLM calls (§5, §6).
 
 The remainder of this paper is organized as follows: §2 reviews related work; §3 describes the Lingxi architecture that made the discovery possible; §4 presents the dual-signal discovery; §5 describes the bootstrapping method; §6 reports quantitative experiments; §7 analyzes why previous approaches failed and why regression succeeds; §8 discusses implications; §9 addresses limitations; §10 concludes.
-
-## 2 Related Work
 
 ## 2 Related Work
 
@@ -79,10 +77,6 @@ Our work differs in that the local model (macbert-102M ONNX) does not perform a 
 | Training paradigm analysis | ✗ | ✓ (classification vs. regression) |
 
 To our knowledge, no existing work has: (1) empirically demonstrated the orthogonality of cognitive state and semantic retrieval signals; (2) shown that cognitive state prediction can be trained with automatically generated labels; or (3) analyzed why the training paradigm (classification vs. regression) fundamentally determines whether personal agent memory can be learned.
-
-## 3 System Architecture: Lingxi
-
-## 3 System Architecture: Lingxi
 
 Lingxi is a personal agent cognitive architecture built as a TypeScript/Node.js system with SQLite storage, designed to run alongside coding agents (Claude Code, OpenClaw, Codex) via hooks and MCP (Model Context Protocol). The architecture consists of five interconnected components. Each component was designed independently, but together they created the conditions under which the dual-signal discovery became possible.
 
@@ -163,10 +157,6 @@ The dual-signal discovery did not emerge from a single component but from the in
 
 Each architectural decision was motivated by engineering concerns, not by a prior hypothesis about dual signals. The discovery emerged from the system's behavior, not from the system's design. This is a strength of the work — the discovery is robust to architectural variations because it was not engineered to produce a specific result.
 
-## 4 Discovery: Dual-Signal Memory
-
-## 4 Discovery: Dual-Signal Memory
-
 The discovery of dual-signal memory emerged through three converging experimental lines. We present them in chronological order, as each experiment motivated the next.
 
 ### 4.1 Memory-Bias Embedding Redirection (Experiment 1)
@@ -241,10 +231,6 @@ These are not two retrieval strategies. They are two different ways of relating 
 
 The 93% non-overlap between semantic and cognitive retrieval results (§4.1), the 5.3% overlap between cognitive and recency signals (§4.2), and the detection of cognitive phase transitions (§4.3) all point to the same conclusion: **cognitive state is an information dimension that exists independently of semantic content and cannot be captured by retrieval alone**.
 
-## 5 Method: Bootstrapping Cognitive State Prediction
-
-## 5 Method: Bootstrapping Cognitive State Prediction
-
 The discovery of dual signals raised a practical question: can cognitive state be predicted efficiently enough to run on every user message? The memory-bias computation (weighted average of 2,674 embeddings) is too expensive for real-time use. We needed a model that could approximate the cognitive state vector from the user message alone, in under 50ms.
 
 ### 5.1 Training Paradigm: Classification vs. Regression
@@ -314,16 +300,12 @@ A surprising finding emerged when we compared single-message input vs. 3-message
 | Predicted vs. Actual overlap (top-10) | 1.76 | **2.40** | +36% ↑ |
 | Query embedding similarity | 0.945 | **0.892** | -0.053 ↓ |
 
-Sequence context **improves** cognitive state prediction but **degrades** semantic search quality. This is not a coincidence — it is evidence of fundamentally different information processing requirements:
+Sequence context **improves** cognitive state prediction but **degrades** semantic search quality. This inverse relationship suggests different processing requirements for the two access patterns under our setup:
 
 - **Semantic search** needs precise, focused queries. Adding context dilutes the query signal.
 - **Cognitive perception** needs contextual patterns. A single message may be an outlier; three messages reveal the trajectory.
 
 This inverse relationship between the two signals under the same input manipulation is the strongest evidence that they are different processing paradigms, not merely different ranking strategies applied to the same underlying signal.
-
-## 6 Experiments
-
-## 6 Experiments
 
 ### 6.1 Association Matrix Ablation (Phase 3)
 
@@ -357,7 +339,7 @@ Before the dual-signal discovery, we conducted a systematic ablation to test whe
 - Explicit knowledge edges (corrected_by + distilled_from) provide genuine +27% improvement on a real retriever
 - Semantic edges and graph propagation provide zero improvement on a real retriever — the retriever already captures what semantic edges encode
 - Edge density (258 knowledge edges vs. 2,700+ fragments) is too low for propagation to add value
-- **Conclusion**: Graph-based association is not a replacement for retrieval; explicit causal edges are a complement
+- **Conclusion**: Under current edge density and semantics, graph propagation adds no incremental value over the production retriever; explicit causal edges are a complement
 
 ### 6.2 Cognitive State Regression
 
@@ -443,7 +425,7 @@ The zero-overlap rate of 46.4% confirms that nearly half of all queries produce 
 
 The temporal depth results (8.2 vs. 8.9 days) indicate that cognitive retrieval favors slightly more recent fragments — the user's *current* constraints and corrections, rather than older ones. This is consistent with the design of the decay-weighted cognitive state label: recent high-weight FEEL fragments dominate the state vector, while older fragments with similar semantic content have decayed.
 
-**Behavioral significance**: These results validate that the cognitive state signal is not merely a statistical artifact — it produces systematically different retrieval behavior that is aligned with the system's estimate of constraint importance. The cognitive dimension surfaces fragments that encode *how the user wants things done* (corrections, preferences, constraints), while the semantic dimension surfaces fragments about *what the user is talking about* (facts, decisions, file references). Both dimensions are useful for different aspects of agent behavior, and neither fully captures the other.
+**Interpretation**: These results confirm that the proxy state vector produces systematically different retrieval behavior from query embedding, and that this divergence is aligned with the system's own weighting of constraint importance (FEEL channel). However, we note that FEEL weights participate in the construction of the training labels (§5.2), so the model's bias toward FEEL fragments is an expected consequence of the label generation mechanism, not an independent discovery. Whether this retrieval divergence translates to improved agent behavior in real interactions remains an open question requiring controlled behavioral experiments with external validation — such as human relevance judgments or user correction rate measurements. The current results demonstrate *retrieval behavior divergence under the system's proxy definition*, not *cognitive state perception as an independently validated construct*.
 
 ### 6.6 Summary of Quantitative Results
 
@@ -461,10 +443,6 @@ The temporal depth results (8.2 vs. 8.9 days) indicate that cognitive retrieval 
 | Behavioral validation | FEEL weight ratio | 1.48× | Cognitive surfaces constraints |
 | Behavioral validation | Zero-overlap queries | 46.4% | Nearly half fully independent |
 | Sequence context effect | Cognition vs. search | Opposite | Different processing paradigms |
-
-## 7 Analysis
-
-## 7 Analysis
 
 ### 7.1 Why Classification Failed
 
@@ -548,10 +526,6 @@ The dual-signal discovery has concrete implications for how agent memory should 
 
 4. **Continuous vs. discrete**: Semantic retrieval is triggered by queries (discrete events). Cognitive state should be maintained continuously (updated on every message) because the user's cognitive state changes with every interaction.
 
-## 8 Discussion
-
-## 8 Discussion
-
 ### 8.1 From Memory Retrieval to Cognitive Perception
 
 The dominant paradigm in agent memory has been retrieval: store fragments, retrieve by similarity, inject into context. This paradigm treats memory as an external resource — something the agent looks up when needed. Our results suggest a complementary paradigm: **cognitive perception** — memory as an internal state that continuously shapes how the agent processes every input.
@@ -590,10 +564,6 @@ The Lingxi system demonstrates that a complete cognitive architecture for person
 
 The path from "agent with memory" to "agent with cognition" requires more than better retrieval. It requires a separate signal dimension that captures not what the user said but how the user is thinking. Our results show this dimension exists, can be measured, can be predicted locally, and is orthogonal to the semantic dimension that existing systems already capture.
 
-## 9 Limitations
-
-## 9 Limitations
-
 ### 9.1 Single-User Evaluation
 
 All experiments in this paper were conducted on data from a single deep user (2,700+ fragments, 130+ sessions, several months of daily use). While this depth provides rich data for mechanism discovery, it does not establish generalizability. The orthogonal signal structure may be specific to this user's interaction patterns, domain, or cognitive style.
@@ -624,13 +594,9 @@ We have not explored embedding-level injection in this work due to API limitatio
 
 The system has been in active use for several months, but the cognitive state prediction model was trained on a single snapshot of the data. We have not evaluated how the model performs as the user's cognitive patterns evolve over longer time scales (months to years). The decay system is designed to handle this, but the prediction model's ability to track long-term cognitive evolution has not been validated.
 
-## 10 Conclusion
-
-## 10 Conclusion
-
 We have presented Lingxi, a personal agent cognitive architecture, and through its construction discovered that agent memory contains two orthogonal signal dimensions: semantic retrieval (what the user is talking about) and cognitive state perception (what the user is thinking about). We validated this discovery through three converging experimental lines: memory-bias redirection showing 60% of queries are reranked with 93% non-overlap against semantic search; cognitive offset detection identifying 96% attention shift between temporal windows; and cognitive state regression achieving cosine similarity 0.967 with automatically generated labels.
 
-The discovery that sequence context improves cognitive state prediction but degrades semantic search quality provides strong evidence that these are fundamentally different information processing paradigms, not merely different ranking strategies. The self-bootstrapping label generation eliminates the data bottleneck that constrained prior classification approaches, demonstrating that personal agent memory can learn from the memory system's own statistical outputs without external annotation.
+The observation that sequence context improves proxy state prediction but degrades semantic search quality suggests different processing requirements for the two access patterns, not merely different ranking strategies. The self-bootstrapping label generation removes the external-label bottleneck that constrained prior classification approaches, demonstrating that a proxy state model can be trained from the memory system's own statistical outputs without external annotation.
 
 Our results suggest that effective personal agent memory requires at least two independent processing mechanisms operating in parallel: a semantic retrieval mechanism for content-specific memory access, and a cognitive perception mechanism for continuous cognitive state tracking. The cognitive dimension captures information that semantic retrieval cannot — the user's attentional trajectory, concern priorities, and cognitive phase — and this information is available for continuous, local, real-time processing without cloud API calls.
 
