@@ -14,8 +14,8 @@
  * is mathematically valid (same length), even if semantic quality degrades.
  */
 
-const DIM = 1536;
-const OPENAI_MODEL = "text-embedding-3-small";
+const DEFAULT_DIM = 1536;
+const DEFAULT_MODEL = "text-embedding-3-small";
 
 // ── Singleton accessor (set by engine constructor) ──────────────────
 
@@ -33,7 +33,8 @@ export function getCurrentEmbedder(): Embedder {
     // Lazy fallback: read env vars for hook subprocesses that don't go through engine
     const key = process.env.AGENTMEMORY_API_KEY || process.env.DEEPSEEK_API_KEY || "";
     const url = process.env.AGENTMEMORY_EMBEDDING_URL || "https://api.minimax.chat";
-    _currentEmbedder = new Embedder(key, url);
+    const model = process.env.AGENTMEMORY_EMBEDDING_MODEL || DEFAULT_MODEL;
+    _currentEmbedder = new Embedder(key, url, model);
   }
   return _currentEmbedder;
 }
@@ -46,10 +47,14 @@ export class Embedder {
   private apiKey: string;
   private baseURL: string;
   private groupId: string;
+  public readonly model: string;
+  public readonly dim: number;
 
-  constructor(apiKey: string, baseURL = "https://api.minimax.chat") {
+  constructor(apiKey: string, baseURL = "https://api.minimax.chat", model?: string) {
     this.apiKey = apiKey;
     this.baseURL = baseURL.replace(/\/+$/, "");
+    this.model = model || process.env.AGENTMEMORY_EMBEDDING_MODEL || DEFAULT_MODEL;
+    this.dim = this.model === "bge-m3" ? 1024 : DEFAULT_DIM;
     this.groupId = "";
     const m = baseURL.match(/[?&]GroupId=([^&]+)/);
     if (m) this.groupId = m[1]!;
@@ -77,7 +82,7 @@ export class Embedder {
         }
       }
     }
-    return embedHash(text);
+    return embedHash(text, this.dim);
   }
 
   /** Batch embed multiple texts in a single API call. Falls back to hash if API fails. */
@@ -90,7 +95,7 @@ export class Embedder {
         // Fall through to hash fallback
       }
     }
-    return texts.map((t) => embedHash(t));
+    return texts.map((t) => embedHash(t, this.dim));
   }
 
   private async embedViaApi(text: string, purpose: EmbedPurpose): Promise<number[]> {
@@ -101,7 +106,7 @@ export class Embedder {
       if (this.isMiniMax()) {
         return await this.embedMiniMax(text, purpose, controller.signal);
       }
-      return await this.embedOpenAI(text, controller.signal);
+      return await this.embedOpenAI(text, controller.signal, this.model);
     } finally {
       clearTimeout(timer);
     }
@@ -132,7 +137,7 @@ export class Embedder {
       const response = await fetch(`${this.baseURL}/v1/embeddings`, {
         method: "POST",
         headers: { "Content-Type": "application/json", "Authorization": `Bearer ${this.apiKey}` },
-        body: JSON.stringify({ model: OPENAI_MODEL, input: texts, encoding_format: "float" }),
+        body: JSON.stringify({ model: this.model, input: texts, encoding_format: "float" }),
         signal: controller.signal,
       });
       if (!response.ok) throw new Error(`Batch embedding API returned ${response.status}`);
@@ -172,11 +177,11 @@ export class Embedder {
 
   // ── OpenAI-compatible API ──────────────────────────────────────────
 
-  private async embedOpenAI(text: string, signal: AbortSignal): Promise<number[]> {
+  private async embedOpenAI(text: string, signal: AbortSignal, model: string): Promise<number[]> {
     const response = await fetch(`${this.baseURL}/v1/embeddings`, {
       method: "POST",
       headers: { "Content-Type": "application/json", "Authorization": `Bearer ${this.apiKey}` },
-      body: JSON.stringify({ model: OPENAI_MODEL, input: text, encoding_format: "float" }),
+      body: JSON.stringify({ model, input: text, encoding_format: "float" }),
       signal,
     });
 
@@ -200,18 +205,18 @@ function simpleHash(str: string, seed: number): number {
   return h;
 }
 
-function embedHash(text: string): number[] {
-  const vec = new Array(DIM).fill(0);
+function embedHash(text: string, dim: number): number[] {
+  const vec = new Array(dim).fill(0);
   const lower = text.toLowerCase();
 
   for (let i = 0; i < lower.length - 1; i++) {
     const bigram = lower.slice(i, i + 2);
-    const idx = ((simpleHash(bigram, 0) % DIM) + DIM) % DIM;
+    const idx = ((simpleHash(bigram, 0) % dim) + dim) % dim;
     vec[idx] += 1;
   }
   for (let i = 0; i < lower.length - 2; i++) {
     const trigram = lower.slice(i, i + 3);
-    const idx = ((simpleHash(trigram, 42) % DIM) + DIM) % DIM;
+    const idx = ((simpleHash(trigram, 42) % dim) + dim) % dim;
     vec[idx] += 1;
   }
 

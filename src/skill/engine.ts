@@ -20,7 +20,7 @@ export class MemoryEngine {
   public readonly embedder: Embedder;
 
   constructor(private config: EngineConfig) {
-    this.embedder = new Embedder(config.apiKey, config.baseURL);
+    this.embedder = new Embedder(config.apiKey, config.baseURL, config.model);
     setCurrentEmbedder(this.embedder);
   }
 
