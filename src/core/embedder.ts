@@ -1,17 +1,16 @@
 /**
- * Semantic embedder: supports MiniMax and OpenAI-compatible APIs.
+ * Semantic embedder: OpenAI-compatible API (Ollama, OpenAI, etc.).
  *
  * Falls back to n-gram hash when:
  * - No API key configured
  * - Network error / timeout
  * - API returns an error
  *
- * MiniMax: POST /v1/embeddings?GroupId=xxx  | model: embo-01  | 1536-dim
- * OpenAI:  POST /v1/embeddings              | model: configurable | 1536-dim
+ * Model and dimension are configured via AGENTMEMORY_EMBEDDING_MODEL env var.
+ * Known dimensions: bge-m3 → 1024, text-embedding-3-small → 1536, default → 1536.
  *
- * Hash fallback also uses 1536-dim to avoid dimension mismatch when the
- * API fails mid-session — cosine similarity between hash and API vectors
- * is mathematically valid (same length), even if semantic quality degrades.
+ * Hash fallback dimension matches the configured model's dimension to keep
+ * cosine similarity mathematically valid when API and hash vectors coexist.
  */
 
 const DEFAULT_DIM = 1536;
@@ -23,58 +22,54 @@ let _currentEmbedder: Embedder | null = null;
 
 export function setCurrentEmbedder(e: Embedder): void {
   if (_currentEmbedder) {
-    console.error("[AgentMemory] WARNING: Embedder singleton being replaced. Multiple Engine instances may cause config mismatch.");
+    // Only warn when config actually differs — avoid noise from
+    // lazy env-created instance being replaced by an identical one.
+    const same = _currentEmbedder.model === e.model
+      && _currentEmbedder.baseURL === e.baseURL;
+    if (!same) {
+      console.error("[AgentMemory] WARNING: Embedder singleton being replaced with different config.");
+    }
   }
   _currentEmbedder = e;
 }
 
 export function getCurrentEmbedder(): Embedder {
   if (!_currentEmbedder) {
-    // Lazy fallback: read env vars for hook subprocesses that don't go through engine
     const key = process.env.AGENTMEMORY_API_KEY || process.env.DEEPSEEK_API_KEY || "";
-    const url = process.env.AGENTMEMORY_EMBEDDING_URL || "https://api.minimax.chat";
+    const url = process.env.AGENTMEMORY_EMBEDDING_URL || "http://127.0.0.1:11434";
     const model = process.env.AGENTMEMORY_EMBEDDING_MODEL || DEFAULT_MODEL;
     _currentEmbedder = new Embedder(key, url, model);
   }
   return _currentEmbedder;
 }
 
-// ── Embedder class (one instance per engine) ────────────────────────
+// ── Embedder class ──────────────────────────────────────────────────
 
 export type EmbedPurpose = "store" | "query";
 
 export class Embedder {
   private apiKey: string;
-  private baseURL: string;
-  private groupId: string;
+  public readonly baseURL: string;
   public readonly model: string;
   public readonly dim: number;
 
-  constructor(apiKey: string, baseURL = "https://api.minimax.chat", model?: string) {
+  constructor(apiKey: string, baseURL = "http://127.0.0.1:11434", model?: string) {
     this.apiKey = apiKey;
     this.baseURL = baseURL.replace(/\/+$/, "");
     this.model = model || process.env.AGENTMEMORY_EMBEDDING_MODEL || DEFAULT_MODEL;
-    this.dim = this.model === "bge-m3" ? 1024 : DEFAULT_DIM;
-    this.groupId = "";
-    const m = baseURL.match(/[?&]GroupId=([^&]+)/);
-    if (m) this.groupId = m[1]!;
+    this.dim = this.model.includes("bge-m3") ? 1024 : DEFAULT_DIM;
   }
 
-  /** Whether this embedder will use hash fallback (no API key configured). */
   isHashOnly(): boolean {
     return !this.apiKey || this.apiKey.length <= 10 || this.apiKey === "test-key";
   }
 
-  private isMiniMax(): boolean {
-    return this.baseURL.includes("minimax");
-  }
-
   private _fallbackWarned = false;
 
-  async embed(text: string, purpose: EmbedPurpose = "store"): Promise<number[]> {
+  async embed(text: string, _purpose: EmbedPurpose = "store"): Promise<number[]> {
     if (this.apiKey && this.apiKey.length > 10 && this.apiKey !== "test-key") {
       try {
-        return await this.embedViaApi(text, purpose);
+        return await this.embedViaApi(text);
       } catch (e) {
         if (!this._fallbackWarned) {
           console.error("[AgentMemory] Embedding API failed, using hash fallback:", (e as Error).message?.slice(0, 80));
@@ -85,55 +80,35 @@ export class Embedder {
     return embedHash(text, this.dim);
   }
 
-  /** Batch embed multiple texts in a single API call. Falls back to hash if API fails. */
-  async embedBatch(texts: string[], purpose: EmbedPurpose = "store"): Promise<number[][]> {
+  async embedBatch(texts: string[], _purpose: EmbedPurpose = "store"): Promise<number[][]> {
     if (texts.length === 0) return [];
     if (this.apiKey && this.apiKey.length > 10 && this.apiKey !== "test-key") {
       try {
-        return await this.embedBatchViaApi(texts, purpose);
-      } catch {
-        // Fall through to hash fallback
+        return await this.embedBatchViaApi(texts);
+      } catch (e) {
+        if (!this._fallbackWarned) {
+          console.error("[AgentMemory] Batch embedding API failed, using hash fallback:", (e as Error).message?.slice(0, 80));
+          this._fallbackWarned = true;
+        }
       }
     }
     return texts.map((t) => embedHash(t, this.dim));
   }
 
-  private async embedViaApi(text: string, purpose: EmbedPurpose): Promise<number[]> {
+  private async embedViaApi(text: string): Promise<number[]> {
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), 15_000);
-
     try {
-      if (this.isMiniMax()) {
-        return await this.embedMiniMax(text, purpose, controller.signal);
-      }
       return await this.embedOpenAI(text, controller.signal, this.model);
     } finally {
       clearTimeout(timer);
     }
   }
 
-  // ── MiniMax API ───────────────────────────────────────────────────
-
-  private async embedBatchViaApi(texts: string[], purpose: EmbedPurpose): Promise<number[][]> {
+  private async embedBatchViaApi(texts: string[]): Promise<number[][]> {
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), 30_000);
     try {
-      if (this.isMiniMax()) {
-        const url = `${this.baseURL}/v1/embeddings${this.groupId ? `?GroupId=${this.groupId}` : ""}`;
-        const response = await fetch(url, {
-          method: "POST",
-          headers: { "Content-Type": "application/json", "Authorization": `Bearer ${this.apiKey}` },
-          body: JSON.stringify({ model: "embo-01", texts, type: purpose === "query" ? "query" : "db" }),
-          signal: controller.signal,
-        });
-        if (!response.ok) throw new Error(`MiniMax batch embeddings returned ${response.status}`);
-        const data = await response.json() as { vectors?: number[][]; base_resp?: { status_code?: number } };
-        if (data.base_resp?.status_code && data.base_resp.status_code !== 0) {
-          throw new Error(`MiniMax API error: ${data.base_resp.status_code}`);
-        }
-        return (data.vectors ?? []).map((v) => normalize(v));
-      }
-      // OpenAI-compatible batch
       const response = await fetch(`${this.baseURL}/v1/embeddings`, {
         method: "POST",
         headers: { "Content-Type": "application/json", "Authorization": `Bearer ${this.apiKey}` },
@@ -147,35 +122,6 @@ export class Embedder {
       clearTimeout(timer);
     }
   }
-
-  private async embedMiniMax(text: string, purpose: EmbedPurpose, signal: AbortSignal): Promise<number[]> {
-    const url = `${this.baseURL}/v1/embeddings${this.groupId ? `?GroupId=${this.groupId}` : ""}`;
-    const body: Record<string, unknown> = {
-      model: "embo-01",
-      texts: [text],
-      type: purpose === "query" ? "query" : "db",
-    };
-
-    const response = await fetch(url, {
-      method: "POST",
-      headers: { "Content-Type": "application/json", "Authorization": `Bearer ${this.apiKey}` },
-      body: JSON.stringify(body),
-      signal,
-    });
-
-    if (!response.ok) throw new Error(`MiniMax embeddings returned ${response.status}`);
-
-    const data = await response.json() as { vectors?: number[][]; base_resp?: { status_code?: number } };
-    if (data.base_resp?.status_code && data.base_resp.status_code !== 0) {
-      throw new Error(`MiniMax API error: ${data.base_resp.status_code}`);
-    }
-    const vec = data.vectors?.[0];
-    if (!vec || vec.length === 0) throw new Error("Empty embedding returned");
-
-    return normalize(vec);
-  }
-
-  // ── OpenAI-compatible API ──────────────────────────────────────────
 
   private async embedOpenAI(text: string, signal: AbortSignal, model: string): Promise<number[]> {
     const response = await fetch(`${this.baseURL}/v1/embeddings`, {
@@ -195,7 +141,7 @@ export class Embedder {
   }
 }
 
-// ── n-gram hash fallback (1536-dim, same as API output) ─────────────
+// ── n-gram hash fallback ────────────────────────────────────────────
 
 function simpleHash(str: string, seed: number): number {
   let h = seed;

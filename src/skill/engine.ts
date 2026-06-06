@@ -10,7 +10,10 @@ export interface EngineConfig {
   apiKey: string;
   fragmentationKey?: string;
   fragmentationBaseURL?: string;
-  model?: string;
+  /** Embedding model name (e.g. bge-m3, text-embedding-3-small). Falls back to AGENTMEMORY_EMBEDDING_MODEL env var. */
+  embeddingModel?: string;
+  /** Fragmentation LLM model name (e.g. MiniMax-M2.7, deepseek-v4-pro). Falls back to auto-detect from fragmentationBaseURL. */
+  fragmentationModel?: string;
   baseURL?: string;
 }
 
@@ -20,7 +23,7 @@ export class MemoryEngine {
   public readonly embedder: Embedder;
 
   constructor(private config: EngineConfig) {
-    this.embedder = new Embedder(config.apiKey, config.baseURL, config.model);
+    this.embedder = new Embedder(config.apiKey, config.baseURL, config.embeddingModel);
     setCurrentEmbedder(this.embedder);
   }
 
@@ -1296,9 +1299,8 @@ export class MemoryEngine {
     if (!key || key === "test-key" || key.length <= 10) {
       return { output: { fragments: [], summary: "" }, usage: undefined };
     }
-    const baseURL = this.config.fragmentationBaseURL
-      || (process.env.DEEPSEEK_API_KEY ? "https://api.deepseek.com" : "https://api.minimax.chat");
-    const model = this.config.model ?? (baseURL.includes("minimax") ? "MiniMax-M2.7" : "deepseek-v4-pro");
+    const baseURL = this.config.fragmentationBaseURL || "https://api.deepseek.com";
+    const model = this.config.fragmentationModel ?? "deepseek-v4-pro";
     return await fragmentTranscript(input, key, model, baseURL);
   }
 }

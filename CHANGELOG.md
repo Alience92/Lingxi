@@ -1,5 +1,27 @@
 # Changelog
 
+## 2026-06-06 (v1.1.1) — Opus 审查修复
+
+### 严重修复
+- **BUG-1**: `EngineConfig.model` 拆为 `embeddingModel` + `fragmentationModel`，消除嵌入模型与碎片化 LLM 模型字段冲突
+- **BUG-3**: `fragments` 表加 `vector_model TEXT` 列，写入时记录嵌入模型名，防不同维度向量混存
+- **BUG-5**: `embedBatch()` 加 `_fallbackWarned` 单次告警，不再静默吞错
+
+### 健壮性
+- **BUG-2**: dim 判别 `=== "bge-m3"` → `.includes("bge-m3")`，覆盖 `bge-m3:latest` 等 Ollama tag 别名
+- **BUG-6**: singleton 替换告警仅在配置不同时触发，相同配置静默替换
+- 删除 MiniMax 嵌入死代码（`isMiniMax`、`embedMiniMax`、`groupId`、batch MiniMax 分支）——约 50 行
+- 碎片化 LLM 默认值移除 MiniMax M2.7，统一为 DeepSeek
+
+### 迁移脚本改进
+- **BUG-4**: 默认 projectId 从硬编码改为读 `AGENTMEMORY_PROJECT` 环境变量，缺则报错
+- 批失败自动降级到逐条重试（指数回退 1s/2s/4s）
+- 本地 Ollama 跳过请求间 sleep
+- 已标记 `vector_model = "bge-m3"` 的 fragment 自动跳过
+- 所有脚本支持 `--dry-run`
+
+---
+
 ## 2026-06-06 (v1.1) — bge-m3 嵌入引擎可插拔化 + 全量迁移 + Hook 层演进
 
 ### bge-m3 嵌入引擎可插拔化

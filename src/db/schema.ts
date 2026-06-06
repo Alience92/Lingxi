@@ -25,6 +25,7 @@ CREATE TABLE IF NOT EXISTS fragments (
   distilled_to TEXT,
   subtype TEXT CHECK(subtype IN ('decision','todo','preference',NULL)),
   vector BLOB,
+  vector_model TEXT,
   scope TEXT
 );
 

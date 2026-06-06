@@ -467,6 +467,12 @@ function ensureSchemaMigrations(database: Database.Database): void {
       CREATE INDEX IF NOT EXISTS idx_activation_log_time ON activation_log(activated_at);
     `);
   }
+
+  // Migration 31: vector_model column on fragments — track which embedder produced the vector
+  const hasVectorModel = database.prepare("SELECT name FROM pragma_table_info('fragments') WHERE name = 'vector_model'").get();
+  if (!hasVectorModel) {
+    database.exec(`ALTER TABLE fragments ADD COLUMN vector_model TEXT`);
+  }
 }
 
 export function checkpointWAL(): void {

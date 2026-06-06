@@ -1,25 +1,37 @@
 #!/usr/bin/env node
 /**
- * Re-embed all existing fragments with bge-m3 (Ollama).
+ * Re-embed all fragments with bge-m3 (Ollama OpenAI-compatible endpoint).
  * Preserves fragment structure, only updates the vector BLOB column.
  *
- * Usage: node scripts/reembed-bge-m3.mjs [projectId]
+ * Usage: node scripts/reembed-bge-m3.mjs [projectId] [--dry-run]
  */
 
 import { openDb, getDb } from "../dist/db/connection.js";
 import * as fs from "node:fs";
 
-const projectId = process.argv[2] || "C--Users-Administrator";
+const args = process.argv.slice(2);
+const dryRun = args.includes("--dry-run");
+const projectId = args.find(a => a !== "--dry-run")
+  || process.env.AGENTMEMORY_PROJECT
+  || null;
+
+if (!projectId) {
+  console.error("ERROR: No projectId provided. Set AGENTMEMORY_PROJECT env var or pass as argument.");
+  console.error("Usage: node scripts/reembed-bge-m3.mjs <projectId> [--dry-run]");
+  process.exit(1);
+}
+
 const BATCH_SIZE = 32;
 const BGE_BLOB_SIZE = 1024 * 4;
+const TARGET_MODEL = "bge-m3";
 
 function loadSettingsEnv() {
-  const settingsPaths = [
+  const paths = [
     `${process.env.HOME || process.env.USERPROFILE}/.claude/settings.json`,
     `${process.env.HOME || process.env.USERPROFILE}/.claude/settings.local.json`,
   ];
   const env = { ...process.env };
-  for (const p of settingsPaths) {
+  for (const p of paths) {
     try {
       const content = fs.readFileSync(p, "utf-8");
       const obj = JSON.parse(content);
@@ -32,9 +44,9 @@ function loadSettingsEnv() {
 const settingsEnv = loadSettingsEnv();
 const embeddingURL = (settingsEnv.AGENTMEMORY_EMBEDDING_URL || "http://127.0.0.1:11434").replace("localhost", "127.0.0.1");
 const embeddingKey = settingsEnv.AGENTMEMORY_API_KEY || "ollama";
-const embeddingModel = settingsEnv.AGENTMEMORY_EMBEDDING_MODEL || "bge-m3";
+const embeddingModel = settingsEnv.AGENTMEMORY_EMBEDDING_MODEL || TARGET_MODEL;
 
-console.log(`Embedding: ${embeddingURL} model=${embeddingModel}`);
+console.log(`Project: ${projectId}  |  Embedding: ${embeddingURL}  |  Model: ${embeddingModel}${dryRun ? "  |  DRY RUN" : ""}\n`);
 
 function fragmentText(fragment) {
   const labels = fragment.anchors?.map(a => a.label).join(" ") || "";
@@ -53,6 +65,10 @@ async function embedBatch(texts) {
   return data.data.map(d => d.embedding);
 }
 
+async function embedOne(text) {
+  return (await embedBatch([text]))[0];
+}
+
 function normalize(vec) {
   const norm = Math.sqrt(vec.reduce((s, v) => s + v * v, 0));
   return norm === 0 ? vec : vec.map(v => v / norm);
@@ -65,16 +81,15 @@ function vectorToBlob(vec) {
 openDb();
 const db = getDb();
 
+// Load all fragments with anchors
 const fragments = db.prepare(`
-  SELECT f.id, f.summary, f.vector
+  SELECT f.id, f.summary, f.vector, f.vector_model
   FROM fragments f
   WHERE f.project_id = ?
   ORDER BY f.created_at
 `).all(projectId);
 
-console.log(`Found ${fragments.length} fragments to re-embed.\n`);
-
-// Load anchors for each fragment
+// Load anchors
 const anchorMap = new Map();
 const anchors = db.prepare(`
   SELECT fa.fragment_id, fa.label
@@ -95,18 +110,39 @@ const enriched = fragments.map(f => ({
   anchors: anchorMap.get(f.id)?.map(l => ({ label: l })) || [],
 }));
 
-let hasVector = 0;
-for (const f of enriched) {
-  if (f.vector && f.vector.length > 10) hasVector++;
-}
-console.log(`Vector status: ${hasVector} with vector, ${enriched.length - hasVector} without\n`);
+// Skip fragments already embedded with the target model
+const toEmbed = enriched.filter(f => {
+  if (f.vector_model === TARGET_MODEL && f.vector && f.vector.length === BGE_BLOB_SIZE) return false;
+  return true;
+});
 
+const skipped = enriched.length - toEmbed.length;
+console.log(`Total: ${enriched.length}  |  Already ${TARGET_MODEL}: ${skipped}  |  To re-embed: ${toEmbed.length}\n`);
+if (skipped > 0) console.log(`Skipping ${skipped} fragments already marked as ${TARGET_MODEL}.\n`);
+
+if (toEmbed.length === 0) {
+  console.log("Nothing to do.");
+  db.close();
+  process.exit(0);
+}
+
+if (dryRun) {
+  console.log("[DRY RUN] Would re-embed the above fragments. No changes made.");
+  db.close();
+  process.exit(0);
+}
+
+// ── Re-embed ──────────────────────────────────────────────────────
+
+const updateStmt = db.prepare(`UPDATE fragments SET vector = ?, vector_model = ? WHERE id = ?`);
 let processed = 0, errors = 0, updated = 0;
 const startTime = Date.now();
-const updateStmt = db.prepare(`UPDATE fragments SET vector = ? WHERE id = ?`);
 
-for (let i = 0; i < enriched.length; i += BATCH_SIZE) {
-  const batch = enriched.slice(i, i + BATCH_SIZE);
+// Determine sleep: skip for local Ollama
+const isLocal = embeddingURL.includes("127.0.0.1") || embeddingURL.includes("localhost") || embeddingURL.includes("0.0.0.0");
+
+for (let i = 0; i < toEmbed.length; i += BATCH_SIZE) {
+  const batch = toEmbed.slice(i, i + BATCH_SIZE);
   const texts = batch.map(f => fragmentText(f));
   const ids = batch.map(f => f.id);
 
@@ -114,23 +150,41 @@ for (let i = 0; i < enriched.length; i += BATCH_SIZE) {
     const vectors = await embedBatch(texts);
     const tx = db.transaction(() => {
       for (let j = 0; j < vectors.length; j++) {
-        updateStmt.run(vectorToBlob(vectors[j]), ids[j]);
+        updateStmt.run(vectorToBlob(vectors[j]), TARGET_MODEL, ids[j]);
         updated++;
       }
     });
     tx();
     processed += batch.length;
-  } catch (e) {
-    console.error(`  Batch ${Math.floor(i / BATCH_SIZE) + 1} error: ${e.message?.slice(0, 120)}`);
-    errors += batch.length;
-    processed += batch.length;
+  } catch (batchErr) {
+    // Batch failed — fall back to one-by-one
+    console.error(`  Batch failed: ${batchErr.message?.slice(0, 80)} — retrying one-by-one...`);
+    for (let j = 0; j < batch.length; j++) {
+      let ok = false;
+      for (let attempt = 1; attempt <= 3; attempt++) {
+        try {
+          const vec = await embedOne(texts[j]);
+          updateStmt.run(vectorToBlob(vec), TARGET_MODEL, ids[j]);
+          updated++;
+          ok = true;
+          break;
+        } catch (e) {
+          if (attempt < 3) await new Promise(r => setTimeout(r, 1000 * attempt));
+          else {
+            errors++;
+            console.error(`    Fragment ${ids[j].slice(0, 8)} failed after 3 attempts: ${e.message?.slice(0, 60)}`);
+          }
+        }
+      }
+      processed++;
+    }
   }
 
   const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
-  const pct = ((processed / enriched.length) * 100).toFixed(1);
-  console.log(`  [${processed}/${enriched.length}] ${pct}% | ${elapsed}s | ${updated} updated | ${errors} errors`);
+  const pct = ((processed / toEmbed.length) * 100).toFixed(1);
+  console.log(`  [${processed}/${toEmbed.length}] ${pct}% | ${elapsed}s | ${updated} updated | ${errors} errors`);
 
-  if (i + BATCH_SIZE < enriched.length) {
+  if (i + BATCH_SIZE < toEmbed.length && !isLocal) {
     await new Promise(r => setTimeout(r, 200));
   }
 }
