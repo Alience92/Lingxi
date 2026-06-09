@@ -1,0 +1,8 @@
+{
+  "model": "hfl/chinese-macbert-base",
+  "embed_dim": 1024,
+  "best_val_cos": 0.8881233430090751,
+  "num_samples": 869,
+  "num_fragments": 527,
+  "timestamp": "2026-06-09T18:25:13"
+}
