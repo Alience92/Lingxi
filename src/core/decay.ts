@@ -72,9 +72,9 @@ export function computeDecayScore(
   const age = now - createdAt;
   const wm = weightMultiplier(anchorWeight);
 
-  // Novelty-adjusted decay window: brand-new systems (nf=1) decay at ~1 day,
-  // mature systems (nf=0) use the standard 7-day window.
-  const effectiveDecayMs = SEVEN_DAYS_MS * (1 - noveltyFactor * 0.85);
+  // Standard 7-day grace period for all fragments regardless of system age.
+  // (Novelty factor is NOT applied to decay — new systems need protection, not acceleration.)
+  const effectiveDecayMs = SEVEN_DAYS_MS;
 
   if (age < effectiveDecayMs) return { score: 1.0, retrievalState: "active" };
 

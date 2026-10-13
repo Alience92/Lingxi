@@ -72,6 +72,30 @@ CREATE TABLE IF NOT EXISTS recall_log (
   recalled_at INTEGER NOT NULL
 );
 
+CREATE TABLE IF NOT EXISTS user_memory_models (
+  id TEXT PRIMARY KEY,
+  project_id TEXT NOT NULL,
+  profile_id TEXT NOT NULL DEFAULT 'user_default',
+  dimension TEXT NOT NULL CHECK(dimension IN ('preference','rule','goal','style','boundary','identity')),
+  fingerprint TEXT NOT NULL,
+  text TEXT NOT NULL,
+  status TEXT NOT NULL DEFAULT 'active' CHECK(status IN ('active','probation','superseded','deleted')),
+  priority INTEGER NOT NULL DEFAULT 50,
+  superseded_by TEXT,
+  confidence REAL NOT NULL DEFAULT 0.5,
+  evidence_count INTEGER NOT NULL DEFAULT 0,
+  source_session_count INTEGER NOT NULL DEFAULT 0,
+  source_fragment_count INTEGER NOT NULL DEFAULT 0,
+  evidence_ids TEXT NOT NULL DEFAULT '[]',
+  last_conflict_at INTEGER,
+  last_reinforced_at INTEGER,
+  created_at INTEGER NOT NULL,
+  updated_at INTEGER NOT NULL
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_user_memory_models_fingerprint ON user_memory_models(project_id, profile_id, dimension, fingerprint);
+CREATE INDEX IF NOT EXISTS idx_user_memory_models_scope ON user_memory_models(project_id, profile_id, dimension, status, confidence);
+
 CREATE TABLE IF NOT EXISTS sessions (
   id TEXT PRIMARY KEY,
   project_id TEXT NOT NULL,

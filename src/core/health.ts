@@ -65,9 +65,9 @@ export function getMemoryHealth(projectId: string): MemoryHealth {
     FROM fragments WHERE project_id = ?
   `).get(projectId) as { total: number; active: number; archived: number };
 
-  // Pending fragmentation sessions
+  // Pending fragmentation sessions — include sessions never fragmented (fragmented_at IS NULL)
   const pending = db.prepare(
-    "SELECT COUNT(*) as cnt FROM sessions WHERE project_id = ? AND pending_fragmentation > 0"
+    "SELECT COUNT(*) as cnt FROM sessions WHERE project_id = ? AND fragmented_at IS NULL AND pending_fragmentation = 0"
   ).get(projectId) as { cnt: number };
 
   // Last dreaming / fragmentation timestamps

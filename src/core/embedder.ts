@@ -1,177 +1,119 @@
 /**
- * Semantic embedder: OpenAI-compatible API (Ollama, OpenAI, etc.).
+ * embedder.ts — 语义嵌入层（唯一后端：cognitive_v5 本地 ONNX）
  *
- * Falls back to n-gram hash when:
- * - No API key configured
- * - Network error / timeout
- * - API returns an error
+ * 历史：旧版是 OpenAI-compatible API（默认指向 Ollama 127.0.0.1:11434）
+ * 加 n-gram hash 回退的三路实现。已收敛为单一后端：
+ * core/cognitive-state.ts 的 cognitive_v5 本地 ONNX 推理（1024 维，无网络）。
  *
- * Model and dimension are configured via AGENTMEMORY_EMBEDDING_MODEL env var.
- * Known dimensions: bge-m3 → 1024, text-embedding-3-small → 1536, default → 1536.
- *
- * Hash fallback dimension matches the configured model's dimension to keep
- * cosine similarity mathematically valid when API and hash vectors coexist.
+ * 设计约定：
+ * 1. 不再有 hash 回退。编码失败即抛错，由调用方决定降级 —— 避免静默
+ *    产出无意义向量（旧版曾因此让 `整体层` 在坏数据上仍报 healthy）。
+ * 2. model 常量 "cognitive_v5" 会作为 fragments.vector_model 落库（见
+ *    db/repository.ts），必须与 cognitive-state.ts 的 cognitiveVectorSearch
+ *    筛选条件保持一致，否则新碎片对语义召回不可见。
+ * 3. cosineSimilarity 仍是纯数学工具，供 signal-channel / retriever 复用。
  */
 
-const DEFAULT_DIM = 1536;
-const DEFAULT_MODEL = "text-embedding-3-small";
+import {
+  encodeCognitiveState,
+  encodeCognitiveBatch,
+  isCognitiveModelPresent,
+} from "./cognitive-state.js";
 
-// ── Singleton accessor (set by engine constructor) ──────────────────
+export const COGNITIVE_MODEL_NAME = "cognitive_v5";
+export const COGNITIVE_DIM = 1024;
+
+export type EmbedPurpose = "store" | "query";
+
+// ── Singleton accessor ──────────────────────────────────────────────
 
 let _currentEmbedder: Embedder | null = null;
 
 export function setCurrentEmbedder(e: Embedder): void {
-  if (_currentEmbedder) {
-    // Only warn when config actually differs — avoid noise from
-    // lazy env-created instance being replaced by an identical one.
-    const same = _currentEmbedder.model === e.model
-      && _currentEmbedder.baseURL === e.baseURL;
-    if (!same) {
-      console.error("[AgentMemory] WARNING: Embedder singleton being replaced with different config.");
-    }
-  }
   _currentEmbedder = e;
 }
 
 export function getCurrentEmbedder(): Embedder {
-  if (!_currentEmbedder) {
-    const key = process.env.AGENTMEMORY_API_KEY || process.env.DEEPSEEK_API_KEY || "";
-    const url = process.env.AGENTMEMORY_EMBEDDING_URL || "http://127.0.0.1:11434";
-    const model = process.env.AGENTMEMORY_EMBEDDING_MODEL || DEFAULT_MODEL;
-    _currentEmbedder = new Embedder(key, url, model);
-  }
+  if (!_currentEmbedder) _currentEmbedder = new Embedder();
   return _currentEmbedder;
 }
 
-// ── Embedder class ──────────────────────────────────────────────────
+// ── Failure reporting ───────────────────────────────────────────────
+// 语义层失败不允许静默：记录原因，供 system-controller 上报到 status().errors。
 
-export type EmbedPurpose = "store" | "query";
+let _lastEmbedError: string | null = null;
+
+/** 最近一次编码失败的原因；成功一次即清空。 */
+export function getLastEmbedError(): string | null {
+  return _lastEmbedError;
+}
+
+// ── Embedder ────────────────────────────────────────────────────────
 
 export class Embedder {
-  private apiKey: string;
-  public readonly baseURL: string;
-  public readonly model: string;
-  public readonly dim: number;
+  public readonly baseURL = "local:onnx";
+  public readonly model = COGNITIVE_MODEL_NAME;
+  public readonly dim = COGNITIVE_DIM;
 
-  constructor(apiKey: string, baseURL = "http://127.0.0.1:11434", model?: string) {
-    this.apiKey = apiKey;
-    this.baseURL = baseURL.replace(/\/+$/, "");
-    this.model = model || process.env.AGENTMEMORY_EMBEDDING_MODEL || DEFAULT_MODEL;
-    this.dim = this.model.includes("bge-m3") ? 1024 : DEFAULT_DIM;
+  /** 编码失败后置位，让门控立即短路，不必重试到底。 */
+  private _failed = false;
+
+  /**
+   * 语义层是否不可用。
+   * 同步判定：模型文件缺失，或此前编码已失败。
+   */
+  isSemanticUnavailable(): boolean {
+    return this._failed || !isCognitiveModelPresent();
   }
 
+  /** @deprecated 语义已由 "是否只能用 hash" 变为 "语义层是否不可用"。
+   *  请改用 isSemanticUnavailable()。 */
   isHashOnly(): boolean {
-    return !this.apiKey || this.apiKey.length <= 10 || this.apiKey === "test-key";
+    return this.isSemanticUnavailable();
   }
-
-  private _fallbackWarned = false;
 
   async embed(text: string, _purpose: EmbedPurpose = "store"): Promise<number[]> {
-    if (this.apiKey && this.apiKey.length > 10 && this.apiKey !== "test-key") {
-      try {
-        return await this.embedViaApi(text);
-      } catch (e) {
-        if (!this._fallbackWarned) {
-          console.error("[AgentMemory] Embedding API failed, using hash fallback:", (e as Error).message?.slice(0, 80));
-          this._fallbackWarned = true;
-        }
-      }
+    let v: number[] | null;
+    try {
+      v = await encodeCognitiveState(text);
+    } catch (e) {
+      this._failed = true;
+      _lastEmbedError = e instanceof Error ? e.message : String(e);
+      throw e;
     }
-    return embedHash(text, this.dim);
+    if (!v || v.length === 0) {
+      this._failed = true;
+      _lastEmbedError = "cognitive_v5 返回空向量（模型缺失或加载失败）";
+      throw new Error("cognitive_v5 encode failed (model missing or unloadable)");
+    }
+    this._failed = false;
+    _lastEmbedError = null;
+    return v;
   }
 
   async embedBatch(texts: string[], _purpose: EmbedPurpose = "store"): Promise<number[][]> {
     if (texts.length === 0) return [];
-    if (this.apiKey && this.apiKey.length > 10 && this.apiKey !== "test-key") {
-      try {
-        return await this.embedBatchViaApi(texts);
-      } catch (e) {
-        if (!this._fallbackWarned) {
-          console.error("[AgentMemory] Batch embedding API failed, using hash fallback:", (e as Error).message?.slice(0, 80));
-          this._fallbackWarned = true;
-        }
+    let vecs: (number[] | null)[];
+    try {
+      vecs = await encodeCognitiveBatch(texts);
+    } catch (e) {
+      this._failed = true;
+      _lastEmbedError = e instanceof Error ? e.message : String(e);
+      throw e;
+    }
+    const out: number[][] = [];
+    for (const v of vecs) {
+      if (!v || v.length === 0) {
+        this._failed = true;
+        _lastEmbedError = "cognitive_v5 返回空向量（模型缺失或加载失败）";
+        throw new Error("cognitive_v5 encode failed (model missing or unloadable)");
       }
+      out.push(v);
     }
-    return texts.map((t) => embedHash(t, this.dim));
+    this._failed = false;
+    _lastEmbedError = null;
+    return out;
   }
-
-  private async embedViaApi(text: string): Promise<number[]> {
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 15_000);
-    try {
-      return await this.embedOpenAI(text, controller.signal, this.model);
-    } finally {
-      clearTimeout(timer);
-    }
-  }
-
-  private async embedBatchViaApi(texts: string[]): Promise<number[][]> {
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 30_000);
-    try {
-      const response = await fetch(`${this.baseURL}/v1/embeddings`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${this.apiKey}` },
-        body: JSON.stringify({ model: this.model, input: texts, encoding_format: "float" }),
-        signal: controller.signal,
-      });
-      if (!response.ok) throw new Error(`Batch embedding API returned ${response.status}`);
-      const data = await response.json() as { data: Array<{ embedding: number[] }> };
-      return (data.data ?? []).map((d) => normalize(d.embedding));
-    } finally {
-      clearTimeout(timer);
-    }
-  }
-
-  private async embedOpenAI(text: string, signal: AbortSignal, model: string): Promise<number[]> {
-    const response = await fetch(`${this.baseURL}/v1/embeddings`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json", "Authorization": `Bearer ${this.apiKey}` },
-      body: JSON.stringify({ model, input: text, encoding_format: "float" }),
-      signal,
-    });
-
-    if (!response.ok) throw new Error(`Embedding API returned ${response.status}`);
-
-    const data = await response.json() as { data: Array<{ embedding: number[] }> };
-    const vec = data.data?.[0]?.embedding;
-    if (!vec || vec.length === 0) throw new Error("Empty embedding returned");
-
-    return normalize(vec);
-  }
-}
-
-// ── n-gram hash fallback ────────────────────────────────────────────
-
-function simpleHash(str: string, seed: number): number {
-  let h = seed;
-  for (let i = 0; i < str.length; i++) {
-    h = ((h << 5) - h + str.charCodeAt(i)) | 0;
-  }
-  return h;
-}
-
-function embedHash(text: string, dim: number): number[] {
-  const vec = new Array(dim).fill(0);
-  const lower = text.toLowerCase();
-
-  for (let i = 0; i < lower.length - 1; i++) {
-    const bigram = lower.slice(i, i + 2);
-    const idx = ((simpleHash(bigram, 0) % dim) + dim) % dim;
-    vec[idx] += 1;
-  }
-  for (let i = 0; i < lower.length - 2; i++) {
-    const trigram = lower.slice(i, i + 3);
-    const idx = ((simpleHash(trigram, 42) % dim) + dim) % dim;
-    vec[idx] += 1;
-  }
-
-  return normalize(vec);
-}
-
-function normalize(vec: number[]): number[] {
-  const norm = Math.sqrt(vec.reduce((s, v) => s + v * v, 0));
-  return norm === 0 ? vec : vec.map((v) => v / norm);
 }
 
 // ── cosine similarity ───────────────────────────────────────────────

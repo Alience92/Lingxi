@@ -2,22 +2,21 @@ import Database from "better-sqlite3";
 import * as path from "node:path";
 import * as fs from "node:fs";
 import { SCHEMA_SQL } from "./schema.js";
+import { resolveConfig, ensureDbDir } from "../config.js";
 
 let db: Database.Database | null = null;
 
 export function getDbPath(workspaceDir?: string): string {
-  const home = process.env.HOME ?? process.env.USERPROFILE;
-  if (!home && !workspaceDir && !process.env.AGENTMEMORY_HOME) {
-    console.error("[AgentMemory] WARNING: No home directory found — using CWD for database. Set AGENTMEMORY_HOME env var.");
-  }
-  const base = workspaceDir ?? process.env.AGENTMEMORY_HOME ?? path.join(home ?? ".", ".agentmemory");
-  fs.mkdirSync(base, { recursive: true });
-  return path.join(base, "memory.db");
+  const cfg = resolveConfig(workspaceDir ? { dbPath: path.join(workspaceDir, "memory.db") } : {});
+  ensureDbDir(cfg.dbPath);
+  return cfg.dbPath;
 }
 
 export function openDb(dbPath?: string): Database.Database {
   if (db) return db;
   const resolved = dbPath ?? getDbPath();
+  const dir = path.dirname(resolved);
+  if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
   db = new Database(resolved);
   db.pragma("journal_mode = WAL");
   db.pragma("foreign_keys = ON");
@@ -473,6 +472,195 @@ function ensureSchemaMigrations(database: Database.Database): void {
   if (!hasVectorModel) {
     database.exec(`ALTER TABLE fragments ADD COLUMN vector_model TEXT`);
   }
+
+  // Migration 32: keywords + raw_prefix columns — dual-track storage for retrieval quality
+  const hasKeywords = database.prepare("SELECT name FROM pragma_table_info('fragments') WHERE name = 'keywords'").get();
+  if (!hasKeywords) {
+    database.exec(`ALTER TABLE fragments ADD COLUMN keywords TEXT`);
+    database.exec(`ALTER TABLE fragments ADD COLUMN raw_prefix TEXT`);
+  }
+
+  // Migration 33: is_proactive + is_read columns — proactive care push notification loop
+  const hasIsProactive = database.prepare("SELECT name FROM pragma_table_info('fragments') WHERE name = 'is_proactive'").get();
+  if (!hasIsProactive) {
+    database.exec(`ALTER TABLE fragments ADD COLUMN is_proactive INTEGER NOT NULL DEFAULT 0`);
+    database.exec(`ALTER TABLE fragments ADD COLUMN is_read INTEGER NOT NULL DEFAULT 0`);
+    database.exec(`CREATE INDEX IF NOT EXISTS idx_fragments_proactive_unread ON fragments(is_proactive, is_read, created_at)`);
+  }
+
+  // Migration 34: profile_id — dual-profile isolation (user model + star persona)
+  const hasProfileId = database.prepare("SELECT name FROM pragma_table_info('fragments') WHERE name = 'profile_id'").get();
+  if (!hasProfileId) {
+    database.exec(`ALTER TABLE fragments ADD COLUMN profile_id TEXT NOT NULL DEFAULT 'user_default'`);
+    const hasDcgkNodes = database.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='dcgk_nodes'").get();
+    const hasDcgkEdges = database.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='dcgk_edges'").get();
+    if (hasDcgkNodes) {
+      database.exec(`ALTER TABLE dcgk_nodes ADD COLUMN profile_id TEXT NOT NULL DEFAULT 'user_default'`);
+      database.exec(`CREATE INDEX IF NOT EXISTS idx_dcgk_nodes_profile ON dcgk_nodes(profile_id)`);
+    }
+    if (hasDcgkEdges) {
+      database.exec(`ALTER TABLE dcgk_edges ADD COLUMN profile_id TEXT NOT NULL DEFAULT 'user_default'`);
+      database.exec(`CREATE INDEX IF NOT EXISTS idx_dcgk_edges_profile ON dcgk_edges(profile_id)`);
+    }
+    database.exec(`CREATE INDEX IF NOT EXISTS idx_fragments_profile ON fragments(profile_id)`);
+  }
+
+  // Migration 35: 多设备支持 + 调试日志 + 远程配置 (Android App MVP)
+  database.exec(`
+    CREATE TABLE IF NOT EXISTS devices (
+      id TEXT PRIMARY KEY,
+      device_type TEXT NOT NULL DEFAULT 'phone',
+      capabilities TEXT DEFAULT '[]',
+      last_heartbeat INTEGER,
+      device_token TEXT,
+      created_at INTEGER NOT NULL DEFAULT (unixepoch() * 1000)
+    );
+    CREATE INDEX IF NOT EXISTS idx_devices_heartbeat ON devices(last_heartbeat);
+
+    CREATE TABLE IF NOT EXISTS debug_logs (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      device_id TEXT NOT NULL,
+      timestamp INTEGER NOT NULL,
+      level TEXT NOT NULL,
+      category TEXT NOT NULL,
+      message TEXT NOT NULL,
+      data TEXT
+    );
+    CREATE INDEX IF NOT EXISTS idx_debug_logs_device ON debug_logs(device_id, timestamp);
+
+    CREATE TABLE IF NOT EXISTS remote_config (
+      key TEXT PRIMARY KEY,
+      value TEXT NOT NULL,
+      updated_at INTEGER NOT NULL DEFAULT (unixepoch() * 1000)
+    );
+    INSERT OR IGNORE INTO remote_config (key, value) VALUES
+      ('context_interval', '30'),
+      ('proactive_interval', '8'),
+      ('health_enabled', 'true'),
+      ('location_enabled', 'true'),
+      ('log_level', 'info'),
+      ('debug_mode', 'false');
+
+    CREATE TABLE IF NOT EXISTS proactive_actions (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      device_id TEXT NOT NULL,
+      messages TEXT NOT NULL,
+      is_delivered INTEGER NOT NULL DEFAULT 0,
+      created_at INTEGER NOT NULL DEFAULT (unixepoch() * 1000)
+    );
+    CREATE INDEX IF NOT EXISTS idx_proactive_actions_device ON proactive_actions(device_id, is_delivered);
+
+    CREATE TABLE IF NOT EXISTS device_contexts (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      device_id TEXT NOT NULL,
+      payload TEXT NOT NULL,
+      created_at INTEGER NOT NULL DEFAULT (unixepoch() * 1000)
+    );
+    CREATE INDEX IF NOT EXISTS idx_device_contexts_device ON device_contexts(device_id, created_at);
+
+    CREATE TABLE IF NOT EXISTS device_feedbacks (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      device_id TEXT,
+      content TEXT,
+      created_at INTEGER NOT NULL DEFAULT (unixepoch() * 1000)
+    );
+  `);
+
+  const deviceColumns = database.prepare("PRAGMA table_info(devices)").all() as Array<{ name: string }>;
+  const hasDeviceToken = deviceColumns.some((column) => column.name === "device_token");
+  if (!hasDeviceToken) {
+    database.exec("ALTER TABLE devices ADD COLUMN device_token TEXT");
+  }
+
+  // Migration 37: Time dimension — edge freshness + validity windows
+  const hasFreshness = database.prepare("SELECT name FROM pragma_table_info('dcgk_edges') WHERE name = 'freshness'").get();
+  if (!hasFreshness) {
+    const hasDcgkNodes = database.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='dcgk_nodes'").get();
+    const hasDcgkEdges = database.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='dcgk_edges'").get();
+    if (hasDcgkEdges) {
+      database.exec(`ALTER TABLE dcgk_edges ADD COLUMN freshness REAL NOT NULL DEFAULT 1.0`);
+      database.exec(`ALTER TABLE dcgk_edges ADD COLUMN valid_from INTEGER`);
+      database.exec(`ALTER TABLE dcgk_edges ADD COLUMN valid_until INTEGER`);
+      database.exec(`CREATE INDEX IF NOT EXISTS idx_dcgk_edges_freshness ON dcgk_edges(freshness)`);
+    }
+    if (hasDcgkNodes) {
+      database.exec(`ALTER TABLE dcgk_nodes ADD COLUMN observed_at INTEGER`);
+    }
+  }
+
+  // Migration 36: Memory fidelity — variable compression + raw evidence tracing
+  const hasCompression = database.prepare("SELECT name FROM pragma_table_info('fragments') WHERE name = 'compression_level'").get();
+  if (!hasCompression) {
+    database.exec(`ALTER TABLE fragments ADD COLUMN compression_level INTEGER NOT NULL DEFAULT 3`);
+    database.exec(`ALTER TABLE fragments ADD COLUMN raw_text TEXT`);
+    database.exec(`ALTER TABLE fragments ADD COLUMN original_length INTEGER`);
+    database.exec(`CREATE INDEX IF NOT EXISTS idx_fragments_compression ON fragments(compression_level)`);
+    database.exec(`CREATE TABLE IF NOT EXISTS raw_evidence (
+      fragment_id TEXT PRIMARY KEY,
+      original_text TEXT NOT NULL,
+      original_length INTEGER,
+      saved_at INTEGER NOT NULL DEFAULT (unixepoch() * 1000),
+      FOREIGN KEY (fragment_id) REFERENCES fragments(id)
+    )`);
+  }
+
+  // Migration 38: V7 long-term user modeling layer.
+  database.exec(`
+    CREATE TABLE IF NOT EXISTS user_memory_models (
+      id TEXT PRIMARY KEY,
+      project_id TEXT NOT NULL,
+      profile_id TEXT NOT NULL DEFAULT 'user_default',
+      dimension TEXT NOT NULL CHECK(dimension IN ('preference','rule','goal','style','boundary','identity')),
+      fingerprint TEXT NOT NULL,
+      text TEXT NOT NULL,
+      status TEXT NOT NULL DEFAULT 'active' CHECK(status IN ('active','probation','superseded','deleted')),
+      priority INTEGER NOT NULL DEFAULT 50,
+      superseded_by TEXT,
+      confidence REAL NOT NULL DEFAULT 0.5,
+      evidence_count INTEGER NOT NULL DEFAULT 0,
+      source_session_count INTEGER NOT NULL DEFAULT 0,
+      source_fragment_count INTEGER NOT NULL DEFAULT 0,
+      evidence_ids TEXT NOT NULL DEFAULT '[]',
+      last_conflict_at INTEGER,
+      last_reinforced_at INTEGER,
+      created_at INTEGER NOT NULL,
+      updated_at INTEGER NOT NULL
+    );
+  `);
+  const userModelCols = database.prepare("PRAGMA table_info(user_memory_models)").all() as Array<{ name: string }>;
+  const hasUserModelCol = (name: string) => userModelCols.some((col) => col.name === name);
+  if (!hasUserModelCol("fingerprint")) database.exec(`ALTER TABLE user_memory_models ADD COLUMN fingerprint TEXT NOT NULL DEFAULT ''`);
+  if (!hasUserModelCol("status")) database.exec(`ALTER TABLE user_memory_models ADD COLUMN status TEXT NOT NULL DEFAULT 'active' CHECK(status IN ('active','probation','superseded','deleted'))`);
+  if (!hasUserModelCol("priority")) database.exec(`ALTER TABLE user_memory_models ADD COLUMN priority INTEGER NOT NULL DEFAULT 50`);
+  if (!hasUserModelCol("superseded_by")) database.exec(`ALTER TABLE user_memory_models ADD COLUMN superseded_by TEXT`);
+  if (!hasUserModelCol("source_session_count")) database.exec(`ALTER TABLE user_memory_models ADD COLUMN source_session_count INTEGER NOT NULL DEFAULT 0`);
+  if (!hasUserModelCol("source_fragment_count")) database.exec(`ALTER TABLE user_memory_models ADD COLUMN source_fragment_count INTEGER NOT NULL DEFAULT 0`);
+  if (!hasUserModelCol("last_conflict_at")) database.exec(`ALTER TABLE user_memory_models ADD COLUMN last_conflict_at INTEGER`);
+  database.exec(`
+    UPDATE user_memory_models SET fingerprint = lower(trim(text)) WHERE fingerprint = '';
+    UPDATE user_memory_models SET source_fragment_count = evidence_count WHERE source_fragment_count = 0;
+    DROP INDEX IF EXISTS idx_user_memory_models_fingerprint;
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_user_memory_models_fingerprint ON user_memory_models(project_id, profile_id, dimension, fingerprint);
+    CREATE INDEX IF NOT EXISTS idx_user_memory_models_scope ON user_memory_models(project_id, profile_id, dimension, status, confidence);
+  `);
+
+  // Migration 39: Add project_id to dcgk tables for multi-project isolation
+  try {
+    const nodeCols = (database.pragma("table_info(dcgk_nodes)") as Array<{ name: string }>).map((c) => c.name);
+    if (!nodeCols.includes("project_id")) {
+      database.exec("ALTER TABLE dcgk_nodes ADD COLUMN project_id TEXT NOT NULL DEFAULT 'user_default'");
+    }
+    if (!nodeCols.includes("profile_id")) {
+      database.exec("ALTER TABLE dcgk_nodes ADD COLUMN profile_id TEXT NOT NULL DEFAULT 'user_default'");
+    }
+    const edgeCols = (database.pragma("table_info(dcgk_edges)") as Array<{ name: string }>).map((c) => c.name);
+    if (!edgeCols.includes("project_id")) {
+      database.exec("ALTER TABLE dcgk_edges ADD COLUMN project_id TEXT NOT NULL DEFAULT 'user_default'");
+    }
+    if (!edgeCols.includes("profile_id")) {
+      database.exec("ALTER TABLE dcgk_edges ADD COLUMN profile_id TEXT NOT NULL DEFAULT 'user_default'");
+    }
+  } catch { /* table may not exist yet — CREATE TABLE IF NOT EXISTS handles it */ }
 }
 
 export function checkpointWAL(): void {

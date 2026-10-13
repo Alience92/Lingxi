@@ -44,13 +44,20 @@ const FRAGMENT_PROMPT = `你是记忆提取专家。分析以下对话，严格�
   "channel": "WHAT"|"FEEL"|"WHO"|"WHERE",
   "label": "≤50字压缩描述",
   "weight": 0-255,
-  "summary": "≤50字完整碎片文本",
+  "summary": "120-180字语义摘要，覆盖本条碎片的核心内容",
+  "keywords": "逗号分隔的5-10个原文关键词/短语，直接引用原文措辞不转述",
   "linkedTo": [],
   "is_decision": true/false,
   "is_todo": true/false,
   "is_preference": true/false,
   "scope": null 或 "project:名称" 或 "domain:类型"
 }
+
+keywords 规则（影响检索质量，务必认真提取）：
+- 直接引用原文中的措辞，不概括、不转述
+- 优先提取：人名、工具名、文件名、情绪词、决策词
+- 示例：原文"猪脑花我吃了一口不喜欢" → "猪脑花, 不喜欢, 食材"
+- 示例：原文"A、B、C、D去海底捞给A庆生" → "海底捞, 庆生, A, B, C, D"
 
 weight 规则：
 - WHAT / WHO / WHERE：默认 10
@@ -106,7 +113,15 @@ WHO 提取规则补充：
 3. 对话体现了用户的偏好、性格、担忧、背景？ → 有 WHO 碎片吗？
 4. 用户是否在回应/评价Agent的行为？ → 有 FEEL 碎片吗？
 5. **本次输出中 WHAT 碎片是否超过总数的 50%？ → 如果是，再检查一遍是否漏掉了 WHO/FEEL/WHERE**
-6. 每个 channel 的 summary 是否从对话中直接提取（不是臆造）？
+6. **长对话（≥3 轮或 ≥200 字）必须至少产生 15 条碎片**，信息密度高的对话应产生 20-30 条。
+7. 每个 channel 的 summary 是否从对话中直接提取（不是臆造）？
+
+### 短输入规则（单句 / 少于 3 轮 / 少于 100 字时强制）
+
+- **禁止输出空数组**：只要输入包含任何实质信息（决策、偏好、事实、反馈、需求），必须输出至少 1 条碎片。
+- 短输入不强制四通道全覆盖——按实际内容输出 1-3 条即可；有情绪反馈则给 FEEL，有实质决定则给 WHAT，体现用户特质则给 WHO。
+- **只有输入是纯口头确认（"好的""知道了""OK""继续"）或纯闲聊（无任何信息量）时才可输出空数组。**
+- 示例：输入"用户: 我更喜欢用中文沟通" → 必须输出至少 1 条，如 {"channel":"WHO","label":"用户偏好中文沟通",...} 或 {"channel":"WHAT","label":"沟通语言偏好中文",...}，不可为空。
 
 丢弃：纯闲聊、无实质确认（"好的""知道了"）、重复内容。
 如果某对话段不产生任何碎片，跳过。
@@ -126,6 +141,7 @@ interface RawFragment {
   weight: number;
   linkedTo: number[];
   summary: string;
+  keywords?: string;
   is_decision?: boolean;
   is_todo?: boolean;
   is_preference?: boolean;
@@ -146,6 +162,15 @@ function extractFirstJsonArray(raw: string): string | null {
     }
   }
   return null;
+}
+
+// 纯确认/闲聊词——短输入时若全文仅由这些构成，允许不产出碎片
+const PURE_ACK_RE = /^(好的|知道了|嗯|恩|好|OK|ok|可以|行|收到|明白|了解|继续|继续吧|对|是|是的|没错|谢谢|感谢|好了|就这样|没问题|算了|就这样吧|接着|来吧|开始吧|动手吧|做吧|试试看|试试|先这样|了解了解|哈哈哈?|嘿嘿|呵呵)[\s。！!？?，,.、]*$/;
+
+/** 判断一段输入是否纯口头确认/闲聊（无实质信息量） */
+export function isPureAck(text: string): boolean {
+  const t = text.trim().replace(/^(用户|User|assistant|Assistant|助手|我)[:：]\s*/i, "");
+  return t.length > 0 && t.length <= 40 && PURE_ACK_RE.test(t);
 }
 
 function validateChannelBalance(fragments: RawFragment[], sessionId: string): void {
@@ -202,6 +227,9 @@ export function parseFragmentationResponse(
       const scope = r.scope && typeof r.scope === "string" && r.scope.length > 0
         ? r.scope.slice(0, 50) : null;
 
+      const keywords = r.keywords && typeof r.keywords === "string"
+        ? r.keywords.slice(0, 300) : null;
+
       return {
         id: uuid(),
         sessionId,
@@ -215,10 +243,11 @@ export function parseFragmentationResponse(
         }],
         linkedIds: [] as string[],
         linkedCount: r.linkedTo?.length ?? 0,
-        summary: r.summary.slice(0, 50),
+        summary: r.summary.slice(0, 180),
         createdAt: Date.now(),
         subtype,
         scope,
+        keywords,
       };
     });
 
@@ -270,31 +299,44 @@ export interface FragmentResult {
   usage: TokenUsage | undefined;
 }
 
+/** 宿主无关的分片 LLM 回调（prompt → 完整输出）。DSH Adapter 用 ctx.llm 适配。 */
+export type FragmentLlm = (prompt: string) => Promise<string>;
+
 export async function fragmentTranscript(
   input: FragmentationInput,
   apiKey: string,
   model: string,
-  baseURL: string = "https://api.deepseek.com"
+  baseURL: string = "https://api.deepseek.com",
+  llm?: FragmentLlm,
 ): Promise<FragmentResult> {
   const prompt = buildFragmentationPrompt(input.transcript);
 
-  // Normalize baseURL: OpenAI client expects /v1 suffix
-  const normalizedURL = baseURL.endsWith("/v1") ? baseURL : `${baseURL}/v1`;
-  const client = new OpenAI({ apiKey, baseURL: normalizedURL });
-  const response = await client.chat.completions.create({
-    model,
-    max_tokens: 4096,
-    temperature: 0.3,
-    messages: [{ role: "user", content: prompt }],
-  });
+  let content: string;
+  let usage: TokenUsage | undefined;
 
-  const usage: TokenUsage | undefined = response.usage ? {
-    promptTokens: response.usage.prompt_tokens,
-    completionTokens: response.usage.completion_tokens,
-    totalTokens: response.usage.total_tokens,
-  } : undefined;
+  if (llm) {
+    // 宿主无关路径：由调用方注入 LLM（DSH ctx.llm），不硬编码 OpenAI/DeepSeek
+    content = await llm(prompt);
+  } else {
+    // 默认路径：OpenAI 兼容 API（DeepSeek）
+    const normalizedURL = baseURL.endsWith("/v1") ? baseURL : `${baseURL}/v1`;
+    const client = new OpenAI({ apiKey, baseURL: normalizedURL });
+    const response = await client.chat.completions.create({
+      model,
+      max_tokens: 4096,
+      temperature: 0.3,
+      messages: [{ role: "user", content: prompt }],
+    });
 
-  let content = response.choices[0]?.message?.content ?? "";
+    usage = response.usage ? {
+      promptTokens: response.usage.prompt_tokens,
+      completionTokens: response.usage.completion_tokens,
+      totalTokens: response.usage.total_tokens,
+    } : undefined;
+
+    content = response.choices[0]?.message?.content ?? "";
+  }
+
   if (!content) return { output: { fragments: [], summary: "" }, usage };
 
   // Strip MiniMax <think>...</think> wrapper

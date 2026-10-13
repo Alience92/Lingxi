@@ -1,39 +1,46 @@
 {
-  "name": "agentmemory",
-  "version": "1.0.0",
-  "description": "AgentMemory - cross-platform Agent memory plugin",
+  "name": "lingxi-memory-service",
+  "version": "2.0.0",
+  "description": "灵犀记忆服务（Easy Mode）—— 纯记忆系统：四通道分片、灵络认知图、cognitive_v5 语义检索、沙漏衰减、整体层自愈",
   "type": "module",
-  "exports": "./dist/skill/mcp/server.js",
-  "bin": "./dist/skill/mcp/server.js",
+  "bin": {
+    "lingxi": "dist/cli.js",
+    "lingxi-mcp": "dist/mcp/server.js"
+  },
   "files": [
-    "dist",
-    "scripts"
+    "dist"
   ],
   "scripts": {
     "build": "tsc",
-    "test": "vitest run",
-    "test:integration": "vitest run tests/integration.test.ts",
-    "typecheck": "tsc --noEmit"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "engines": {
-    "node": ">=18"
+    "start": "node dist/index.js",
+    "dev": "node --import tsx src/index.ts",
+    "mcp": "node --import tsx src/mcp/server.ts",
+    "cli": "node --import tsx src/cli.ts",
+    "quantize:cognitive": "python scripts/quantize-cognitive-model.py",
+    "typecheck": "tsc --noEmit",
+    "typecheck:adapter": "tsc -p dsh-adapter/tsconfig.json",
+    "check": "npm run typecheck && npm run build",
+    "eval:user-model": "node --import tsx src/tools/eval-user-model-regression.ts && node --import tsx src/tools/eval-user-model-v5-compat.ts",
+    "eval:v7-memory": "node --import tsx src/tools/eval-long-memory-lifecycle.ts && node --import tsx src/tools/eval-profile-isolation.ts",
+    "eval:stability": "node --import tsx src/tools/eval-longrun-stability.ts",
+    "eval:retrieval": "node --import tsx src/tools/eval-retrieval-zh.ts"
   },
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.29.0",
+    "@modelcontextprotocol/sdk": "^1.30.0",
     "better-sqlite3": "^12.10.0",
-    "onnxruntime-node": "^1.26.0",
+    "dotenv": "^17.4.2",
+    "onnxruntime-node": "^1.27.0",
     "openai": "^6.39.0",
     "uuid": "^14.0.0",
-    "zod": "^4.4.3"
+    "zod": "^4.6.2"
   },
   "devDependencies": {
     "@types/better-sqlite3": "^7.6.13",
-    "@types/node": "^25.9.1",
-    "@types/uuid": "^10.0.0",
-    "typescript": "^6.0.3",
-    "vitest": "^4.1.7"
+    "@types/node": "^22.0.0",
+    "tsx": "^4.0.0",
+    "typescript": "^5.8.0"
+  },
+  "engines": {
+    "node": ">=18"
   }
 }

@@ -1,0 +1,14 @@
+{
+  "name": "lingxi-memory",
+  "version": "0.2.0",
+  "private": true,
+  "type": "module",
+  "peerDependencies": {
+    "@deepseek-ai/cordis": "*",
+    "@deepseek-ai/dsh-llm": "*",
+    "@deepseek-ai/dsh-tools": "*"
+  },
+  "dependencies": {
+    "zod": "^4.4.3"
+  }
+}

@@ -1,13 +1,27 @@
-node_modules/
-dist/
-*.tsbuildinfo
+# ── 密钥与本地环境 ────────────────────────────────
+# .env 里只放非敏感的本地配置；API Key 请用环境变量注入。
 .env
 .env.local
+.env.*.local
+
+# ── 依赖与构建产物 ────────────────────────────────
+node_modules/
+dist/
+
+# ── 运行时产物 ────────────────────────────────────
+*.log
 *.db
-*.db-shm
 *.db-wal
+*.db-shm
+*.tgz
+*.tsbuildinfo
 
-# Encoder model files — stored in GitHub Releases, downloaded via setup.sh
-tools/encoder-output/
+# ── 模型权重（体积大，不入版本库） ─────────────────
+*.onnx
+*.pt
 
-tools/clean-model-output/
+# ── 编辑器 / 系统 ─────────────────────────────────
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/

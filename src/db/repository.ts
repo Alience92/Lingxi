@@ -46,8 +46,8 @@ export async function persistFragments(input: PersistInput): Promise<Fragment[]>
   }
 
   const insertFrag = db.prepare(`
-    INSERT INTO fragments (id, session_id, project_id, summary, linked_count, decay_score, created_at, status, retrieval_state, asset_state, distilled_to, subtype, vector, vector_model, scope)
-    VALUES (?, ?, ?, ?, ?, 1.0, ?, 'active', 'active', 'retained', NULL, ?, ?, ?, ?)
+    INSERT INTO fragments (id, session_id, project_id, summary, linked_count, decay_score, created_at, status, retrieval_state, asset_state, distilled_to, subtype, vector, vector_model, scope, keywords, raw_prefix)
+    VALUES (?, ?, ?, ?, ?, 1.0, ?, 'active', 'active', 'retained', NULL, ?, ?, ?, ?, ?, ?)
   `);
   const insertAnchor = db.prepare(`
     INSERT INTO fragment_anchors (fragment_id, channel, label, weight, source, timestamp)
@@ -73,16 +73,17 @@ export async function persistFragments(input: PersistInput): Promise<Fragment[]>
 
       const vec = vectors.get(f.id);
       const vecModel = vec ? (getCurrentEmbedder().model || null) : null;
-      insertFrag.run(f.id, f.sessionId, f.projectId, f.summary, f.linkedCount, f.createdAt, f.subtype ?? null, vec ?? null, vecModel, (f as any).scope ?? null);
+      insertFrag.run(f.id, f.sessionId, f.projectId, f.summary, f.linkedCount, f.createdAt, f.subtype ?? null, vec ?? null, vecModel, (f as any).scope ?? null, (f as any).keywords ?? null, (f as any).rawPrefix ?? null);
 
       for (const anchor of f.anchors) {
         insertAnchor.run(f.id, anchor.channel, anchor.label, anchor.weight, anchor.source, anchor.timestamp);
       }
 
-      // FTS: insert using the actual SQLite rowid (not the TEXT UUID)
+      // FTS: include keywords + raw_prefix in searchable text
       const row = db.prepare("SELECT rowid FROM fragments WHERE id = ?").get(f.id) as { rowid: number } | undefined;
       if (row) {
-        db.prepare("INSERT INTO fragments_fts (rowid, summary) VALUES (?, ?)").run(row.rowid, f.summary);
+        const searchText = [f.summary, (f as any).keywords, (f as any).rawPrefix].filter(Boolean).join(" ");
+        db.prepare("INSERT INTO fragments_fts (rowid, summary) VALUES (?, ?)").run(row.rowid, searchText);
       }
 
       fragments.push(f);
